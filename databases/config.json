@@ -1,0 +1,33 @@
+{
+  "development": {
+    "username": "root",
+    "password": null,
+    "database": "nestjs_example_dev",
+    "host": "localhost",
+    "storage": "./databases/db/database.dev.sqlite",
+    "dialect": "sqlite"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "nestjs_example_test",
+    "storage": "./databases/db/database.test.sqlite",
+    "host": "localhost",
+    "dialect": "sqlite"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "nestjs_example",
+    "storage": "./databases/db/database.sqlite",
+    "host": "localhost",
+    "dialect": "sqlite"
+  },
+  "mysql_demo": {
+    "username": "root",
+    "password": null,
+    "database": "nestjs_example",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}

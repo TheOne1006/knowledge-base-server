@@ -1,0 +1,13 @@
+{
+  "password": "password",
+  "INVALID_EMAIL": "email is invalid",
+  "INVALID_BOOLEAN": "{property} is not a boolean",
+
+  "ENUM": "{property} 值不正确",
+  "EMAIL": "{property} 必须为邮箱格式",
+  "NOT_EMPTY": "{property} 不能为空",
+  "LENGTH": "{property} 长度介于 {constraints.0} 与 {constraints.1} 之间",
+  "STRING": "{property} 必须为字符串",
+  "MIN": "{property} 不能少于 {constraints.0}",
+  "MAX": "{property} 不能多于 {constraints.0}"
+}
