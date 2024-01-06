@@ -1,0 +1,119 @@
+import { Sequelize } from 'sequelize-typescript';
+import { Transactionable, WhereOptions, Transaction } from 'sequelize';
+
+interface BaseModelT {
+  count: (where: WhereOptions) => Promise<number>;
+}
+
+export abstract class BaseService<T extends BaseModelT, U> {
+  protected readonly sequelize: Sequelize;
+  protected readonly mainModel: T;
+
+  constructor(sequelize: Sequelize, mainModel: T) {
+    this.sequelize = sequelize;
+    this.mainModel = mainModel;
+  }
+
+  /**
+   * 获取 Transaction 对象
+   * @returns {Promise<Transaction>}
+   */
+  protected async genTransaction(): Promise<Transaction> {
+    const transaction = await this.sequelize.transaction();
+    return transaction;
+  }
+
+  /**
+   * 操作前 options
+   * @param {Transaction} preTransaction
+   * @returns {Promise<Transactionable>}
+   */
+  protected async genOptions(
+    preTransaction?: Transaction,
+  ): Promise<Transactionable> {
+    const options = {
+      transaction: preTransaction,
+    };
+
+    if (!preTransaction) {
+      options.transaction = await this.sequelize.transaction();
+    }
+
+    return options;
+  }
+
+  /**
+   * 如果存在 preTransaction 则无需提交, 否则提交
+   * @param {Transactionable} options
+   * @param {Transaction} preTransaction
+   * @returns {Promise<void>}
+   */
+  protected async autoCommit(
+    options: Transactionable,
+    preTransaction?: Transaction,
+  ): Promise<void> {
+    if (!preTransaction && options.transaction) {
+      await options.transaction.commit();
+    }
+  }
+
+  /**
+   * 创建
+   * @param {any} pyload
+   * @param {any} payload
+   * @returns {Promise<U>}
+   */
+  abstract create(pyload: any, ...payload: any): Promise<U>;
+
+  /**
+   * 查找全部
+   * @param {WhereOptions} where
+   * @param {number} offset
+   * @param {number} limit
+   * @returns {Promise<U[]>}
+   */
+  abstract findAll(
+    where?: WhereOptions,
+    offset?: number,
+    limit?: number,
+  ): Promise<U[]>;
+
+  /**
+   * count 统计
+   * @param {WhereOptions} where
+   * @returns {Promise<number>}
+   */
+  async count(where?: WhereOptions): Promise<number> {
+    return this.mainModel.count({
+      where,
+    });
+  }
+
+  /**
+   * 根据id,查找
+   * @param {number} id
+   * @returns {Promise<U>}
+   */
+  abstract findByPk(id: number): Promise<U>;
+
+  /**
+   * 根据pk, 更新
+   * @param {number} pk
+   * @param {any} pyload
+   * @param {Transaction} transaction
+   * @returns {Promise<U>}
+   */
+  abstract updateByPk(
+    pk: number,
+    pyload: any,
+    transaction?: Transaction,
+  ): Promise<U>;
+
+  /**
+   * 根据id, 删除
+   * @param {number} id
+   * @param {Transaction} transaction
+   * @returns {Promise<U>}
+   */
+  abstract removeByPk(id: number, transaction?: Transaction): Promise<U>;
+}

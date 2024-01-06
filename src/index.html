@@ -1,0 +1,60 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <h1>title</h1>
+  </body>
+
+  <!-- <script>
+    function bar() {
+      axios({
+        method: 'get',
+        url: '/steam',
+        responseType: 'stream',
+      })
+        .then(response => {
+          console.log(response, '<<<<response');
+          // response.data.pipe(console.log);
+
+        });
+    }
+
+    bar()
+
+  </script> -->
+
+
+  <script type="text/javascript">
+    function foo () {
+      console.log('run foo')
+      const eventSource = new EventSource('/steam');
+
+      eventSource.onerror =(ev) => {
+        console.log(ev)
+        eventSource.close()
+      }
+
+      eventSource.onmessage = (event) => {
+
+        console.log(event)
+        const message = document.createElement('li');
+        message.innerText = 'New message: ' + event.data;
+        document.body.appendChild(message);
+
+        // strint to json
+        const jsonData = JSON.parse(event.data)
+
+        if (jsonData.finish){
+          console.log('finish it')
+          eventSource.close()
+        }
+      }
+    }
+
+    foo()
+
+    // eventSource.
+  </script>
+
+</html>

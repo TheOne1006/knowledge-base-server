@@ -11,7 +11,7 @@ export const config = {
     storage: join(__dirname, '../..', './databases/db/database.dev.sqlite'),
     host: 'localhost',
     dialect: 'sqlite' as Dialect,
-    logging: false,
+    logging: console.log,
   },
   logger: {
     appName: 'example',
