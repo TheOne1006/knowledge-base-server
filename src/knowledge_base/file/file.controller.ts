@@ -52,7 +52,6 @@ export class KbFileController extends BaseController {
 
   /**
    * 获取所有文件列表
-   * todo 分页
    */
   @Get('/admin-list')
   @ApiQuery({
@@ -60,20 +59,21 @@ export class KbFileController extends BaseController {
     example: '1',
     description: '知识库id',
     type: Number,
+    required: false,
   })
   @ApiQuery({
     name: 'offset',
     description: 'offset',
     example: 1,
     type: Number,
-    required: true,
+    required: false,
   })
   @ApiQuery({
     name: 'limit',
     description: 'limit',
     example: 10,
     type: Number,
-    required: true,
+    required: false,
   })
   @ApiOperation({
     summary: '知识库文件列表',
@@ -82,9 +82,21 @@ export class KbFileController extends BaseController {
   @SerializerClass(KbFileDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async adminlist(
-    @Query('kbId', ParseIntPipe) kbId: number,
-    @Query('offset', ParseIntPipe) offset: number,
-    @Query('limit', ParseIntPipe) limit: number,
+    @Query(
+      'kbId',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    kbId: number,
+    @Query(
+      'offset',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    offset: number,
+    @Query(
+      'limit',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    limit: number,
   ): Promise<KbFileDto[]> {
     const where: WhereOptions = {};
 
@@ -107,27 +119,40 @@ export class KbFileController extends BaseController {
     example: '1',
     description: '知识库id',
     type: Number,
+    required: false,
   })
   @ApiQuery({
     name: 'offset',
     description: 'offset',
     example: 1,
     type: Number,
-    required: true,
+    required: false,
   })
   @ApiQuery({
     name: 'limit',
     description: 'limit',
     example: 10,
     type: Number,
-    required: true,
+    required: false,
   })
   @SerializerClass(KbFileDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async ownerlist(
-    @Param('kbId', ParseIntPipe) kbId: number,
-    @Query('offset', ParseIntPipe) offset: number,
-    @Query('limit', ParseIntPipe) limit: number,
+    @Param(
+      'kbId',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    kbId: number,
+    @Query(
+      'offset',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    offset: number,
+    @Query(
+      'limit',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    limit: number,
     @User() owner: RequestUser,
   ): Promise<KbFileDto[]> {
     const where: WhereOptions = {
@@ -152,7 +177,11 @@ export class KbFileController extends BaseController {
   @SerializerClass(ReqDataCountDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async count(
-    @Query('ownerId', ParseIntPipe) ownerId: number,
+    @Query(
+      'ownerId',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    ownerId: number,
   ): Promise<ReqDataCountDto> {
     const where: WhereOptions = {};
     if (ownerId) {
@@ -173,7 +202,7 @@ export class KbFileController extends BaseController {
   @SerializerClass(KbFileDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async findByPk(
-    @Query('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @User() user: RequestUser,
   ): Promise<KbFileDto> {
     const ins = await this.service.findByPk(id);

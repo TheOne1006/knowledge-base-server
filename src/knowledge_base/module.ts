@@ -17,6 +17,9 @@ import { KbFileController } from './file/file.controller';
 import { KnowledgeBaseFile } from './file/file.entity';
 import { KbFileService } from './file/file.service';
 
+// process
+import { KbResourceController } from './process/resource.controller';
+
 @Module({
   imports: [
     SequelizeModule.forFeature([
@@ -25,7 +28,12 @@ import { KbFileService } from './file/file.service';
       KnowledgeBaseFile,
     ]),
   ],
-  controllers: [KbController, KbSiteController, KbFileController],
+  controllers: [
+    KbController,
+    KbSiteController,
+    KbFileController,
+    KbResourceController,
+  ],
   providers: [KbService, KbSiteService, KbFileService],
 })
 export class KnowledgeBaseModule {}

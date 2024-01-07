@@ -22,7 +22,6 @@ module.exports = {
         type: STRING(20),
         comment: '文件扩展名',
       },
-      // todo: 新增
       source_type: {
         type: STRING(20),
         comment: '来源方式',
