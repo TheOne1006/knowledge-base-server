@@ -5,9 +5,13 @@
   "INVALID_EMAIL": "email is invalid",
   "INVALID_BOOLEAN": "{property} is not a boolean",
 
+  "URL": "{property} must be an URL address",
   "ENUM": "{property} must be a valid enum value",
   "LENGTH": "{property} must be longer than or equal to {constraints.0} and shorter than or equal to {constraints.1} characters",
   "STRING": "{property} must be a string",
   "MIN": "{property} must not be less than {constraints.0}",
-  "MAX": "{property} must not be greater than {constraints.0}"
+  "MAX": "{property} must not be greater than {constraints.0}",
+  "MIN_LENGTH": "{property} is too short, Minimal length is {constraints.0}",
+  "MAX_LENGTH": "{property} is too long, Maximal length is {constraints.0}",
+   "MATCHES": "{property} cannot contain special characters "
 }

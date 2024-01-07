@@ -1,3 +1,4 @@
 {
-  "FORBIDDEN": "当前权限无法访问！"
+  "FORBIDDEN": "当前权限无法访问！",
+  "KB_NOT_OWNER": "该知识库不属于你！"
 }

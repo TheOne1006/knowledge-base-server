@@ -48,7 +48,6 @@ describe('AuthService', () => {
     });
   });
 
-  // TODO: check
   describe('check()', () => {
     beforeEach(async () => {
       mockLogger = {

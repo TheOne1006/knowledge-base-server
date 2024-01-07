@@ -32,6 +32,7 @@ export interface Iconfig {
   APP_CONFIG: {
     JWT_SECRET: string;
     JWT_SECRET_EXPIRESIN: string; // token 过期时间
+    KOWNLEDGE_BASE_RESOURCES_ROOT: string; // 知识库根文件目录
   };
 }
 
@@ -63,5 +64,6 @@ export const config: Iconfig = {
   APP_CONFIG: {
     JWT_SECRET: '12132334234242',
     JWT_SECRET_EXPIRESIN: '10d', // token 过期时间
+    KOWNLEDGE_BASE_RESOURCES_ROOT: join(__dirname, '../..', 'resources/dev'),
   },
 };
