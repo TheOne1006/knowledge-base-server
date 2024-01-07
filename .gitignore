@@ -38,3 +38,6 @@ documentation
 
 # sqlit db
 databases/db
+
+# resources
+resources/dev/

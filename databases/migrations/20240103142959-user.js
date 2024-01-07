@@ -68,12 +68,10 @@ module.exports = {
 
     await queryInterface.addIndex(tableName, ['username'], {
       unique: true,
-      name: `idx_username`,
     });
 
     await queryInterface.addIndex(tableName, ['email'], {
       unique: true,
-      name: `idx_email`,
     });
   },
 

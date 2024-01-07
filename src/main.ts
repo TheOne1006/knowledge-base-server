@@ -5,7 +5,11 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    forceCloseConnections: true, // 强制关闭打开的HTTP连接,用于 steam
+  });
+
+  app.enableShutdownHooks();
 
   app.useGlobalPipes(new I18nValidationPipe());
 
