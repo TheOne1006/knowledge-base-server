@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
 import { urlAppendSuffix } from './libs/append-suffix';
@@ -11,9 +11,13 @@ export class KbResourceService {
    * @returns {Promise<boolean>}
    */
   async checkDir(dirPath: string): Promise<boolean> {
-    // 判断目录是否存
-    const isExists = await fs.exists(dirPath);
+    let isExists = true;
 
+    try {
+      await fs.access(dirPath);
+    } catch (error) {
+      isExists = false;
+    }
     if (!isExists) {
       await fs.mkdir(dirPath, { recursive: true });
     } else {
