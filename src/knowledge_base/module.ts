@@ -19,6 +19,7 @@ import { KbFileService } from './file/file.service';
 
 // process
 import { KbResourceController } from './process/resource.controller';
+import { KbResourceService } from './process/resource.service';
 
 @Module({
   imports: [
@@ -34,6 +35,6 @@ import { KbResourceController } from './process/resource.controller';
     KbFileController,
     KbResourceController,
   ],
-  providers: [KbService, KbSiteService, KbFileService],
+  providers: [KbService, KbSiteService, KbFileService, KbResourceService],
 })
 export class KnowledgeBaseModule {}

@@ -206,7 +206,7 @@ export class KbFileController extends BaseController {
     @User() user: RequestUser,
   ): Promise<KbFileDto> {
     const ins = await this.service.findByPk(id);
-    await this.check_owner(ins, user.id);
+    this.check_owner(ins, user.id);
     return ins;
   }
   /**
@@ -243,7 +243,7 @@ export class KbFileController extends BaseController {
     @User() owner: RequestUser,
   ): Promise<KbFileDto> {
     const ins = await this.service.findByPk(pk);
-    await this.check_owner(ins, owner.id);
+    this.check_owner(ins, owner.id);
     const deleteIns = await this.service.removeByPk(pk);
     return deleteIns;
   }

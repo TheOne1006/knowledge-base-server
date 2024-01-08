@@ -3,13 +3,19 @@ import { Transaction, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { KnowledgeBase } from './kb.entity';
 import { KbDto, CreateKbDto, UpdateKbDto } from './dtos';
+import { FileStatDto } from '../base/dtos';
 
 import { BaseService } from '../base/base.service';
+import { config } from '../../../config';
 
-@Injectable()
-export class KbService extends BaseService<typeof KnowledgeBase, KbDto> {
+const RESOURCES_ROOT = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
+
+export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   constructor(
     @Inject(Sequelize)
     protected readonly sequelize: Sequelize,
@@ -112,5 +118,97 @@ export class KbService extends BaseService<typeof KnowledgeBase, KbDto> {
     await data.destroy(options);
     await this.autoCommit(options, transaction);
     return data;
+  }
+}
+
+@Injectable()
+export class KbService extends KbServiceDB {
+  constructor(
+    @Inject(Sequelize)
+    protected readonly sequelize: Sequelize,
+    @InjectModel(KnowledgeBase)
+    protected readonly mainModel: typeof KnowledgeBase,
+  ) {
+    super(sequelize, mainModel);
+  }
+  /**
+   * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
+   */
+  getKbRoot(kb: KbDto) {
+    return `${RESOURCES_ROOT}/${kb.ownerId}/${kb.title}`;
+  }
+
+  /**
+   * 递归获取所有文件信息
+   */
+  async getAllFiles(
+    kb: KbDto,
+    subDir?: string,
+    isRecursion: boolean = true,
+    ignorePathPrefix: string = '',
+  ): Promise<FileStatDto[]> {
+    let root = this.getKbRoot(kb);
+    if (subDir) {
+      root = `${root}/${subDir}`;
+    }
+    const files = await this.getRecursionFiles(root, ignorePathPrefix);
+
+    if (!isRecursion) {
+      // 展平
+      return this.flatFileStatDto(files);
+    } else {
+      return files;
+    }
+  }
+
+  /**
+   * 递归文件新信息
+   * @param dir 目录
+   * @param ignorePathPrefix 忽略的路径信息
+   * @returns
+   */
+  private async getRecursionFiles(
+    dir: string,
+    ignorePathPrefix = '',
+  ): Promise<FileStatDto[]> {
+    const dirList = await fs.readdir(dir);
+    const files: FileStatDto[] = [];
+
+    dirList.forEach(async (item) => {
+      const fullPath = path.join(dir, item);
+      const stat = await fs.stat(fullPath);
+      const fullPathCrop = fullPath.replace(ignorePathPrefix, '');
+      if (stat && stat.isDirectory()) {
+        const children = await this.getRecursionFiles(fullPath);
+        files.push({
+          name: item,
+          path: fullPathCrop,
+          isDir: true,
+          children,
+        });
+      } else {
+        files.push({
+          name: item,
+          path: fullPathCrop,
+          isDir: false,
+        });
+      }
+    });
+    return files;
+  }
+
+  /**
+   * 展平所有 FileStatDto
+   */
+  private flatFileStatDto(files: FileStatDto[]): FileStatDto[] {
+    const result: FileStatDto[] = [];
+    files.forEach((item) => {
+      if (item.isDir) {
+        result.push(...this.flatFileStatDto(item.children));
+      } else {
+        result.push(item);
+      }
+    });
+    return result;
   }
 }

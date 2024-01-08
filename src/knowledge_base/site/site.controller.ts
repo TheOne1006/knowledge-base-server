@@ -233,7 +233,7 @@ export class KbSiteController extends BaseController {
     @User() user: RequestUser,
   ): Promise<KbSiteDto> {
     const ins = await this.service.findByPk(pk);
-    await this.check_owner(ins, user.id);
+    this.check_owner(ins, user.id);
     return ins;
   }
 
@@ -260,7 +260,7 @@ export class KbSiteController extends BaseController {
     @User() owner: RequestUser,
   ): Promise<KbSiteDto> {
     const kb = await this.kbService.findByPk(kbId);
-    await this.check_owner(kb, owner.id);
+    this.check_owner(kb, owner.id);
     const newSite = await this.service.create(newKbSite, kbId, owner.id);
     return newSite;
   }
@@ -285,7 +285,7 @@ export class KbSiteController extends BaseController {
     @User() owner: RequestUser,
   ): Promise<KbSiteDto> {
     const ins = await this.service.findByPk(pk);
-    await this.check_owner(ins, owner.id);
+    this.check_owner(ins, owner.id);
     const deleteIns = await this.service.removeByPk(pk);
     return deleteIns;
   }
@@ -314,7 +314,7 @@ export class KbSiteController extends BaseController {
   ): Promise<KbSiteDto> {
     const ins = await this.service.findByPk(pk);
 
-    await this.check_owner(ins, owner.id);
+    this.check_owner(ins, owner.id);
     const newIns = await this.service.updateByPk(pk, updateKbInfo);
 
     return newIns;

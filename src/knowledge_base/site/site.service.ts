@@ -8,8 +8,7 @@ import { KbSiteDto, CreateKbSiteDto, UpdateKbSiteDto } from './dtos';
 
 import { BaseService } from '../base/base.service';
 
-@Injectable()
-export class KbSiteService extends BaseService<
+export class KbSiteServiceDB extends BaseService<
   typeof KnowledgeBaseSite,
   KbSiteDto
 > {
@@ -39,9 +38,6 @@ export class KbSiteService extends BaseService<
       kbId,
       ownerId,
     });
-
-    console.log('create:');
-    console.log(data);
 
     const options = await this.genOptions();
     const instance = await data.save(options);
@@ -126,5 +122,49 @@ export class KbSiteService extends BaseService<
     await this.autoCommit(options, transaction);
 
     return instance;
+  }
+}
+
+@Injectable()
+export class KbSiteService extends KbSiteServiceDB {
+  /**
+   * 获取 站点的本地 根目录
+   * @param {string} kbResRoot
+   * @param {KbSiteDto} bkSiteIns
+   * @returns {string}
+   */
+  getKbSiteRoot(kbResRoot: string, bkSiteIns: KbSiteDto): string {
+    return `${kbResRoot}/${bkSiteIns.title}`;
+  }
+
+  /**
+   * 获取完整版的 startUrls
+   * @param bkSiteIns
+   * @returns
+   */
+  getFullStartUrls(bkSiteIns: KbSiteDto): string[] {
+    const hostname = bkSiteIns.hostname;
+    const startUrls = bkSiteIns.startUrls;
+    const fullStartUrls = startUrls.map((url) => {
+      if (url.startsWith('http')) {
+        return url;
+      }
+      return `${hostname}${url}`;
+    });
+
+    return fullStartUrls;
+  }
+
+  /**
+   * 将本地文件路径转换成 url
+   * @param {KbSiteDto} bkSiteIns
+   * @param {string[]} filePaths
+   * @returns {string[]}
+   */
+  convertFilePathsToUrls(bkSiteIns: KbSiteDto, filePaths: string[]): string[] {
+    const hostname = bkSiteIns.hostname;
+    return filePaths.map((filePath) => {
+      return `${hostname}${filePath}`;
+    });
   }
 }
