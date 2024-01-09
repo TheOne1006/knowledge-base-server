@@ -10,14 +10,11 @@ import { KbDto, CreateKbDto, UpdateKbDto } from './dtos';
 import { FileStatDto } from '../utils/dtos';
 
 import { BaseService } from '../base/base.service';
-import { config } from '../../../config';
 import { checkDir } from '../utils/check-dir';
 import {
   getAllFilesAndDirectoriesRecursively,
   flatFileAndDirRecursively,
 } from '../utils/recursion-files';
-
-const RESOURCES_ROOT = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
 
 export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   constructor(
@@ -141,7 +138,7 @@ export class KbService extends KbServiceDB {
    * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
    */
   getKbRoot(kb: KbDto) {
-    return `${RESOURCES_ROOT}/${kb.ownerId}/${kb.title}`;
+    return `${this.getResourceRoot()}/${kb.ownerId}/${kb.title}`;
   }
 
   /**
@@ -158,26 +155,6 @@ export class KbService extends KbServiceDB {
       root = `${root}/${subDir}`;
     }
 
-    const files = await getAllFilesAndDirectoriesRecursively(
-      root,
-      ignorePathPrefix,
-    );
-    this.logger.info(files);
-
-    if (!isRecursion) {
-      // 展平
-      return flatFileAndDirRecursively(files);
-    } else {
-      return files;
-    }
-  }
-
-  /**
-   * 检查目录是否存在, 如果不存在 则创建
-   * @param  {string} dirPath
-   * @returns {Promise<boolean>}
-   */
-  async checkDir(dirPath: string): Promise<boolean> {
-    return checkDir(dirPath);
+    return this.getFiles(root, isRecursion, ignorePathPrefix);
   }
 }

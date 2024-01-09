@@ -1,11 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { KbController } from '../kb.controller';
-import { KbService } from '../kb.service';
+import { KbSiteController } from '../site.controller';
+import { KbSiteService } from '../site.service';
+import { KbService } from '../../kb/kb.service';
 import { I18nService } from 'nestjs-i18n';
 
 describe('KbController', () => {
   let moduleRef: TestingModule;
-  let controller: KbController;
+  let controller: KbSiteController;
+  let KbSiteServiceMock: KbSiteService;
   let KbServiceMock: KbService;
   let I18nServiceMock: I18nService;
 
@@ -15,6 +17,14 @@ describe('KbController', () => {
     } as any as I18nService;
 
     KbServiceMock = {
+      findByPk: jest.fn().mockResolvedValue({
+        id: 1,
+        title: 'title',
+      }),
+      getKbRoot: jest.fn().mockResolvedValue('/tmp'),
+    } as any as KbService;
+
+    KbSiteServiceMock = {
       findAll: jest.fn().mockResolvedValue([
         { id: 1, title: 'title' },
         { id: 2, title: 'title2' },
@@ -39,12 +49,17 @@ describe('KbController', () => {
         title: 'title',
         desc: 'desc',
       }),
-      getKbRoot: jest.fn().mockResolvedValue('/tmp'),
+      getKbSiteRoot: jest.fn().mockResolvedValue('/tmp'),
       checkDir: jest.fn().mockResolvedValue(true),
-    } as any as KbService;
+      removeDir: jest.fn().mockResolvedValue(true),
+    } as any as KbSiteService;
     moduleRef = await Test.createTestingModule({
-      controllers: [KbController],
+      controllers: [KbSiteController],
       providers: [
+        {
+          provide: KbSiteService,
+          useValue: KbSiteServiceMock,
+        },
         {
           provide: KbService,
           useValue: KbServiceMock,
@@ -56,7 +71,7 @@ describe('KbController', () => {
       ],
     }).compile();
 
-    controller = moduleRef.get<KbController>(KbController);
+    controller = moduleRef.get<KbSiteController>(KbSiteController);
     (controller as any).check_owner = jest.fn().mockImplementation(() => true);
   });
 
@@ -70,12 +85,12 @@ describe('KbController', () => {
 
   describe('READ', () => {
     it('adminlist', async () => {
-      const actual = await controller.adminlist(1, 1, 1);
+      const actual = await controller.adminlist(1, 1, 1, 1);
       expect(actual.length).toBeGreaterThan(1);
     });
 
     it('adminlist with out ownerId', async () => {
-      const actual = await controller.adminlist(undefined, 1, 1);
+      const actual = await controller.adminlist(undefined, undefined, 1, 1);
       expect(actual.length).toBeGreaterThan(1);
     });
 
@@ -86,27 +101,41 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(1, 1, user);
+      const actual = await controller.ownerlist(1, 1, 1, user);
+
+      expect(actual.length).toBeGreaterThan(1);
+    });
+
+    it('ownerlist without kbId', async () => {
+      const user = {
+        id: 1,
+        username: 'user',
+        email: '',
+        roles: [],
+      };
+      const actual = await controller.ownerlist(undefined, 1, 1, user);
+
       expect(actual.length).toBeGreaterThan(1);
     });
 
     describe('count', () => {
-      it('should return count when ownerId is provided', async () => {
+      it('should return count when ownerId/kbId is provided', async () => {
         const ownerId = 1;
+        const kbId = 1;
         const count = 5;
 
-        const actual = await controller.count(ownerId);
+        const actual = await controller.count(ownerId, kbId);
 
-        expect(KbServiceMock.count).toHaveBeenCalledWith({ ownerId });
+        expect(KbSiteServiceMock.count).toHaveBeenCalledWith({ ownerId, kbId });
         expect(actual).toEqual({ count });
       });
 
-      it('should return count when ownerId is not provided', async () => {
+      it('should return count when ownerId/kbId is not provided', async () => {
         const count = 5;
 
-        const actual = await controller.count(undefined);
+        const actual = await controller.count(undefined, undefined);
 
-        expect(KbServiceMock.count).toHaveBeenCalledWith({});
+        expect(KbSiteServiceMock.count).toHaveBeenCalledWith({});
         expect(actual).toEqual({ count });
       });
     });
@@ -128,21 +157,30 @@ describe('KbController', () => {
 
   describe('CREATE', () => {
     describe('create', () => {
-      it('should return created kb', async () => {
+      it('should return created instance', async () => {
         const user = {
           id: 1,
           username: 'user',
           email: '',
           roles: [],
         };
-        const newKbInfo = {
+        const newInfo = {
           title: 'title',
           desc: 'title',
+          hostname: 'http://xxx.com/',
+          startUrls: ['/start'],
+          pattern: 'http',
+          removeSelectors: [],
         };
+        const kbId = 1;
 
-        const actual = await controller.create(newKbInfo, user);
+        const actual = await controller.create(kbId, newInfo, user);
 
-        expect(KbServiceMock.create).toHaveBeenCalledWith(newKbInfo, user.id);
+        expect(KbSiteServiceMock.create).toHaveBeenCalledWith(
+          newInfo,
+          kbId,
+          user.id,
+        );
         const expected = {
           id: 1,
           title: 'title',
@@ -165,11 +203,15 @@ describe('KbController', () => {
 
         const updateKb = {
           desc: 'title',
+          hostname: 'http://xxx.com/',
+          startUrls: ['/start'],
+          pattern: 'http',
+          removeSelectors: [],
         };
 
         const actual = await controller.updateByPk(1, updateKb, user);
 
-        expect(KbServiceMock.updateByPk).toHaveBeenCalledWith(1, updateKb);
+        expect(KbSiteServiceMock.updateByPk).toHaveBeenCalledWith(1, updateKb);
         const expected = {
           id: 1,
           title: 'title',
@@ -182,7 +224,7 @@ describe('KbController', () => {
 
   describe('DELETE', () => {
     describe('deleteByPk', () => {
-      it('should return deleted kb', async () => {
+      it('should return deleted instance', async () => {
         const user = {
           id: 1,
           username: 'user',
@@ -192,7 +234,7 @@ describe('KbController', () => {
 
         const actual = await controller.deleteByPk(1, user);
 
-        expect(KbServiceMock.removeByPk).toHaveBeenCalledWith(1);
+        expect(KbSiteServiceMock.removeByPk).toHaveBeenCalledWith(1);
         const expected = {
           id: 1,
           title: 'title',

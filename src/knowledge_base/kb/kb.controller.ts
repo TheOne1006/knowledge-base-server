@@ -158,6 +158,20 @@ export class KbController extends BaseController {
     type: Number,
     required: false,
   })
+  @ApiQuery({
+    name: 'offset',
+    description: 'offset',
+    example: 1,
+    type: Number,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'limit',
+    example: 10,
+    type: Number,
+    required: false,
+  })
   @SerializerClass(ReqDataCountDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async count(

@@ -1,11 +1,23 @@
 import { Sequelize } from 'sequelize-typescript';
 import { Transactionable, WhereOptions, Transaction } from 'sequelize';
+import { FileStatDto } from '../utils/dtos';
+import {
+  getAllFilesAndDirectoriesRecursively,
+  flatFileAndDirRecursively,
+} from '../utils/recursion-files';
+import { checkDir, removeDir } from '../utils/check-dir';
+import { config } from '../../../config';
+
+const RESOURCES_ROOT = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
 
 interface BaseModelT {
   count: (where: WhereOptions) => Promise<number>;
 }
 
-export abstract class BaseService<T extends BaseModelT, U> {
+/**
+ * 基础 Service
+ */
+abstract class BaseDBService<T extends BaseModelT, U> {
   protected readonly sequelize: Sequelize;
   protected readonly mainModel: T;
 
@@ -116,4 +128,59 @@ export abstract class BaseService<T extends BaseModelT, U> {
    * @returns {Promise<U>}
    */
   abstract removeByPk(id: number, transaction?: Transaction): Promise<U>;
+}
+
+export abstract class BaseService<
+  T extends BaseModelT,
+  U,
+> extends BaseDBService<T, U> {
+  /**
+   * 获取资源 root 地址
+   */
+  protected getResourceRoot(): string {
+    return RESOURCES_ROOT;
+  }
+
+  /**
+   * 递归获取目录下的所有文件
+   * @param {string} root
+   * @param {boolean} isRecursion true 递归格式， false 展平处理
+   * @param {string} ignorePathPrefix 忽略路径
+   * @returns {Promise<FileStatDto[]>}
+   */
+  protected async getFiles(
+    root: string,
+    isRecursion: boolean = true,
+    ignorePathPrefix: string = '',
+  ): Promise<FileStatDto[]> {
+    const files = await getAllFilesAndDirectoriesRecursively(
+      root,
+      ignorePathPrefix,
+    );
+
+    if (!isRecursion) {
+      // 展平
+      return flatFileAndDirRecursively(files);
+    } else {
+      return files;
+    }
+  }
+
+  /**
+   * 检查目录是否存在, 如果不存在 则创建
+   * @param  {string} dirPath
+   * @returns {Promise<boolean>}
+   */
+  async checkDir(dirPath: string): Promise<boolean> {
+    return checkDir(dirPath);
+  }
+
+  /**
+   * 检查目录是否存在, 存在则删除该目录
+   * @param  {string} dirPath
+   * @returns {Promise<boolean>}
+   */
+  async removeDir(dirPath: string): Promise<boolean> {
+    return removeDir(dirPath);
+  }
 }

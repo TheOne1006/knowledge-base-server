@@ -35,6 +35,11 @@ import { ReqDataCountDto } from '../base/res-data-count.dto';
 
 const prefix = config.API_V1;
 
+/**
+ *
+ * todo: 文件预览、文件入库、独立上传文件、同步删除、文件标注
+ */
+
 @UseGuards(RolesGuard)
 @Roles(ROLE_AUTHENTICATED)
 @Controller(`${prefix}/kb-file`)

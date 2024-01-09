@@ -7,12 +7,7 @@ import { KnowledgeBaseSite } from './site.entity';
 import { KbSiteDto, CreateKbSiteDto, UpdateKbSiteDto } from './dtos';
 
 import { BaseService } from '../base/base.service';
-import { checkDir } from '../utils/check-dir';
-
-export class KbSiteServiceDB extends BaseService<
-  typeof KnowledgeBaseSite,
-  KbSiteDto
-> {
+class KbSiteServiceDB extends BaseService<typeof KnowledgeBaseSite, KbSiteDto> {
   constructor(
     @Inject(Sequelize)
     protected readonly sequelize: Sequelize,
@@ -61,8 +56,8 @@ export class KbSiteServiceDB extends BaseService<
   ): Promise<KbSiteDto[]> {
     return this.mainModel.findAll({
       where,
-      offset: offset > 0 ? offset : null,
-      limit: limit > 0 ? limit : null,
+      offset: Math.max(0, offset) || null,
+      limit: Math.max(0, limit) || null,
     });
   }
 
@@ -76,7 +71,7 @@ export class KbSiteServiceDB extends BaseService<
   }
 
   /**
-   * todo: 同步删除 目录
+   *
    * 根据id, 删除
    * @param {number} id
    * @param {Transaction} transaction
@@ -155,20 +150,11 @@ export class KbSiteService extends KbSiteServiceDB {
    * @returns {string[]}
    */
   convertPathsToUrls(bkSiteIns: KbSiteDto, paths: string[]): string[] {
-    const urls = paths.map((path) => {
-      const item = new URL(path, bkSiteIns.hostname);
-      return item.href;
+    const urls = paths.map((item) => {
+      const urlObj = new URL(item, bkSiteIns.hostname);
+      return urlObj.href;
     });
 
     return urls;
-  }
-
-  /**
-   * 检查目录是否存在, 如果不存在 则创建
-   * @param  {string} dirPath
-   * @returns {Promise<boolean>}
-   */
-  async checkDir(dirPath: string): Promise<boolean> {
-    return checkDir(dirPath);
   }
 }
