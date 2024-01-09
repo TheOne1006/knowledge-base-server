@@ -56,8 +56,8 @@ class KbSiteServiceDB extends BaseService<typeof KnowledgeBaseSite, KbSiteDto> {
   ): Promise<KbSiteDto[]> {
     return this.mainModel.findAll({
       where,
-      offset: Math.max(0, offset) || null,
-      limit: Math.max(0, limit) || null,
+      offset: Math.max(0, offset) || undefined,
+      limit: Math.max(0, limit) || undefined,
     });
   }
 

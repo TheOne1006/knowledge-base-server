@@ -5,7 +5,12 @@ import {
   getAllFilesAndDirectoriesRecursively,
   flatFileAndDirRecursively,
 } from '../utils/recursion-files';
-import { checkDir, removeDir } from '../utils/check-dir';
+import {
+  checkDir,
+  removeDir,
+  doesFileExist,
+  removeFile,
+} from '../utils/check-dir';
 import { config } from '../../../config';
 
 const RESOURCES_ROOT = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
@@ -171,6 +176,15 @@ export abstract class BaseService<
    * @param  {string} dirPath
    * @returns {Promise<boolean>}
    */
+  async checkPathExist(dirPath: string): Promise<boolean> {
+    return doesFileExist(dirPath);
+  }
+
+  /**
+   * 检查目录是否存在, 如果不存在 则创建
+   * @param  {string} dirPath
+   * @returns {Promise<boolean>}
+   */
   async checkDir(dirPath: string): Promise<boolean> {
     return checkDir(dirPath);
   }
@@ -182,5 +196,14 @@ export abstract class BaseService<
    */
   async removeDir(dirPath: string): Promise<boolean> {
     return removeDir(dirPath);
+  }
+
+  /**
+   * 检查文件是否存在, 存在则删除该文件
+   * @param  {string} filePath
+   * @returns {Promise<boolean>}
+   */
+  async removeFile(filePath: string): Promise<boolean> {
+    return removeFile(filePath);
   }
 }

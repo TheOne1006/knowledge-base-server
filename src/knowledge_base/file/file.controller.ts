@@ -30,6 +30,7 @@ import { KbFileDto } from './dtos';
 
 import { config } from '../../../config';
 import { KbFileService } from './file.service';
+import { KbService } from '../kb/kb.service';
 import { BaseController } from '../base/base.controller';
 import { ReqDataCountDto } from '../base/res-data-count.dto';
 
@@ -50,6 +51,7 @@ const prefix = config.API_V1;
 export class KbFileController extends BaseController {
   constructor(
     private readonly service: KbFileService,
+    private readonly kbService: KbService,
     protected readonly i18n: I18nService,
   ) {
     super(i18n);
@@ -179,6 +181,13 @@ export class KbFileController extends BaseController {
     type: Number,
     required: false,
   })
+  @ApiQuery({
+    name: 'kbId',
+    example: '1',
+    description: '知识库id',
+    type: Number,
+    required: false,
+  })
   @SerializerClass(ReqDataCountDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async count(
@@ -187,11 +196,20 @@ export class KbFileController extends BaseController {
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
     ownerId: number,
+    @Param(
+      'kbId',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    kbId: number,
   ): Promise<ReqDataCountDto> {
     const where: WhereOptions = {};
     if (ownerId) {
       where.ownerId = ownerId;
     }
+    if (kbId) {
+      where.kbId = kbId;
+    }
+
     const count = await this.service.count(where);
 
     return { count };
@@ -214,24 +232,6 @@ export class KbFileController extends BaseController {
     this.check_owner(ins, user.id);
     return ins;
   }
-  /**
-   * rename
-   */
-
-  /**
-   * 上传文件
-   * todo
-   */
-  // @Post()
-  // @ApiOperation({
-  //   summary: '创建新知识库',
-  // })
-  // @SerializerClass(KbFileDto)
-  // async uploadFiles(
-  //   @Body() newKbInfos: [],
-  //   @User() owner: RequestUser,
-  // ): Promise<KbFileDto> {
-  // }
 
   /**
    * 删除知识某个文件
@@ -250,6 +250,20 @@ export class KbFileController extends BaseController {
     const ins = await this.service.findByPk(pk);
     this.check_owner(ins, owner.id);
     const deleteIns = await this.service.removeByPk(pk);
+
+    const kb = await this.kbService.findByPk(ins.kbId);
+    const kbRoot = this.kbService.getKbRoot(kb);
+
+    // 文件的绝对路径
+    const fileAbsPath = this.service.getFilePath(kbRoot, ins);
+
+    const isExist = await this.service.checkPathExist(fileAbsPath);
+
+    // 校验删除
+    if (isExist) {
+      await this.service.removeFile(fileAbsPath);
+    }
+
     return deleteIns;
   }
 }
