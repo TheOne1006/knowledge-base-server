@@ -1,5 +1,3 @@
-// FILEPATH: /Users/theone/Programme/my-project/knowledge-base-server/src/knowledge_base/process/resource.service.spec.ts
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { KbResourceService } from '../resource.service';
 import { urlAppendSuffix } from '../../utils/link-format';

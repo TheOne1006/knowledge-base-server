@@ -114,7 +114,7 @@ export class KbSiteServiceDB extends BaseService<
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);
       if (value !== originalValue) {
-        updatePayload[key] = value;
+        instance[key] = value;
       }
     });
 
