@@ -20,4 +20,14 @@ export const config = {
     // filename: 'log/all.log',
   },
   API_V1: '',
+  APP_CONFIG: {
+    JWT_SECRET: '123',
+    JWT_SECRET_EXPIRESIN: '10d', // token 过期时间
+    KOWNLEDGE_BASE_RESOURCES_ROOT: join(
+      __dirname,
+      '../..',
+      'resources',
+      'test',
+    ),
+  },
 };

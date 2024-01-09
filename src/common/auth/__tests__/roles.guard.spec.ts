@@ -2,12 +2,12 @@
 import { createMock } from '@golevelup/ts-jest';
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { I18nService } from 'nestjs-i18n';
+// import { I18nService } from 'nestjs-i18n';
 import { RolesGuard } from '../roles.guard';
 
-export const I18nServiceMock = {
-  t: jest.fn().mockImplementation((key) => key),
-} as any as I18nService;
+// export const I18nServiceMock = {
+//   t: jest.fn().mockImplementation((key) => key),
+// } as any as I18nService;
 
 describe('guard RolesGuard', () => {
   let guard: RolesGuard;

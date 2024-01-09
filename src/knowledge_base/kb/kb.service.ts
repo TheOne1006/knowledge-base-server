@@ -3,18 +3,26 @@ import { Transaction, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { KnowledgeBase } from './kb.entity';
 import { KbDto, CreateKbDto, UpdateKbDto } from './dtos';
+import { FileStatDto } from '../utils/dtos';
 
 import { BaseService } from '../base/base.service';
+import { checkDir } from '../utils/check-dir';
+import {
+  getAllFilesAndDirectoriesRecursively,
+  flatFileAndDirRecursively,
+} from '../utils/recursion-files';
 
-@Injectable()
-export class KbService extends BaseService<typeof KnowledgeBase, KbDto> {
+export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   constructor(
     @Inject(Sequelize)
     protected readonly sequelize: Sequelize,
     @InjectModel(KnowledgeBase)
     protected readonly mainModel: typeof KnowledgeBase,
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
   ) {
     super(sequelize, mainModel);
   }
@@ -88,7 +96,7 @@ export class KbService extends BaseService<typeof KnowledgeBase, KbDto> {
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);
       if (value !== originalValue) {
-        updatePayload[key] = value;
+        instance[key] = value;
       }
     });
 
@@ -112,5 +120,41 @@ export class KbService extends BaseService<typeof KnowledgeBase, KbDto> {
     await data.destroy(options);
     await this.autoCommit(options, transaction);
     return data;
+  }
+}
+
+@Injectable()
+export class KbService extends KbServiceDB {
+  constructor(
+    @Inject(Sequelize)
+    protected readonly sequelize: Sequelize,
+    @InjectModel(KnowledgeBase)
+    protected readonly mainModel: typeof KnowledgeBase,
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+  ) {
+    super(sequelize, mainModel, logger);
+  }
+  /**
+   * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
+   */
+  getKbRoot(kb: KbDto) {
+    return `${this.getResourceRoot()}/${kb.ownerId}/${kb.title}`;
+  }
+
+  /**
+   * 递归获取所有文件信息
+   */
+  async getAllFiles(
+    kb: KbDto,
+    subDir?: string,
+    isRecursion: boolean = true,
+    ignorePathPrefix: string = '',
+  ): Promise<FileStatDto[]> {
+    let root = this.getKbRoot(kb);
+    if (subDir) {
+      root = `${root}/${subDir}`;
+    }
+
+    return this.getFiles(root, isRecursion, ignorePathPrefix);
   }
 }

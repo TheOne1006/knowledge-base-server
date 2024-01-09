@@ -5,6 +5,7 @@
   "INVALID_EMAIL": "email is invalid",
   "INVALID_BOOLEAN": "{property} is not a boolean",
 
+  "NUMBER": "{property} must be a number",
   "URL": "{property} must be an URL address",
   "ENUM": "{property} must be a valid enum value",
   "LENGTH": "{property} must be longer than or equal to {constraints.0} and shorter than or equal to {constraints.1} characters",

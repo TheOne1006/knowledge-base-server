@@ -1,14 +1,14 @@
 import {
   Controller,
-  Get,
+  // Get,
   Post,
-  Body,
+  // Body,
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
-  Query,
-  Put,
-  Delete,
+  // Query,
+  // Put,
+  // Delete,
   Param,
   ParseIntPipe,
   UploadedFiles,
@@ -21,7 +21,7 @@ import {
   ApiTags,
   ApiSecurity,
   ApiResponse,
-  ApiQuery,
+  // ApiQuery,
   ApiParam,
   ApiBody,
   ApiConsumes,
@@ -33,18 +33,18 @@ import * as fs from 'fs';
 import { join } from 'path';
 // import { WhereOptions } from 'sequelize';
 import { SerializerInterceptor } from '../../common/interceptors/serializer.interceptor';
-import { Roles, SerializerClass, User } from '../../common/decorators';
+import { Roles, User } from '../../common/decorators';
 import { RolesGuard } from '../../common/auth';
 import { ROLE_AUTHENTICATED } from '../../common/constants';
 import { RequestUser } from '../../common/interfaces';
-import { KbFileDto } from '../file/dtos';
+// import { KbFileDto } from '../file/dtos';
 
 import { config } from '../../../config';
 import { KbService } from '../kb/kb.service';
 import { BaseController } from '../base/base.controller';
+import { KbResourceService } from './resource.service';
 
 const prefix = config.API_V1;
-const resourceRoot = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
 
 @UseGuards(RolesGuard)
 @Roles(ROLE_AUTHENTICATED)
@@ -55,7 +55,8 @@ const resourceRoot = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
 @Controller('kb')
 export class KbResourceController extends BaseController {
   constructor(
-    private readonly service: KbService,
+    private readonly kbService: KbService,
+    private readonly kbResService: KbResourceService,
     protected readonly i18n: I18nService,
   ) {
     super(i18n);
@@ -63,6 +64,7 @@ export class KbResourceController extends BaseController {
 
   /**
    * 根据 id upload
+   * todo: 进度条
    */
   @Post(':id/upload')
   @ApiParam({
@@ -74,13 +76,6 @@ export class KbResourceController extends BaseController {
   @ApiOperation({
     summary: ' 根据 id 查找库',
   })
-  // @ApiBody({
-  //   required: true,
-  //   type: 'multipart/form-data',
-  //   schema: {
-  //     type: 'array',
-  //   },
-  // })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -115,18 +110,19 @@ export class KbResourceController extends BaseController {
     files: Array<Express.Multer.File>,
     @User() user: RequestUser,
   ): Promise<string[]> {
-    const bkIns = await this.service.findByPk(pk);
-    await this.check_owner(bkIns, user.id);
-    console.log(files);
+    const bkIns = await this.kbService.findByPk(pk);
+    this.check_owner(bkIns, user.id);
+
+    const kbResRoot = this.kbService.getKbRoot(bkIns);
+    await this.kbResService.checkDir(kbResRoot);
 
     const targetPaths = [];
     // save to disk
     for (const file of files) {
-      const targetPath = join(resourceRoot, file.originalname);
-      targetPaths.push(targetPath);
+      const targetPath = join(kbResRoot, file.originalname);
+      targetPaths.push(file.originalname);
       await fs.promises.writeFile(targetPath, file.buffer);
     }
-    // 完善代码
 
     return targetPaths;
   }
