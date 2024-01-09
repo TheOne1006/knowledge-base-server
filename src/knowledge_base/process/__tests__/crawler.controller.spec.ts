@@ -6,7 +6,7 @@ import { CrawlerService } from '../crawler.service';
 import { KbResourceService } from '../resource.service';
 import { I18nService } from 'nestjs-i18n';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Logger } from 'winston';
 
 import { CrawlerDto, CrawlerResultDto } from '../dtos';

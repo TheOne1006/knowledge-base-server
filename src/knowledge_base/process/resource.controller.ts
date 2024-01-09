@@ -1,14 +1,14 @@
 import {
   Controller,
-  Get,
+  // Get,
   Post,
-  Body,
+  // Body,
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
-  Query,
-  Put,
-  Delete,
+  // Query,
+  // Put,
+  // Delete,
   Param,
   ParseIntPipe,
   UploadedFiles,
@@ -21,7 +21,7 @@ import {
   ApiTags,
   ApiSecurity,
   ApiResponse,
-  ApiQuery,
+  // ApiQuery,
   ApiParam,
   ApiBody,
   ApiConsumes,
@@ -76,13 +76,6 @@ export class KbResourceController extends BaseController {
   @ApiOperation({
     summary: ' 根据 id 查找库',
   })
-  // @ApiBody({
-  //   required: true,
-  //   type: 'multipart/form-data',
-  //   schema: {
-  //     type: 'array',
-  //   },
-  // })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
