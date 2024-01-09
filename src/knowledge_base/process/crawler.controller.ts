@@ -205,7 +205,7 @@ export class CrawlerController extends BaseController {
         data: {
           url: '', // 抓取处理连接
           completed: false, // 是否完成
-          successUrls: urlManager.getCrawlerUrls(),
+          successUrls: urlManager.getProcessedUrls(),
           failedUrls: urlManager.getFailedUrls(),
           finish: true, // 是否结束
           retry: 0, // 重试次数

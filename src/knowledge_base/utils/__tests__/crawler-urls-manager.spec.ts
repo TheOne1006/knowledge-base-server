@@ -176,4 +176,204 @@ describe('CrawlerUrlsManager', () => {
       expect(result).toEqual(expected);
     });
   });
+
+  describe('getUrlRetryUrlTimes', () => {
+    const table = [
+      {
+        _title: 'should return 0 if the url is not in retryUrlItems',
+        retryUrlItems: {},
+        url: 'http://example.com/path1',
+        expected: 0,
+      },
+      {
+        _title: 'should return the retry times if the url is in retryUrlItems',
+        retryUrlItems: {
+          'http://example.com/path1': 2,
+          'http://example.com/path2': 3,
+        },
+        url: 'http://example.com/path1',
+        expected: 2,
+      },
+    ];
+
+    describe.each(table)(
+      'getUrlRetryUrlTimes test',
+      ({ _title, retryUrlItems, url, expected }) => {
+        beforeEach(() => {
+          crawlerUrlsManager.retryUrlItems = retryUrlItems;
+        });
+
+        it(_title, () => {
+          const result = crawlerUrlsManager.getUrlRetryUrlTimes(url);
+          expect(result).toEqual(expected);
+        });
+      },
+    );
+  });
+
+  describe('clearRetryUrl', () => {
+    it('should clear the retry url if it exists', () => {
+      const url = 'http://example.com/path2';
+      crawlerUrlsManager.retryUrlItems = {
+        [url]: 1,
+      };
+      crawlerUrlsManager.clearRetryUrl(url);
+      expect(crawlerUrlsManager.retryUrlItems[url]).toBeUndefined();
+    });
+
+    it('should not throw an error if the retry url does not exist', () => {
+      const url = 'http://example.com/path3';
+      crawlerUrlsManager.retryUrlItems = {};
+      expect(() => crawlerUrlsManager.clearRetryUrl(url)).not.toThrow();
+    });
+  });
+
+  describe('getTotal', () => {
+    const table = [
+      {
+        _title:
+          'should return the length of urls when it is less than maxConnections',
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        maxConnections: 5,
+        expected: 2,
+      },
+      {
+        _title:
+          'should return maxConnections when it is less than the length of urls',
+        urls: [
+          'http://example.com/path1',
+          'http://example.com/path2',
+          'http://example.com/path3',
+          'http://example.com/path4',
+          'http://example.com/path5',
+          'http://example.com/path6',
+        ],
+        maxConnections: 5,
+        expected: 5,
+      },
+    ];
+
+    describe.each(table)(
+      'getTotal test',
+      ({ _title, urls, maxConnections, expected }) => {
+        beforeEach(() => {
+          crawlerUrlsManager.urls = urls;
+          crawlerUrlsManager.maxConnections = maxConnections;
+        });
+
+        it(_title, () => {
+          const result = crawlerUrlsManager.getTotal();
+          expect(result).toEqual(expected);
+        });
+      },
+    );
+  });
+
+  describe('getUrlIndex', () => {
+    const table = [
+      {
+        _title:
+          'should return the index of the url if it exists in the urls array',
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        url: 'http://example.com/path1',
+        expected: 0,
+      },
+      {
+        _title: 'should return -1 if the url does not exist in the urls array',
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        url: 'http://example.com/path3',
+        expected: -1,
+      },
+      {
+        _title: 'should return -1 if the urls array is empty',
+        urls: [],
+        url: 'http://example.com/path1',
+        expected: -1,
+      },
+    ];
+
+    describe.each(table)(
+      'getUrlIndex test',
+      ({ _title, urls, url, expected }) => {
+        beforeEach(() => {
+          crawlerUrlsManager.urls = urls;
+        });
+
+        it(_title, () => {
+          const result = crawlerUrlsManager.getUrlIndex(url);
+          expect(result).toEqual(expected);
+        });
+      },
+    );
+  });
+
+  describe('getProcessedUrls', () => {
+    const table = [
+      {
+        _title: 'should return all urls if currentPointer is greater than the length of urls',
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        currentPointer: 3,
+        expected: ['http://example.com/path1', 'http://example.com/path2'],
+      },
+      {
+        _title: 'should return the first url if currentPointer is 1',
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        currentPointer: 1,
+        expected: ['http://example.com/path1'],
+      },
+      {
+        _title: 'should return an empty array if currentPointer is 0',
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        currentPointer: 0,
+        expected: [],
+      },
+    ];
+
+    describe.each(table)(
+      'getProcessedUrls test',
+      ({ _title, urls, currentPointer, expected }) => {
+        beforeEach(() => {
+          crawlerUrlsManager.urls = urls;
+          crawlerUrlsManager.currentPointer = currentPointer;
+        });
+
+        it(_title, () => {
+          const result = crawlerUrlsManager.getProcessedUrls();
+          expect(result).toEqual(expected);
+        });
+      },
+    );
+  });
+
+  describe('getFailedUrls', () => {
+    const table = [
+      {
+        _title: 'should return all failed urls',
+        retryUrlItems: {
+          'http://example.com/path1': 1,
+          'http://example.com/path2': 2,
+        },
+        expected: ['http://example.com/path1', 'http://example.com/path2'],
+      },
+      {
+        _title: 'should return an empty array if there are no failed urls',
+        retryUrlItems: {},
+        expected: [],
+      },
+    ];
+
+    describe.each(table)(
+      'getFailedUrls test',
+      ({ _title, retryUrlItems, expected }) => {
+        beforeEach(() => {
+          crawlerUrlsManager.retryUrlItems = retryUrlItems;
+        });
+
+        it(_title, () => {
+          const result = crawlerUrlsManager.getFailedUrls();
+          expect(result).toEqual(expected);
+        });
+      },
+    );
+  });
 });

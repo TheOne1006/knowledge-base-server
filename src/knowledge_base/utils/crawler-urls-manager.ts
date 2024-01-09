@@ -183,6 +183,7 @@ export class CrawlerUrlsManager {
 
   /**
    * 尝试删除 重试信息
+   * @param {string} url
    */
   clearRetryUrl(url: string) {
     if (this.retryUrlItems[url]) {
@@ -191,7 +192,7 @@ export class CrawlerUrlsManager {
   }
 
   /**
-   * 获取 urls
+   * 获取 总共的 urls 数量
    */
   getTotal() {
     return Math.min(this.urls.length, this.maxConnections);
@@ -199,6 +200,8 @@ export class CrawlerUrlsManager {
 
   /**
    * 获取 url 的索引
+   * @param {string} url
+   * @returns {number} -1 没找到, ...
    */
   getUrlIndex(url: string): number {
     return this.urls.indexOf(url);
@@ -206,6 +209,8 @@ export class CrawlerUrlsManager {
 
   /**
    * 获取 url 的重试次数
+   * @param {string} url
+   * @returns {number}
    */
   getUrlRetryUrlTimes(url: string): number {
     if (!this.retryUrlItems[url]) {
@@ -215,13 +220,15 @@ export class CrawlerUrlsManager {
   }
 
   /**
-   * 获取 urls
+   * 获取已处理的 urls
+   * @returns {string[]}
    */
-  getCrawlerUrls() {
+  getProcessedUrls() {
     return this.urls.slice(0, this.currentPointer);
   }
   /**
    * 获取 失败的 urls
+   * @returns {string[]}
    */
   getFailedUrls() {
     return Object.keys(this.retryUrlItems);

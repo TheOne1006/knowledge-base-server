@@ -39,7 +39,7 @@ export class CrawlerService {
 
     $('img[src]').map((_, el) => {
       const item = $(el).attr('src');
-      if (item && !item.startsWith('src')) {
+      if (item && !item.startsWith('http')) {
         $(el).attr('src', toAbsoluteURL(base, item));
       }
     });
