@@ -41,6 +41,9 @@ export async function loadMockData(moduleFixture: TestingModule) {
 // iconv.encodingExists('foo');
 
 module.exports = async function startApp() {
+  if (process.env.SKIP_INIT_DB) {
+    return;
+  }
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();

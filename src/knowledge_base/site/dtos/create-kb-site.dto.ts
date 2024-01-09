@@ -65,7 +65,7 @@ export class CreateKbSiteDto {
   startUrls: string[];
 
   @ApiProperty({
-    example: '^https://nestjs.bootcss.com/**/*',
+    example: '^https:\\/\\/nestjs\\.bootcss\\.com\\/.*',
     description: '正则表示',
   })
   @IsString({
@@ -80,7 +80,7 @@ export class CreateKbSiteDto {
   pattern: string;
 
   @ApiProperty({
-    example: ['nav', 'sidebar', 'footer', 'div.header'],
+    example: ['nav', 'aside', 'footer', 'div.row > div.col.col--3'],
     description: '移除的选择器',
   })
   @IsArray()

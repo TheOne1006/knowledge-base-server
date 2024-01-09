@@ -194,6 +194,13 @@ export class KbSiteController extends BaseController {
     type: Number,
     required: false,
   })
+  @ApiQuery({
+    name: 'kbId',
+    example: '1',
+    description: '知识库id',
+    type: Number,
+    required: false,
+  })
   @SerializerClass(ReqDataCountDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async count(
@@ -202,10 +209,19 @@ export class KbSiteController extends BaseController {
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
     ownerId: number,
+    @Query(
+      'kbId',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    kbId: number,
   ): Promise<ReqDataCountDto> {
     const where: WhereOptions = {};
     if (ownerId) {
       where.ownerId = ownerId;
+    }
+
+    if (kbId) {
+      where.kbId = kbId;
     }
 
     const count = await this.service.count(where);
@@ -233,7 +249,7 @@ export class KbSiteController extends BaseController {
     @User() user: RequestUser,
   ): Promise<KbSiteDto> {
     const ins = await this.service.findByPk(pk);
-    await this.check_owner(ins, user.id);
+    this.check_owner(ins, user.id);
     return ins;
   }
 
@@ -260,34 +276,15 @@ export class KbSiteController extends BaseController {
     @User() owner: RequestUser,
   ): Promise<KbSiteDto> {
     const kb = await this.kbService.findByPk(kbId);
-    await this.check_owner(kb, owner.id);
+    this.check_owner(kb, owner.id);
     const newSite = await this.service.create(newKbSite, kbId, owner.id);
-    return newSite;
-  }
 
-  /**
-   * 删除知识某个文件
-   */
-  @Delete('/:id')
-  @ApiOperation({
-    summary: '删除知识库网站',
-  })
-  @ApiParam({
-    name: 'id',
-    example: '1',
-    description: '知识库站点id',
-    type: Number,
-  })
-  @SerializerClass(KbSiteDto)
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async deleteByPk(
-    @Param('id', ParseIntPipe) pk: number,
-    @User() owner: RequestUser,
-  ): Promise<KbSiteDto> {
-    const ins = await this.service.findByPk(pk);
-    await this.check_owner(ins, owner.id);
-    const deleteIns = await this.service.removeByPk(pk);
-    return deleteIns;
+    const kbRoot = this.kbService.getKbRoot(kb);
+    const kbSiteRoot = this.service.getKbSiteRoot(kbRoot, newSite);
+
+    await this.service.checkDir(kbSiteRoot);
+
+    return newSite;
   }
 
   /**
@@ -314,9 +311,40 @@ export class KbSiteController extends BaseController {
   ): Promise<KbSiteDto> {
     const ins = await this.service.findByPk(pk);
 
-    await this.check_owner(ins, owner.id);
+    this.check_owner(ins, owner.id);
     const newIns = await this.service.updateByPk(pk, updateKbInfo);
 
     return newIns;
+  }
+
+  /**
+   * 删除知识某个文件
+   * todo: 同步删除 目录
+   */
+  @Delete('/:id')
+  @ApiOperation({
+    summary: '删除知识库网站',
+  })
+  @ApiParam({
+    name: 'id',
+    example: '1',
+    description: '知识库站点id',
+    type: Number,
+  })
+  @SerializerClass(KbSiteDto)
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async deleteByPk(
+    @Param('id', ParseIntPipe) pk: number,
+    @User() owner: RequestUser,
+  ): Promise<KbSiteDto> {
+    const ins = await this.service.findByPk(pk);
+    this.check_owner(ins, owner.id);
+    const deleteIns = await this.service.removeByPk(pk);
+
+    const kb = await this.kbService.findByPk(ins.kbId);
+    const kbRoot = this.kbService.getKbRoot(kb);
+    const kbSiteRoot = this.service.getKbSiteRoot(kbRoot, ins);
+    await this.service.removeDir(kbSiteRoot);
+    return deleteIns;
   }
 }

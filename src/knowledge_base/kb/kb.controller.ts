@@ -158,6 +158,20 @@ export class KbController extends BaseController {
     type: Number,
     required: false,
   })
+  @ApiQuery({
+    name: 'offset',
+    description: 'offset',
+    example: 1,
+    type: Number,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'limit',
+    example: 10,
+    type: Number,
+    required: false,
+  })
   @SerializerClass(ReqDataCountDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async count(
@@ -196,7 +210,7 @@ export class KbController extends BaseController {
     @User() user: RequestUser,
   ): Promise<KbDto> {
     const ins = await this.service.findByPk(pk);
-    await this.check_owner(ins, user.id);
+    this.check_owner(ins, user.id);
     return ins;
   }
 
@@ -213,9 +227,12 @@ export class KbController extends BaseController {
     @Body() newKbInfo: CreateKbDto,
     @User() owner: RequestUser,
   ): Promise<KbDto> {
-    const newUser = await this.service.create(newKbInfo, owner.id);
+    const kbInfo = await this.service.create(newKbInfo, owner.id);
 
-    return newUser;
+    const kbRoot = this.service.getKbRoot(kbInfo);
+    await this.service.checkDir(kbRoot);
+
+    return kbInfo;
   }
 
   /**
@@ -242,7 +259,7 @@ export class KbController extends BaseController {
   ): Promise<KbDto> {
     const ins = await this.service.findByPk(pk);
 
-    await this.check_owner(ins, owner.id);
+    this.check_owner(ins, owner.id);
     const newIns = await this.service.updateByPk(pk, updateKbInfo);
 
     return newIns;
@@ -268,7 +285,7 @@ export class KbController extends BaseController {
     @User() owner: RequestUser,
   ): Promise<KbDto> {
     const ins = await this.service.findByPk(pk);
-    await this.check_owner(ins, owner.id);
+    this.check_owner(ins, owner.id);
     const deleteIns = await this.service.removeByPk(pk);
     return deleteIns;
   }

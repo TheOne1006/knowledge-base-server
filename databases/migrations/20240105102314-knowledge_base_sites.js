@@ -43,6 +43,12 @@ module.exports = {
         defaultValue: [],
         comment: '需要移除的选择器',
       },
+      // todo
+      // inject_jquery: {
+      //   type: Sequelize.BOOLEAN,
+      //   defaultValue: false,
+      //   comment: '是否注入jQuery',
+      // },
       kb_id: {
         type: Sequelize.INTEGER,
         allowNull: false,

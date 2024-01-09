@@ -1,5 +1,8 @@
 import { Column, Model, Table, DataType } from 'sequelize-typescript';
 
+/**
+ * todo 扩展元素 增加标记信息
+ */
 @Table({
   tableName: 'knowledge_base_files',
   version: true,

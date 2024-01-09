@@ -7,12 +7,7 @@ import { KnowledgeBaseSite } from './site.entity';
 import { KbSiteDto, CreateKbSiteDto, UpdateKbSiteDto } from './dtos';
 
 import { BaseService } from '../base/base.service';
-
-@Injectable()
-export class KbSiteService extends BaseService<
-  typeof KnowledgeBaseSite,
-  KbSiteDto
-> {
+class KbSiteServiceDB extends BaseService<typeof KnowledgeBaseSite, KbSiteDto> {
   constructor(
     @Inject(Sequelize)
     protected readonly sequelize: Sequelize,
@@ -40,9 +35,6 @@ export class KbSiteService extends BaseService<
       ownerId,
     });
 
-    console.log('create:');
-    console.log(data);
-
     const options = await this.genOptions();
     const instance = await data.save(options);
     await this.autoCommit(options);
@@ -64,8 +56,8 @@ export class KbSiteService extends BaseService<
   ): Promise<KbSiteDto[]> {
     return this.mainModel.findAll({
       where,
-      offset: offset > 0 ? offset : null,
-      limit: limit > 0 ? limit : null,
+      offset: Math.max(0, offset) || undefined,
+      limit: Math.max(0, limit) || undefined,
     });
   }
 
@@ -79,7 +71,7 @@ export class KbSiteService extends BaseService<
   }
 
   /**
-   * todo: 同步删除 目录
+   *
    * 根据id, 删除
    * @param {number} id
    * @param {Transaction} transaction
@@ -117,7 +109,7 @@ export class KbSiteService extends BaseService<
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);
       if (value !== originalValue) {
-        updatePayload[key] = value;
+        instance[key] = value;
       }
     });
 
@@ -126,5 +118,43 @@ export class KbSiteService extends BaseService<
     await this.autoCommit(options, transaction);
 
     return instance;
+  }
+}
+
+@Injectable()
+export class KbSiteService extends KbSiteServiceDB {
+  /**
+   * 获取 站点的本地 根目录
+   * @param {string} kbResRoot
+   * @param {KbSiteDto} bkSiteIns
+   * @returns {string}
+   */
+  getKbSiteRoot(kbResRoot: string, bkSiteIns: KbSiteDto): string {
+    return `${kbResRoot}/${bkSiteIns.title}`;
+  }
+
+  /**
+   * 获取完整版的 startUrls
+   * @param {KbSiteDto} bkSiteIns
+   * @returns {string[]}
+   */
+  getFullStartUrls(bkSiteIns: KbSiteDto): string[] {
+    const startUrls = bkSiteIns.startUrls;
+    return this.convertPathsToUrls(bkSiteIns, startUrls);
+  }
+
+  /**
+   * 将本地文件路径转换成 url
+   * @param {KbSiteDto} bkSiteIns
+   * @param {string[]} paths
+   * @returns {string[]}
+   */
+  convertPathsToUrls(bkSiteIns: KbSiteDto, paths: string[]): string[] {
+    const urls = paths.map((item) => {
+      const urlObj = new URL(item, bkSiteIns.hostname);
+      return urlObj.href;
+    });
+
+    return urls;
   }
 }
