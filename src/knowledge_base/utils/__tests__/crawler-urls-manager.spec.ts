@@ -1,14 +1,16 @@
-import { CRAWLER_TYPE_ALL, CRAWLER_TYPE_INCREMENTAL } from '../../constants';
+import {
+  CRAWLER_TYPE_ALL,
+  CRAWLER_TYPE_INCREMENTAL,
+} from '../../process/constants';
 import { CrawlerUrlsManager } from '../crawler-urls-manager';
 
 describe('CrawlerUrlsManager', () => {
   let crawlerUrlsManager: any; // CrawlerUrlsManager
+  beforeEach(() => {
+    crawlerUrlsManager = new CrawlerUrlsManager('^http://example.com/') as any;
+  });
 
   describe('appendUrls 添加 urls', () => {
-    beforeEach(() => {
-      crawlerUrlsManager = new CrawlerUrlsManager() as any;
-    });
-
     const table = [
       {
         originUrls: [],
@@ -38,10 +40,6 @@ describe('CrawlerUrlsManager', () => {
   });
 
   describe('getNextBatch & hasNextBatch 获取下一批链接', () => {
-    beforeEach(() => {
-      crawlerUrlsManager = new CrawlerUrlsManager() as any;
-    });
-
     const table = [
       {
         _title: 'all empty',
@@ -104,27 +102,37 @@ describe('CrawlerUrlsManager', () => {
     );
   });
 
-  describe('excludeCompletedUrls', () => {
-    beforeEach(() => {
-      crawlerUrlsManager = new CrawlerUrlsManager() as any;
-    });
+  describe('excludeLocalUrls', () => {
+    const table = [
+      {
+        localUrls: ['http://example.com/path1.html'],
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        expected: ['http://example.com/path2'],
+      },
+      {
+        localUrls: ['http://example.com/path1.html'],
+        urls: [
+          'http://example.com/path1.php?c=123',
+          'http://example.com/path2',
+        ],
+        expected: [
+          'http://example.com/path1.php?c=123',
+          'http://example.com/path2',
+        ],
+      },
+    ];
 
-    it('get different urls', () => {
-      const urls = ['http://example.com/path1', 'http://example.com/path2'];
-      crawlerUrlsManager.completedUrls = ['http://example.com/path1.html'];
-      const result = crawlerUrlsManager.excludeCompletedUrls(urls);
-      expect(result).toEqual(['http://example.com/path2']);
+    it.each(table)('get different urls', ({ localUrls, urls, expected }) => {
+      crawlerUrlsManager.localUrls = localUrls;
+      const result = crawlerUrlsManager.excludeLocalUrls(urls);
+      expect(result).toEqual(expected);
     });
   });
 
   describe('addUrlsFromCrawler', () => {
-    beforeEach(() => {
-      crawlerUrlsManager = new CrawlerUrlsManager() as any;
-    });
-
     it(`with type: ${CRAWLER_TYPE_ALL}`, () => {
       const urls = ['http://example.com/path1', 'http://example.com/path2'];
-      crawlerUrlsManager.completedUrls = ['http://example.com/path1.html'];
+      crawlerUrlsManager.localUrls = ['http://example.com/path1.html'];
       crawlerUrlsManager.type = CRAWLER_TYPE_ALL;
       crawlerUrlsManager.addUrlsFromCrawler(urls);
 
@@ -136,7 +144,7 @@ describe('CrawlerUrlsManager', () => {
 
     it(`with type: ${CRAWLER_TYPE_INCREMENTAL}`, () => {
       const urls = ['http://example.com/path1', 'http://example.com/path2'];
-      crawlerUrlsManager.completedUrls = ['http://example.com/path1.html'];
+      crawlerUrlsManager.localUrls = ['http://example.com/path1.html'];
       crawlerUrlsManager.type = CRAWLER_TYPE_INCREMENTAL;
       crawlerUrlsManager.addUrlsFromCrawler(urls);
       const result = crawlerUrlsManager.urls;
@@ -146,10 +154,6 @@ describe('CrawlerUrlsManager', () => {
   });
 
   describe('addRetryUrl', () => {
-    beforeEach(() => {
-      crawlerUrlsManager = new CrawlerUrlsManager() as any;
-    });
-
     it('first retry', () => {
       crawlerUrlsManager.addRetryUrl('http://example.com/path2');
       const result = crawlerUrlsManager.retryUrlItems;

@@ -7,6 +7,7 @@ import { KnowledgeBaseSite } from './site.entity';
 import { KbSiteDto, CreateKbSiteDto, UpdateKbSiteDto } from './dtos';
 
 import { BaseService } from '../base/base.service';
+import { checkDir } from '../utils/check-dir';
 
 export class KbSiteServiceDB extends BaseService<
   typeof KnowledgeBaseSite,
@@ -139,32 +140,35 @@ export class KbSiteService extends KbSiteServiceDB {
 
   /**
    * 获取完整版的 startUrls
-   * @param bkSiteIns
-   * @returns
+   * @param {KbSiteDto} bkSiteIns
+   * @returns {string[]}
    */
   getFullStartUrls(bkSiteIns: KbSiteDto): string[] {
-    const hostname = bkSiteIns.hostname;
     const startUrls = bkSiteIns.startUrls;
-    const fullStartUrls = startUrls.map((url) => {
-      if (url.startsWith('http')) {
-        return url;
-      }
-      return `${hostname}${url}`;
-    });
-
-    return fullStartUrls;
+    return this.convertPathsToUrls(bkSiteIns, startUrls);
   }
 
   /**
    * 将本地文件路径转换成 url
    * @param {KbSiteDto} bkSiteIns
-   * @param {string[]} filePaths
+   * @param {string[]} paths
    * @returns {string[]}
    */
-  convertFilePathsToUrls(bkSiteIns: KbSiteDto, filePaths: string[]): string[] {
-    const hostname = bkSiteIns.hostname;
-    return filePaths.map((filePath) => {
-      return `${hostname}${filePath}`;
+  convertPathsToUrls(bkSiteIns: KbSiteDto, paths: string[]): string[] {
+    const urls = paths.map((path) => {
+      const item = new URL(path, bkSiteIns.hostname);
+      return item.href;
     });
+
+    return urls;
+  }
+
+  /**
+   * 检查目录是否存在, 如果不存在 则创建
+   * @param  {string} dirPath
+   * @returns {Promise<boolean>}
+   */
+  async checkDir(dirPath: string): Promise<boolean> {
+    return checkDir(dirPath);
   }
 }

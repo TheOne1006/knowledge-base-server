@@ -213,9 +213,12 @@ export class KbController extends BaseController {
     @Body() newKbInfo: CreateKbDto,
     @User() owner: RequestUser,
   ): Promise<KbDto> {
-    const newUser = await this.service.create(newKbInfo, owner.id);
+    const kbInfo = await this.service.create(newKbInfo, owner.id);
 
-    return newUser;
+    const kbRoot = this.service.getKbRoot(kbInfo);
+    await this.service.checkDir(kbRoot);
+
+    return kbInfo;
   }
 
   /**

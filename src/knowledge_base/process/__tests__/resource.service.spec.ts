@@ -2,7 +2,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { KbResourceService } from '../resource.service';
-import { urlAppendSuffix } from '../libs/append-suffix';
+import { urlAppendSuffix } from '../../utils/link-format';
 import * as fs from 'fs/promises';
 // import * as path from 'path';
 

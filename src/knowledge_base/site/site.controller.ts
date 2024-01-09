@@ -262,6 +262,12 @@ export class KbSiteController extends BaseController {
     const kb = await this.kbService.findByPk(kbId);
     this.check_owner(kb, owner.id);
     const newSite = await this.service.create(newKbSite, kbId, owner.id);
+
+    const kbRoot = this.kbService.getKbRoot(kb);
+    const kbSiteRoot = this.service.getKbSiteRoot(kbRoot, newSite);
+
+    await this.service.checkDir(kbSiteRoot);
+
     return newSite;
   }
 

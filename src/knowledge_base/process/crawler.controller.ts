@@ -14,6 +14,7 @@ import {
   ParseIntPipe,
   SetMetadata,
   MessageEvent,
+  Inject,
 } from '@nestjs/common';
 import { METHOD_METADATA } from '@nestjs/common/constants';
 import { RequestMethod } from '@nestjs/common/enums/request-method.enum';
@@ -28,10 +29,11 @@ import {
   // ApiConsumes,
 } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import pLimit from 'p-limit';
-import { Observable } from 'rxjs';
+import { eachLimit } from 'async';
+import { Observable, Subscriber } from 'rxjs';
 import { I18nService } from 'nestjs-i18n';
-
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 // import * as fs from 'fs';
 // import { join } from 'path';
 // import { WhereOptions } from 'sequelize';
@@ -49,7 +51,7 @@ import { BaseController } from '../base/base.controller';
 import { KbResourceService } from './resource.service';
 import { CrawlerService } from './crawler.service';
 import { CrawlerDto } from './dtos';
-import { CrawlerUrlsManager } from './libs/crawler-urls-manager';
+import { CrawlerUrlsManager } from '../utils/crawler-urls-manager';
 
 const prefix = config.API_V1;
 
@@ -60,13 +62,14 @@ const prefix = config.API_V1;
 @ApiTags('kb')
 @UseInterceptors(SerializerInterceptor)
 @Controller('kb')
-export class KbSiteCrawlerController extends BaseController {
+export class CrawlerController extends BaseController {
   constructor(
     private readonly kbService: KbService,
     private readonly kbSiteService: KbSiteService,
-    private readonly kbResService: KbResourceService,
     private readonly crawlerService: CrawlerService,
+    private readonly kbResService: KbResourceService,
     protected readonly i18n: I18nService,
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
   ) {
     super(i18n);
   }
@@ -74,8 +77,8 @@ export class KbSiteCrawlerController extends BaseController {
   /**
    * crawler 抓取 部分数据
    */
-  @Sse(':id/site/:siteId/crawler')
   @SetMetadata(METHOD_METADATA, RequestMethod.POST)
+  @Sse(':id/site/:siteId/crawler')
   @ApiParam({
     name: 'id',
     example: '1',
@@ -118,9 +121,11 @@ export class KbSiteCrawlerController extends BaseController {
       bkIns,
       bkSiteIns.title,
       false,
+      kbSiteResRoot,
     );
+
     const completedPaths = localAllPaths.map((item) => item.path);
-    const completedUrls = this.kbSiteService.convertFilePathsToUrls(
+    const localPathUrls = this.kbSiteService.convertPathsToUrls(
       bkSiteIns,
       completedPaths,
     );
@@ -128,64 +133,103 @@ export class KbSiteCrawlerController extends BaseController {
     // 获取开始的urls
     const fullUrls = this.kbSiteService.getFullStartUrls(bkSiteIns);
     // 长度与 fullUrls 一致
-    const completed = new Array(fullUrls.length).fill(false);
-
-    const observable = new Observable<MessageEvent>((observer) => {
-      observer.next({
-        data: {
-          urls: fullUrls,
-          completed,
-          finish: false,
-        },
-      });
-    });
+    // const completed = new Array(fullUrls.length).fill(false);
 
     // 控制并发数
     const concurrency = crawlerOption.concurrency;
-    const limit = pLimit(concurrency);
+
     // 最大抓取页面
     const maxConnections = crawlerOption.maxConnections;
 
     // url 管理
     const urlManager = new CrawlerUrlsManager(
+      bkSiteIns.pattern,
       fullUrls,
       maxConnections,
       maxConnections,
       crawlerOption.type,
-      completedUrls,
+      localPathUrls,
     );
 
-    // const tryCrawler = (url: string) => {
-    //   const { links, html } = await this.crawlerService.crawlLinksAndHtml(url, crawlerOption.linkSelector, bkSiteIns.removeSelectors);
-    // }
+    const logger = this.logger;
 
-    // 当 i < maxConnections 或者 i < fullUrls.length 时, 继续抓取
-    while (urlManager.hasNextBatch()) {
-      // 当前需要抓取的连接
-      const urls = urlManager.getNextBatch();
+    const crawlFlow = async (subscriber: Subscriber<MessageEvent>) => {
+      // 当 i < maxConnections 或者 i < fullUrls.length 时, 继续抓取
+      while (urlManager.hasNextBatch()) {
+        // 当前需要抓取的连接
+        const urls = urlManager.getNextBatch();
 
-      await Promise.all(
-        urls.map((url: string) => {
-          limit(async () => {
-            // 爬取链接 以及下载 html
-            try {
-              const { links, html } =
-                await this.crawlerService.crawlLinksAndHtml(
-                  url,
-                  crawlerOption.linkSelector,
-                  bkSiteIns.removeSelectors,
-                );
-              // 加入 urls 队列中
-              urlManager.addUrlsFromCrawler(links);
-              // 保存 html
-              await this.kbResService.saveHtml(kbSiteResRoot, url, html);
-            } catch (error) {
-              urlManager.addRetryUrl(url);
-            }
+        await eachLimit(urls, concurrency, async (url: string) => {
+          let completed = true;
+          let retry = 0;
+          // 爬取链接 以及下载 html
+          try {
+            // logger start
+            logger.info(`start at ${url}`);
+            const { links, html } = await this.crawlerService.crawlLinksAndHtml(
+              url,
+              crawlerOption.linkSelector,
+              bkSiteIns.removeSelectors,
+            );
+
+            logger.info(`crawlLinksAndHtml finish at ${url}`);
+            // 加入 urls 队列中
+            urlManager.addUrlsFromCrawler(links);
+            // 保存 html
+            await this.kbResService.saveHtml(kbSiteResRoot, url, html);
+            urlManager.clearRetryUrl(url);
+          } catch (error) {
+            logger.warn(`error at ${url}, ${error.message}`);
+            completed = false;
+            retry = urlManager.getUrlRetryUrlTimes(url);
+            urlManager.addRetryUrl(url);
+          }
+
+          logger.info(`crawler finish at ${url}, ${completed}`);
+
+          subscriber.next({
+            data: {
+              url: url, // 抓取处理连接
+              completed, // 是否完成
+              retry, // 重试次数
+              finish: false, // 是否结束
+              total: urlManager.getTotal(),
+              index: urlManager.getUrlIndex(url),
+            },
           });
-        }),
-      );
-    }
+        });
+      }
+
+      // 完成任务
+      subscriber.next({
+        data: {
+          url: '', // 抓取处理连接
+          completed: false, // 是否完成
+          successUrls: urlManager.getCrawlerUrls(),
+          failedUrls: urlManager.getFailedUrls(),
+          finish: true, // 是否结束
+          retry: 0, // 重试次数
+          total: urlManager.getTotal(),
+          index: urlManager.getTotal(),
+        },
+      });
+      subscriber.complete();
+    };
+
+    const observable = new Observable<MessageEvent>((subscriber) => {
+      subscriber.next({
+        data: {
+          url: '', // 抓取处理连接
+          completed: false, // 是否完成
+          finish: false, // 是否结束
+          retry: 0, // 重试次数
+          total: urlManager.getTotal(),
+          index: 0,
+        },
+      });
+
+      crawlFlow(subscriber);
+    });
 
     return observable;
   }

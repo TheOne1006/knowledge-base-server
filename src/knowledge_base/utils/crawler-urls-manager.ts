@@ -1,11 +1,20 @@
 import { uniq, difference } from 'lodash';
-import { CRAWLER_TYPES, CRAWLER_TYPE_INCREMENTAL } from '../constants';
-import { urlAppendSuffix } from './append-suffix';
+// import { Logger } from 'winston';
+
+import { Logger, Injectable } from '@nestjs/common';
+import { CRAWLER_TYPES, CRAWLER_TYPE_INCREMENTAL } from '../process/constants';
+import { urlAppendSuffix, urlRemoveHash } from './link-format';
 
 /**
  * @description 爬虫url管理器
  */
+@Injectable()
 export class CrawlerUrlsManager {
+  protected readonly logger = new Logger('CrawlerUrlsManager');
+  /**
+   * 爬虫的 pattern
+   */
+  private pattern: RegExp;
   /**
    * 需要爬取的urls
    */
@@ -17,9 +26,9 @@ export class CrawlerUrlsManager {
   private type: CRAWLER_TYPES = CRAWLER_TYPE_INCREMENTAL;
 
   /**
-   * 已下载的 urls 信息
+   * 已下载到本地 urls 信息
    */
-  private completedUrls: string[];
+  private localUrls: string[];
 
   /**
    * 当前索引位置
@@ -50,17 +59,19 @@ export class CrawlerUrlsManager {
    * @param {number} maxConnections 最大连接数
    */
   constructor(
+    pattern: string,
     initUrls: string[] = [],
     maxRetryTimes: number = 3,
     maxConnections: number = 5,
     type: CRAWLER_TYPES = CRAWLER_TYPE_INCREMENTAL,
-    completedUrls: string[] = [],
+    localUrls: string[] = [],
   ) {
+    this.pattern = new RegExp(pattern);
     this.urls = uniq(initUrls);
     this.maxRetryTimes = maxRetryTimes;
     this.maxConnections = maxConnections;
     this.type = type;
-    this.completedUrls = completedUrls;
+    this.localUrls = localUrls;
   }
 
   /**
@@ -104,23 +115,26 @@ export class CrawlerUrlsManager {
     const hasRetryUrls = Object.keys(this.retryUrlItems).some(
       (item) => this.retryUrlItems[item] < this.maxRetryTimes,
     );
+
     return hasNextBatch || hasRetryUrls;
   }
 
   /**
-   * 剔除在 completedUrls 的 urls
+   * 排除在 localUrls 的 urls
    * @param {string[]} urls
    * @returns {string[]}
    */
-  private excludeCompletedUrls(urls: string[]): string[] {
+  private excludeLocalUrls(urls: string[]): string[] {
     // urls => 以 .xxx 的结尾的urls
-    const sufUrls = urls.map((url) => urlAppendSuffix(url, '.html').toString());
+    const links = urls
+      // .map((item) => urlRemoveHash(item)) # 提取的时候已经删除
+      .map((url) => urlAppendSuffix(url, '.html'))
+      .map((item) => item.toString());
 
-    // 遍历 sufUrls 如果存在于 this.completedUrls, 则排除，没有则保留 urls 的信息
+    // 遍历 sufUrls 如果存在于 this.localUrls, 则排除，没有则保留 urls 的信息
     const uniqueUrls = [];
-
-    sufUrls.forEach((item, index) => {
-      if (!this.completedUrls.includes(item)) {
+    links.forEach((item, index) => {
+      if (!this.localUrls.includes(item)) {
         uniqueUrls.push(urls[index]);
       }
     });
@@ -129,15 +143,28 @@ export class CrawlerUrlsManager {
   }
 
   /**
+   * 过滤 urls 根据 正则表达式
+   * @param urls
+   * @returns
+   */
+  filterUrlsWithPattern(urls: string[]): string[] {
+    return urls.filter((url) => this.pattern.test(url));
+  }
+
+  /**
    * 新增 urls 从 爬虫的 links 里, 排除已完成的
    */
   addUrlsFromCrawler(urls: string[]) {
     let newUrls = urls;
+    // this.logger.debug(`type: ${this.type}`);
+
     if (this.type === CRAWLER_TYPE_INCREMENTAL) {
-      // 排除 completedUrls 的 urls
-      newUrls = this.excludeCompletedUrls(urls);
+      newUrls = this.excludeLocalUrls(urls);
     }
 
+    newUrls = this.filterUrlsWithPattern(newUrls);
+
+    this.logger.debug(`append url length: ${newUrls.length}`);
     // 添加到 urls 中
     this.appendUrls(newUrls);
   }
@@ -152,5 +179,51 @@ export class CrawlerUrlsManager {
     } else {
       this.retryUrlItems[url] += 1;
     }
+  }
+
+  /**
+   * 尝试删除 重试信息
+   */
+  clearRetryUrl(url: string) {
+    if (this.retryUrlItems[url]) {
+      delete this.retryUrlItems[url];
+    }
+  }
+
+  /**
+   * 获取 urls
+   */
+  getTotal() {
+    return Math.min(this.urls.length, this.maxConnections);
+  }
+
+  /**
+   * 获取 url 的索引
+   */
+  getUrlIndex(url: string): number {
+    return this.urls.indexOf(url);
+  }
+
+  /**
+   * 获取 url 的重试次数
+   */
+  getUrlRetryUrlTimes(url: string): number {
+    if (!this.retryUrlItems[url]) {
+      return 0;
+    }
+    return this.retryUrlItems[url];
+  }
+
+  /**
+   * 获取 urls
+   */
+  getCrawlerUrls() {
+    return this.urls.slice(0, this.currentPointer);
+  }
+  /**
+   * 获取 失败的 urls
+   */
+  getFailedUrls() {
+    return Object.keys(this.retryUrlItems);
   }
 }

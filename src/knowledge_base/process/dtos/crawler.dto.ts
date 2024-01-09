@@ -25,7 +25,7 @@ import {
  */
 export class CrawlerDto {
   @ApiProperty({
-    example: '1',
+    example: '10',
     description: '最大爬取链接数',
   })
   @IsNumber(
@@ -76,11 +76,10 @@ export class CrawlerDto {
   linkSelector: string;
 
   @ApiProperty({
-    example: [CRAWLER_TYPE_INCREMENTAL],
+    example: CRAWLER_TYPE_ALL,
     description: '爬取方式（全量、增量)',
   })
   @IsEnum([CRAWLER_TYPE_ALL, CRAWLER_TYPE_INCREMENTAL], {
-    each: true,
     message: i18nValidationMessage('validation.ENUM'),
   })
   type: CRAWLER_TYPES;

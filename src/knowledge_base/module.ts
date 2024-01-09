@@ -20,6 +20,8 @@ import { KbFileService } from './file/file.service';
 // process
 import { KbResourceController } from './process/resource.controller';
 import { KbResourceService } from './process/resource.service';
+import { CrawlerService } from './process/crawler.service';
+import { CrawlerController } from './process/crawler.controller';
 
 @Module({
   imports: [
@@ -34,7 +36,14 @@ import { KbResourceService } from './process/resource.service';
     KbSiteController,
     KbFileController,
     KbResourceController,
+    CrawlerController,
   ],
-  providers: [KbService, KbSiteService, KbFileService, KbResourceService],
+  providers: [
+    KbService,
+    KbSiteService,
+    KbFileService,
+    KbResourceService,
+    CrawlerService,
+  ],
 })
 export class KnowledgeBaseModule {}

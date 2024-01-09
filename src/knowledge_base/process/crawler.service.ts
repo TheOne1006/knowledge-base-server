@@ -1,22 +1,62 @@
 import { chromium } from 'playwright';
-import * as fs from 'fs-extra';
-import * as path from 'path';
+// import * as fs from 'fs-extra';
+// import * as path from 'path';
 import * as cheerio from 'cheerio';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 import {
   PlaywrightWebBaseLoader,
-  Page,
+  // Page,
   // Browser,
 } from 'langchain/document_loaders/web/playwright';
-import { Injectable } from '@nestjs/common';
-import { KbResourceService } from './resource.service';
-// import { CrawlerDto } from './dtos';
+import { Injectable, Inject } from '@nestjs/common';
+import { urlRemoveHash, toAbsoluteURL } from '../utils/link-format';
 
 PlaywrightWebBaseLoader.imports = async () => ({ chromium });
 
 @Injectable()
 export class CrawlerService {
-  constructor(private readonly kbResService: KbResourceService) {}
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+  ) {}
+
+  // page.head 添加 一个 <base href="hostname" /> 标签
+  private async appendBase2Head($: cheerio.CheerioAPI, hostname: string) {
+    $('head').append(`<base href="${hostname}" />`);
+  }
+
+  private async changeLinks($: cheerio.CheerioAPI, base: string) {
+    // playwright page 根据 href 以 / 开头的连接 替换成 hostname + href + /endpoint
+    $('*[href]').map((_, el) => {
+      // 移除 a href 属性的空格 和 / 开头
+      const item = $(el).attr('href');
+      // item 包含 hostname
+      if (item && !item.startsWith('http')) {
+        $(el).attr('href', toAbsoluteURL(base, item));
+      }
+    });
+
+    $('img[src]').map((_, el) => {
+      const item = $(el).attr('src');
+      if (item && !item.startsWith('src')) {
+        $(el).attr('src', toAbsoluteURL(base, item));
+      }
+    });
+  }
+
+  /**
+   * 根据 removeSelectors 使用 cheerio 删除指定的元素
+   * @param {cheerio.CheerioAPI} $
+   * @param removeSelectors
+   */
+  private removeDoms($: cheerio.CheerioAPI, removeSelectors: string[]) {
+    // 根据 removeSelectors 使用 cheerio 删除指定的元素
+    for (const selector of removeSelectors) {
+      // 删除全部
+      $(selector).remove();
+    }
+  }
 
   /**
    * 开始爬虫
@@ -28,43 +68,15 @@ export class CrawlerService {
     linkSelector: string = 'a[href]',
     removeSelectors: string[] = [],
   ): Promise<{ links: string[]; html: string }> {
+    const urlObj = new URL(url);
+    const hostname = `${urlObj.protocol}//${urlObj.hostname}`;
+
     const loader = new PlaywrightWebBaseLoader(url, {
       launchOptions: {
         headless: true,
       },
       gotoOptions: {
         waitUntil: 'domcontentloaded',
-      },
-      evaluate: async (page: Page) => {
-        // 通过 page 获取 hostname
-        const pageUrl = new URL(page.url());
-        const hostname = `${pageUrl.protocol}://${pageUrl.hostname}`;
-
-        // playwright page 添加 一个 <base href="hostname" /> 标签
-        await page.evaluate((hostname) => {
-          const base = document.createElement('base');
-          base.href = hostname;
-          document.head.prepend(base);
-        }, hostname);
-
-        // playwright page 根据 href 以 / 开头的连接 替换成 hostname + href + /endpoint
-        // 替换所有链接的 href 属性
-        await page.evaluate((hostname) => {
-          // 获取页面上所有的链接
-          const links = Array.from(document.querySelectorAll('a[href]'));
-          // 遍历每个链接
-          for (const link of links) {
-            // 获取当前链接的 href 属性
-            const href = link.getAttribute('href') || '';
-            // 如果 href 属性以 / 开头, 替换为 hostname + /...
-            if (href.startsWith('/')) {
-              link.setAttribute('href', `${hostname}${href}`);
-            }
-          }
-        }, hostname);
-
-        const result = await page.evaluate(() => document.body.innerHTML);
-        return result;
       },
     });
 
@@ -73,32 +85,25 @@ export class CrawlerService {
     const html = docs[0].pageContent;
     const $ = cheerio.load(html);
 
+    this.appendBase2Head($, hostname);
+    this.changeLinks($, url);
+
     // 获取所有 a[href] 的链接
-    const links = $(linkSelector)
+    let links = $(linkSelector)
       .map((_, el) => $(el).attr('href'))
       .get();
+
+    // 删除hash
+    links = links.map((link) => urlRemoveHash(link).href);
+
+    // 去重
     const linkSet = new Set(links);
 
-    // 根据 removeSelectors 使用 cheerio 删除指定的元素
-    for (const selector of removeSelectors) {
-      $(selector).remove();
-    }
+    this.removeDoms($, removeSelectors);
 
     return {
       links: [...linkSet],
       html: $.html(),
     };
-  }
-
-  /**
-   * 写入 html
-   * @param {string} html
-   * @param {string} filePath
-   */
-  async writeHTMLToFile(html: string, filePath: string): Promise<void> {
-    // 检查目录是否存在, 如果不存在 则创建
-    await this.kbResService.checkDir(path.dirname(filePath));
-    // 将 html 写入文件
-    await fs.writeFile(filePath, html);
   }
 }

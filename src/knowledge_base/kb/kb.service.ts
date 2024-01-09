@@ -3,15 +3,19 @@ import { Transaction, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { KnowledgeBase } from './kb.entity';
 import { KbDto, CreateKbDto, UpdateKbDto } from './dtos';
-import { FileStatDto } from '../base/dtos';
+import { FileStatDto } from '../utils/dtos';
 
 import { BaseService } from '../base/base.service';
 import { config } from '../../../config';
+import { checkDir } from '../utils/check-dir';
+import {
+  getAllFilesAndDirectoriesRecursively,
+  flatFileAndDirRecursively,
+} from '../utils/recursion-files';
 
 const RESOURCES_ROOT = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
 
@@ -21,6 +25,7 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
     protected readonly sequelize: Sequelize,
     @InjectModel(KnowledgeBase)
     protected readonly mainModel: typeof KnowledgeBase,
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
   ) {
     super(sequelize, mainModel);
   }
@@ -128,8 +133,9 @@ export class KbService extends KbServiceDB {
     protected readonly sequelize: Sequelize,
     @InjectModel(KnowledgeBase)
     protected readonly mainModel: typeof KnowledgeBase,
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
   ) {
-    super(sequelize, mainModel);
+    super(sequelize, mainModel, logger);
   }
   /**
    * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
@@ -151,64 +157,27 @@ export class KbService extends KbServiceDB {
     if (subDir) {
       root = `${root}/${subDir}`;
     }
-    const files = await this.getRecursionFiles(root, ignorePathPrefix);
+
+    const files = await getAllFilesAndDirectoriesRecursively(
+      root,
+      ignorePathPrefix,
+    );
+    this.logger.info(files);
 
     if (!isRecursion) {
       // 展平
-      return this.flatFileStatDto(files);
+      return flatFileAndDirRecursively(files);
     } else {
       return files;
     }
   }
 
   /**
-   * 递归文件新信息
-   * @param dir 目录
-   * @param ignorePathPrefix 忽略的路径信息
-   * @returns
+   * 检查目录是否存在, 如果不存在 则创建
+   * @param  {string} dirPath
+   * @returns {Promise<boolean>}
    */
-  private async getRecursionFiles(
-    dir: string,
-    ignorePathPrefix = '',
-  ): Promise<FileStatDto[]> {
-    const dirList = await fs.readdir(dir);
-    const files: FileStatDto[] = [];
-
-    dirList.forEach(async (item) => {
-      const fullPath = path.join(dir, item);
-      const stat = await fs.stat(fullPath);
-      const fullPathCrop = fullPath.replace(ignorePathPrefix, '');
-      if (stat && stat.isDirectory()) {
-        const children = await this.getRecursionFiles(fullPath);
-        files.push({
-          name: item,
-          path: fullPathCrop,
-          isDir: true,
-          children,
-        });
-      } else {
-        files.push({
-          name: item,
-          path: fullPathCrop,
-          isDir: false,
-        });
-      }
-    });
-    return files;
-  }
-
-  /**
-   * 展平所有 FileStatDto
-   */
-  private flatFileStatDto(files: FileStatDto[]): FileStatDto[] {
-    const result: FileStatDto[] = [];
-    files.forEach((item) => {
-      if (item.isDir) {
-        result.push(...this.flatFileStatDto(item.children));
-      } else {
-        result.push(item);
-      }
-    });
-    return result;
+  async checkDir(dirPath: string): Promise<boolean> {
+    return checkDir(dirPath);
   }
 }

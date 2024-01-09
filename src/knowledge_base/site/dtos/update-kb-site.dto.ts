@@ -44,7 +44,7 @@ export class UpdateKbSiteDto {
   startUrls: string[];
 
   @ApiProperty({
-    example: '^https://nestjs.bootcss.com/**/*',
+    example: '^https:\\/\\/nestjs\\.bootcss\\.com\\/.*',
     description: '正则表示',
   })
   @IsString({
