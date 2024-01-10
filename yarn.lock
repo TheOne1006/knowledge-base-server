@@ -1591,9 +1591,9 @@
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
 "@langchain/community@~0.0.15":
-  version "0.0.15"
-  resolved "https://registry.npmjs.org/@langchain/community/-/community-0.0.15.tgz#ef3eb9e6bdc59a9a24441f1086f811972bf6f966"
-  integrity sha512-Dc9IqDa1BpkGQPUsOfSC/sD1a13GpEO6LVe+v4oI8wG+ncx4/5epteXsPPfhg+u/u6sK0jqaOrg18dCjQD1YYw==
+  version "0.0.16"
+  resolved "https://registry.npmjs.org/@langchain/community/-/community-0.0.16.tgz#53a4254483534a7ad22ee5bf5e1f290a934d78f0"
+  integrity sha512-6Jqq4I9nyiV5+CBTdKKA3ggCyhkMLUDborSC8bNBv5PKOGUFviLrEuHoB6GZnRCyJDHHkk1VN++P4cdozcbmUw==
   dependencies:
     "@langchain/core" "~0.1.9"
     "@langchain/openai" "~0.0.10"
@@ -1602,10 +1602,10 @@
     uuid "^9.0.0"
     zod "^3.22.3"
 
-"@langchain/core@~0.1.9":
-  version "0.1.10"
-  resolved "https://registry.npmjs.org/@langchain/core/-/core-0.1.10.tgz#2334c64e925f095c9182fc128fc82b45bed62340"
-  integrity sha512-vSFPtTkpQ9NT3qqvRh9FN4A16m89npj9KhzZgIh976bseMfI87jS+GK6Rih3qVcB8wsStqp80E5A36ce2egl8Q==
+"@langchain/core@~0.1.12", "@langchain/core@~0.1.9":
+  version "0.1.12"
+  resolved "https://registry.npmjs.org/@langchain/core/-/core-0.1.12.tgz#fb126ae3604d9ba7875ce142cbc610859d88e7ce"
+  integrity sha512-lBfPEjcizJzkZjVTNJp0j+a85BFaXEjzyiUlsh7GwZRERwkrMEV2vtCSRrujbsnZcHzxN67K2bL02KHNLgWkOg==
   dependencies:
     ansi-styles "^5.0.0"
     camelcase "6"
@@ -5999,13 +5999,13 @@ kuler@^2.0.0:
   integrity sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==
 
 langchain@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/langchain/-/langchain-0.1.0.tgz#f342c8b1b70c473410fa90a0557a7459b1755b98"
-  integrity sha512-PvoDzFRdukrKpaB41lNXd4zD9WnhAkTq2heqVO51T5ecOZCF86tjHS+9t3x08NOOU7yKtRN+78f6VVuMX73Jrw==
+  version "0.1.2"
+  resolved "https://registry.npmjs.org/langchain/-/langchain-0.1.2.tgz#28d19108a9d7a8b90681cc49a88ac4a333a57832"
+  integrity sha512-sJbVvIabjmsKDsIdfSiojHOg1EXbVsuVH6Y12rproGwYNRdQZ5zhikW+RttuRSmmEfCVfaGV5++nzYes9/jVAg==
   dependencies:
     "@anthropic-ai/sdk" "^0.9.1"
     "@langchain/community" "~0.0.15"
-    "@langchain/core" "~0.1.9"
+    "@langchain/core" "~0.1.12"
     "@langchain/openai" "~0.0.10"
     binary-extensions "^2.2.0"
     expr-eval "^2.0.2"
@@ -6957,13 +6957,6 @@ p-limit@^3.0.2, p-limit@^3.1.0:
   integrity sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==
   dependencies:
     yocto-queue "^0.1.0"
-
-p-limit@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.npmjs.org/p-limit/-/p-limit-5.0.0.tgz#6946d5b7140b649b7a33a027d89b4c625b3a5985"
-  integrity sha512-/Eaoq+QyLSiXQ4lyYV23f14mZRQcXnxfHrN0vCai+ak9G0pp9iEQukIIZq5NccEvwRB8PUnZT0KsOoDCINS1qQ==
-  dependencies:
-    yocto-queue "^1.0.0"
 
 p-locate@^4.1.0:
   version "4.1.0"
@@ -8978,11 +8971,6 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
-
-yocto-queue@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/yocto-queue/-/yocto-queue-1.0.0.tgz#7f816433fb2cbc511ec8bf7d263c3b58a1a3c251"
-  integrity sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==
 
 zepto@^1.2.0:
   version "1.2.0"
