@@ -98,8 +98,7 @@
     "rootDir": "src",
     "coverageReporters": [
       "json",
-      "html",
-      "text"
+      "html"
     ],
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
