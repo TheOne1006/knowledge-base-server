@@ -156,7 +156,7 @@ export class CrawlerUrlsManager {
    */
   addUrlsFromCrawler(urls: string[]) {
     let newUrls = urls;
-    // this.logger.debug(`type: ${this.type}`);
+    // this.logger.info(`type: ${this.type}`);
 
     if (this.type === CRAWLER_TYPE_INCREMENTAL) {
       newUrls = this.excludeLocalUrls(urls);
@@ -164,7 +164,7 @@ export class CrawlerUrlsManager {
 
     newUrls = this.filterUrlsWithPattern(newUrls);
 
-    this.logger.debug(`append url length: ${newUrls.length}`);
+    // this.logger.info(`append url length: ${newUrls.length}`);
     // 添加到 urls 中
     this.appendUrls(newUrls);
   }
