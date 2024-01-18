@@ -6,6 +6,7 @@ import { KnowledgeBaseFile } from '../file.entity';
 
 import { DatabaseModule } from '../../../core/database/database.module';
 import { LoggerModule } from '../../../core/logger/logger.module';
+import { FILE_SOURCE_TYPE_UPLOAD, FILE_SOURCE_TYPE_CRAWLER } from '../../base/constants';
 
 const defaultAttr = {
   fileExt: 'html',
@@ -103,7 +104,12 @@ describe('KbFileService', () => {
         ];
         const ownerId = 1;
         const kId = 1;
-        const result = await service.batchCreate(dtos, kId, ownerId);
+        const result = await service.batchCreate(
+          dtos,
+          ownerId,
+          kId,
+          FILE_SOURCE_TYPE_UPLOAD,
+        );
         expect(result).toBeDefined();
         // 最后一个元素
         const last = mockData[mockData.length - 1];

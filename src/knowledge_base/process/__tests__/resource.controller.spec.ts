@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as path from 'path';
 import { KbService } from '../../kb/kb.service';
 import { KbResourceService } from '../resource.service';
+import { KbSiteService } from '../../site/site.service';
+import { KbFileService } from '../../file/file.service';
 import { KbResourceController } from '../resource.controller';
 import { I18nService } from 'nestjs-i18n';
 // import { Logger } from 'winston';
@@ -9,6 +11,8 @@ import { I18nService } from 'nestjs-i18n';
 describe('KbResourceController', () => {
   let KbServiceMock: KbService;
   let KbResourceServiceMock: KbResourceService;
+  let KbSiteServiceMock: KbSiteService;
+  let KbFileServiceMock: KbFileService;
   let controller: KbResourceController;
 
   beforeEach(async () => {
@@ -16,8 +20,39 @@ describe('KbResourceController', () => {
     KbResourceServiceMock = {
       checkDir: jest.fn().mockImplementation(() => true),
     } as any as KbResourceService;
+    KbSiteServiceMock = {
+      findAll: jest.fn().mockImplementation(() => [
+        {
+          id: 1,
+          title: 'title',
+          ownerId: 1,
+        },
+      ]),
+    } as any as KbSiteService;
+    KbFileServiceMock = {
+      batchCreate: jest.fn().mockImplementation(() => [
+        {
+          id: 1,
+          title: 'title',
+          ownerId: 1,
+        },
+        {
+          id: 2,
+          title: 'title',
+          ownerId: 1,
+        },
+      ]),
+      findAll: jest.fn().mockImplementation(() => [
+        {
+          id: 1,
+          title: 'title',
+          ownerId: 1,
+        },
+      ]),
+    } as any as KbFileService;
 
     KbServiceMock = {
+      getKbUploadRoot: jest.fn().mockImplementation(() => '/tmp'),
       findByPk: jest.fn().mockImplementation(() => ({
         id: 1,
         title: 'title',
@@ -43,6 +78,14 @@ describe('KbResourceController', () => {
         {
           provide: KbResourceService,
           useValue: KbResourceServiceMock,
+        },
+        {
+          provide: KbSiteService,
+          useValue: KbSiteServiceMock,
+        },
+        {
+          provide: KbFileService,
+          useValue: KbFileServiceMock,
         },
         {
           provide: I18nService,

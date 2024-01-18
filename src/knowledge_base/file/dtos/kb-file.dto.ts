@@ -12,7 +12,15 @@ export class KbFileDto {
 
   ownerId: number;
 
+  sourceType: string;
+
+  sourceUrl: string;
+
+  summary: string;
+
   kbId: number;
+
+  siteId?: number;
 
   @Exclude()
   updatedAt: Date;

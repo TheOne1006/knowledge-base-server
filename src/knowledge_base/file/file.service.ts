@@ -50,16 +50,19 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    * @param  {CreateKbFileDto[]} pyloads
    * @param  {number} ownerId
    * @param  {number} kbId
+   * @param  {string} sourceType
    * @returns {Promise<KbFileDto>}
    */
   async batchCreate(
     pyloads: CreateKbFileDto[],
     ownerId: number,
     kbId: number,
+    sourceType: string,
     transaction?: Transaction,
   ): Promise<KbFileDto[]> {
     const data = pyloads.map((payload) => ({
       ...payload,
+      sourceType,
       ownerId,
       kbId,
     }));
@@ -127,11 +130,11 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
   }
 
   /**
-   * todo: 同步删除文件
+   *
    * 根据id, 删除
    * @param {number} id
    * @param {Transaction} transaction
-   * @returns Promise<KbFileDto>
+   * @returns {Promise<KbFileDto>}
    */
   async removeByPk(id: number, transaction?: Transaction): Promise<KbFileDto> {
     const data = await this.mainModel.findByPk(id);
@@ -140,6 +143,67 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     await data.destroy(options);
     await this.autoCommit(options, transaction);
     return data;
+  }
+
+  /**
+   * 批量删除
+   * @param {number[]} ids
+   * @param {Transaction} transaction
+   * @returns {Promise<number[]>}
+   */
+  async batchDeleteByIds(
+    ids: number[],
+    transaction?: Transaction,
+  ): Promise<number[]> {
+    const options = await this.genOptions(transaction);
+    await this.mainModel.destroy({
+      where: {
+        id: ids,
+      },
+      ...options,
+    });
+    await this.autoCommit(options, transaction);
+
+    return ids;
+  }
+
+  /**
+   * 查找或者创建
+   * @param {Partial<KbFileDto>} pyload
+   * @param {string} filePath
+   * @param {number} kbId
+   * @param {number} siteId
+   * @param {number} ownerId
+   * @returns {Promise<KbFileDto>}
+   */
+  async findOrCreate(
+    pyload: Partial<KbFileDto>,
+    filePath: string,
+    kbId: number,
+    siteId: number,
+    ownerId: number,
+  ): Promise<KbFileDto> {
+    let instance = await this.mainModel.findOne({
+      where: {
+        kbId,
+        siteId,
+        ownerId,
+        filePath,
+      },
+    });
+
+    if (!instance) {
+      instance = (await this.create(
+        {
+          ...pyload,
+          filePath,
+        },
+        kbId,
+        ownerId,
+      )) as KnowledgeBaseFile;
+    }
+
+    return instance;
   }
 }
 
