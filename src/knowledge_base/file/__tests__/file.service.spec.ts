@@ -6,7 +6,10 @@ import { KnowledgeBaseFile } from '../file.entity';
 
 import { DatabaseModule } from '../../../core/database/database.module';
 import { LoggerModule } from '../../../core/logger/logger.module';
-import { FILE_SOURCE_TYPE_UPLOAD, FILE_SOURCE_TYPE_CRAWLER } from '../../base/constants';
+import {
+  FILE_SOURCE_TYPE_UPLOAD,
+  // FILE_SOURCE_TYPE_CRAWLER,
+} from '../../base/constants';
 
 const defaultAttr = {
   fileExt: 'html',
@@ -157,7 +160,6 @@ describe('KbFileService', () => {
       //     ...defaultAttr,
       //     desc: 'update',
       //   };
-
       //   // 检测报错
       //   await expect(service.updateByPk(pk, dto)).rejects.toThrow(
       //     'instance not found',
