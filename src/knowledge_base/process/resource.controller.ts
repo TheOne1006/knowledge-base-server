@@ -213,7 +213,7 @@ export class KbResourceController extends BaseController {
    * @param {ENUM_FILE_SOURCE_TYPES} sourceType
    * @param {number | undefined} siteId
    */
-  async _autoCreateOrDeleteFiles(
+  private async _autoCreateOrDeleteFiles(
     diskFiles: FileStatDto[],
     dbFiles: KbFileDto[],
     kbId: number,

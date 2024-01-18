@@ -45,7 +45,7 @@ export async function removeDir(dirPath: string): Promise<boolean> {
   if (isExists) {
     const stat = await fs.stat(dirPath);
     if (stat.isDirectory()) {
-      await fs.rmdir(dirPath, { recursive: true });
+      await fs.rm(dirPath, { recursive: true });
     }
   }
 

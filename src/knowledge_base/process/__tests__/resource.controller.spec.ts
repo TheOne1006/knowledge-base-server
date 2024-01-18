@@ -6,7 +6,7 @@ import { KbSiteService } from '../../site/site.service';
 import { KbFileService } from '../../file/file.service';
 import { KbResourceController } from '../resource.controller';
 import { I18nService } from 'nestjs-i18n';
-// import { Logger } from 'winston';
+import { ENUM_FILE_SOURCE_TYPES } from '../../base/constants';
 
 describe('KbResourceController', () => {
   let KbServiceMock: KbService;
@@ -49,9 +49,11 @@ describe('KbResourceController', () => {
           ownerId: 1,
         },
       ]),
+      batchDeleteByIds: jest.fn().mockImplementation(() => true),
     } as any as KbFileService;
 
     KbServiceMock = {
+      getUploadFiles: jest.fn().mockImplementation(() => []),
       getKbUploadRoot: jest.fn().mockImplementation(() => '/tmp'),
       findByPk: jest.fn().mockImplementation(() => ({
         id: 1,
@@ -122,6 +124,56 @@ describe('KbResourceController', () => {
       const result = await controller.uploadFiles(1, mockFiles, mockUser);
       const expected = mockFiles.map((file) => file.originalname);
       expect(result).toEqual(expected);
+    });
+  });
+
+  describe('syncFilesToDb', () => {
+    it('should sync files to db successfully', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      await controller.syncFilesToDb(kbId, mockUser);
+
+      expect(KbServiceMock.getUploadFiles).toHaveBeenCalledWith({
+        id: kbId,
+        ownerId: mockUser.id,
+        title: 'title',
+      });
+    });
+  });
+
+  describe('_autoCreateOrDeleteFiles', () => {
+    it('should create new files and delete non-existing files', async () => {
+      const diskFiles = [{ path: '/path1.txt' }, { path: '/path2.txt' }] as any;
+      const dbFiles = [
+        { id: 1, filePath: '/path1.txt', fileExt: 'txt' },
+        { id: 2, filePath: '/path3.txt', fileExt: 'txt' },
+      ] as any;
+      const kbId = 1;
+      const userId = 1;
+      const sourceType = ENUM_FILE_SOURCE_TYPES.UPLOAD;
+      const siteId = 1;
+
+      await (controller as any)._autoCreateOrDeleteFiles(
+        diskFiles,
+        dbFiles,
+        kbId,
+        userId,
+        sourceType,
+        siteId,
+      );
+
+      expect(KbFileServiceMock.batchCreate).toHaveBeenCalledWith(
+        [{ filePath: '/path2.txt', fileExt: 'txt', siteId }],
+        userId,
+        kbId,
+        sourceType,
+      );
+      expect(KbFileServiceMock.batchDeleteByIds).toHaveBeenCalledWith([2]);
     });
   });
 });
