@@ -194,8 +194,8 @@ export class CrawlerController extends BaseController {
               },
               filePath,
               kbIns.id,
-              bkSiteIns.id,
               user.id,
+              bkSiteIns.id,
             );
             // save html to page
             urlManager.clearRetryUrl(url);
