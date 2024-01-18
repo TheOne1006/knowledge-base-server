@@ -1,11 +1,11 @@
-// import { omit, map } from 'lodash';
+import { pick, map } from 'lodash';
 import { Transaction, WhereOptions } from 'sequelize';
 import * as path from 'path';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { KnowledgeBaseFile } from './file.entity';
-import { KbFileDto, CreateKbFileDto } from './dtos';
+import { KbFileDto, CreateKbFileDto, UpdateKbFileDto } from './dtos';
 
 import { BaseService } from '../base/base.service';
 
@@ -50,16 +50,19 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    * @param  {CreateKbFileDto[]} pyloads
    * @param  {number} ownerId
    * @param  {number} kbId
+   * @param  {string} sourceType
    * @returns {Promise<KbFileDto>}
    */
   async batchCreate(
     pyloads: CreateKbFileDto[],
     ownerId: number,
     kbId: number,
+    sourceType: string,
     transaction?: Transaction,
   ): Promise<KbFileDto[]> {
     const data = pyloads.map((payload) => ({
       ...payload,
+      sourceType,
       ownerId,
       kbId,
     }));
@@ -100,15 +103,15 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
   }
 
   /**
-   * 根据pk, 更新 只接受 filePath
+   * 根据pk, 更新 只接受 pyload
    * @param {number} pk
-   * @param {string} filePath
+   * @param {UpdateKbFileDto} pyload
    * @param {KbFileDto} transaction
    * @returns {Promise<KbFileDto>}
    */
   async updateByPk(
     pk: number,
-    filePath: string,
+    pyload: UpdateKbFileDto,
     transaction?: Transaction,
   ): Promise<KbFileDto> {
     const instance = await this.mainModel.findByPk(pk);
@@ -117,7 +120,14 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       throw new Error('instance not found');
     }
 
-    instance.filePath = filePath;
+    const updatePayload = pick(pyload, ['sourceUrl', 'summary']);
+
+    map(updatePayload, (value: any, key: string) => {
+      const originalValue = instance.get(key);
+      if (value !== originalValue) {
+        instance[key] = value;
+      }
+    });
 
     const options = await this.genOptions(transaction);
     await instance.save(options);
@@ -127,11 +137,11 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
   }
 
   /**
-   * todo: 同步删除文件
+   *
    * 根据id, 删除
    * @param {number} id
    * @param {Transaction} transaction
-   * @returns Promise<KbFileDto>
+   * @returns {Promise<KbFileDto>}
    */
   async removeByPk(id: number, transaction?: Transaction): Promise<KbFileDto> {
     const data = await this.mainModel.findByPk(id);
@@ -140,6 +150,73 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     await data.destroy(options);
     await this.autoCommit(options, transaction);
     return data;
+  }
+
+  /**
+   * 批量删除
+   * @param {number[]} ids
+   * @param {Transaction} transaction
+   * @returns {Promise<number[]>}
+   */
+  async batchDeleteByIds(
+    ids: number[],
+    transaction?: Transaction,
+  ): Promise<number[]> {
+    const options = await this.genOptions(transaction);
+    await this.mainModel.destroy({
+      where: {
+        id: ids,
+      },
+      ...options,
+    });
+    await this.autoCommit(options, transaction);
+
+    return ids;
+  }
+
+  /**
+   * 查找或者创建
+   * @param {Partial<KbFileDto>} pyload
+   * @param {string} filePath
+   * @param {number} kbId
+   * @param {number} ownerId
+   * @param {number} siteId
+   * @returns {Promise<KbFileDto>}
+   */
+  async findOrCreate(
+    pyload: Partial<KbFileDto>,
+    filePath: string,
+    kbId: number,
+    ownerId: number,
+    siteId?: number,
+  ): Promise<KbFileDto> {
+    const where: WhereOptions = {
+      kbId,
+      filePath,
+      ownerId,
+    };
+
+    if (siteId) {
+      where.siteId = siteId;
+    }
+    console.log('where', where);
+
+    let instance = await this.mainModel.findOne({
+      where,
+    });
+
+    if (!instance) {
+      instance = (await this.create(
+        {
+          ...pyload,
+          ...where,
+        },
+        kbId,
+        ownerId,
+      )) as KnowledgeBaseFile;
+    }
+
+    return instance;
   }
 }
 
@@ -151,7 +228,7 @@ export class KbFileService extends KbFileDBService {
    * @returns {string}
    */
   getFilePath(kbResRoot: string, instance: KbFileDto): string {
-    // filePath 删除 最左边的 ...
+    // filePath 删除 最左边的 ..., 避免越界
     const filePath = instance.filePath.replace(/^[\.]+/, '');
     return path.join(kbResRoot, filePath).toString();
   }

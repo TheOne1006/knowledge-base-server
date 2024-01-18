@@ -20,18 +20,20 @@ export class KbResourceService {
    * @param {string} kbSiteResRoot
    * @param {string} url
    * @param {string} html
-   * @returns {Promise<void>}
+   * @returns {Promise<string>}
    */
   async saveHtml(
     kbSiteResRoot: string,
     url: string,
     html: string,
-  ): Promise<void> {
+  ): Promise<string> {
     const urlObj = urlAppendSuffix(url, '.html');
 
     const filePath = `${kbSiteResRoot}${urlObj.pathname}`;
     // 获取 filePath 的目录
     await this.checkDir(path.dirname(filePath));
     await fs.writeFile(filePath, html);
+
+    return urlObj.pathname;
   }
 }

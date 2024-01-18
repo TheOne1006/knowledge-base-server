@@ -99,5 +99,19 @@ describe('Test CrawlerService', () => {
       expect(links).toEqual(expectedLinks);
       expect(actualHtml).toEqual(expectedHtml);
     });
+
+    it('should fetch and process HTML from the provided URL with default params', async () => {
+      const url = path.join(__dirname, 'mock_files', 'mock_html.html');
+      // console.log(url);
+      const { links, html } = await service.crawlLinksAndHtml(`file://${url}`);
+
+      const expectedLinks = ['file:///relative/path', 'file:///relative/path2'];
+      const expectedHtml =
+        '<!DOCTYPEhtml><htmllang="en"><head><metacharset="UTF-8"><metaname="viewport"content="width=device-width,initial-scale=1.0"><title>mock1</title><basehref="file:///"></head><body><h1>title</h1><div><ahref="file:///relative/path">Link</a><ahref="file:///relative/path2">Link2</a><imgsrc="file:///relative/path.jpg"><divclass="ad">Ad</div><divclass="ad">Ad2</div><div>Content</div></div><footer>footer</footer></body></html>';
+      // 去除 换行符
+      const actualHtml = html.replace(/\n/g, '').replace(/\s/g, '');
+      expect(links).toEqual(expectedLinks);
+      expect(actualHtml).toEqual(expectedHtml);
+    });
   });
 });

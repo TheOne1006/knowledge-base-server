@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CrawlerController } from '../crawler.controller';
 import { KbService } from '../../kb/kb.service';
+import { KbFileService } from '../../file/file.service';
 import { KbSiteService } from '../../site/site.service';
 import { CrawlerService } from '../crawler.service';
 import { KbResourceService } from '../resource.service';
@@ -21,6 +22,7 @@ describe('CrawlerController', () => {
   let controller: CrawlerController;
   let KbServiceMock: KbService;
   let KbSiteServiceMock: KbSiteService;
+  let KbFileServiceMock: KbFileService;
   let CrawlerServiceMock: CrawlerService;
   let KbResourceServiceMock: KbResourceService;
   let I18nServiceMock: I18nService;
@@ -39,6 +41,14 @@ describe('CrawlerController', () => {
           .fn()
           .mockImplementation(() => ['/path', '/path1', '/path2']),
       } as any as KbService;
+
+      KbFileServiceMock = {
+        findOrCreate: jest.fn().mockImplementation(() => ({
+          id: 1,
+          title: 'title',
+          ownerId: 1,
+        })),
+      } as any as KbFileService;
 
       KbSiteServiceMock = {
         findByPk: jest.fn().mockImplementation(() => ({
@@ -91,6 +101,10 @@ describe('CrawlerController', () => {
           {
             provide: KbResourceService,
             useValue: KbResourceServiceMock,
+          },
+          {
+            provide: KbFileService,
+            useValue: KbFileServiceMock,
           },
           {
             provide: I18nService,
