@@ -72,37 +72,22 @@ class PushLogDBService extends BaseService<typeof PushLog, PushLogDto> {
   }
 
   /**
-   * 根据pk, 更新 pyload
-   * @param {number} pk
-   * @param {Partial<PushLogDto>} pyload
-   * @param {Transaction} transaction
+   * @param {WhereOptions} where
    * @returns {Promise<PushLogDto>}
    */
-  async updateByPk(
-    pk: number,
-    pyload: Partial<PushLogDto>,
-    transaction?: Transaction,
-  ): Promise<PushLogDto> {
-    const instance = await this.mainModel.findByPk(pk);
-
-    if (!instance) {
-      throw new Error('instance not found');
-    }
-
-    const updatePayload = pick(pyload, ['status']);
-
-    map(updatePayload, (value: any, key: string) => {
-      const originalValue = instance.get(key);
-      if (value !== originalValue) {
-        instance[key] = value;
-      }
+  async findLastOne(where?: WhereOptions): Promise<PushLogDto> {
+    return this.mainModel.findOne({
+      where,
+      order: [['id', 'desc']],
     });
+  }
 
-    const options = await this.genOptions(transaction);
-    await instance.save(options);
-    await this.autoCommit(options, transaction);
-
-    return instance;
+  /**
+   * 根据pk, 更新 pyload 禁用
+   * @returns {Promise<PushLogDto>}
+   */
+  async updateByPk(): Promise<PushLogDto> {
+    throw new Error('Method not Allow.');
   }
 
   /**

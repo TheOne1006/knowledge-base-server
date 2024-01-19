@@ -1,4 +1,4 @@
-import { omit, map } from 'lodash';
+import { pick, map } from 'lodash';
 import { Transaction, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
@@ -90,14 +90,7 @@ class PushMapDBService extends BaseService<typeof PushMap, PushMapDto> {
       throw new Error('instance not found');
     }
 
-    const updatePayload = omit(pyload, [
-      'id',
-      'type',
-      'fileId',
-      'kbId',
-      'ownerId',
-      'remoteId',
-    ]);
+    const updatePayload = pick(pyload, ['pushVersion']);
 
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);

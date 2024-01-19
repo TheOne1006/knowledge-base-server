@@ -97,7 +97,7 @@ class PushConfigDBService extends BaseService<
       throw new Error('instance not found');
     }
 
-    const updatePayload = omit(pyload, ['id', 'type']);
+    const updatePayload = omit(pyload, ['id', 'type', 'kid', 'ownerId']);
 
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);

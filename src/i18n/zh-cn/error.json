@@ -1,4 +1,4 @@
 {
   "FORBIDDEN": "当前权限无法访问！",
-  "KB_NOT_OWNER": "该知识库不属于你！"
+  "INS_NOT_OWNER": "该实例不属于你！"
 }

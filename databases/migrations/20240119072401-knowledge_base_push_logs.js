@@ -27,9 +27,10 @@ module.exports = {
         type: STRING(20),
         comment: '推送版本',
       },
-      status: {
-        type: STRING(20),
-        comment: '状态',
+      kb_id: {
+        type: INTEGER,
+        allowNull: false,
+        comment: '知识库id',
       },
       owner_id: {
         type: INTEGER,
@@ -59,6 +60,10 @@ module.exports = {
         allowNull: false,
         comment: '是否删除',
       },
+    });
+
+    await queryInterface.addIndex(tableName, ['config_id', 'push_version'], {
+      unique: true,
     });
   },
 

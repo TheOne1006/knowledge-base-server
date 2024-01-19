@@ -12,8 +12,6 @@ export class PushLogDto {
 
   pushVersion: string;
 
-  status: string;
-
   ownerId: number;
 
   kbId: number;

@@ -27,12 +27,6 @@ export class PushLog extends Model<PushLog> {
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
-  })
-  status: string;
-
-  @Column({
-    type: DataType.STRING,
     allowNull: true,
     field: 'push_version',
   })

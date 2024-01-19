@@ -46,6 +46,7 @@ export class PushConfig extends Model<PushConfig> {
 
   @Column({
     type: DataType.INTEGER,
+    allowNull: false,
     field: 'kb_id',
   })
   kbId: number;
