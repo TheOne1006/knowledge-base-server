@@ -55,10 +55,10 @@ describe.skip('PushDifyService on truely remote server', () => {
       expect(actual).toMatchObject(expected);
     });
 
-    it('UpdateByFile: should send a post request and return the document', async () => {
+    it('updateByFile: should send a post request and return the document', async () => {
       const url = `${API_URL}/${DATATSET_ID}`;
       const filePath = path.join(__dirname, 'mocks', 'mock-update.txt');
-      const actual = await service.UpdateByFile(
+      const actual = await service.updateByFile(
         url,
         currentId,
         filePath,

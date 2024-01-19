@@ -199,7 +199,6 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     if (siteId) {
       where.siteId = siteId;
     }
-    console.log('where', where);
 
     let instance = await this.mainModel.findOne({
       where,

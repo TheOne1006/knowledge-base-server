@@ -16,7 +16,7 @@ module.exports = {
       },
       file_path: {
         type: STRING(350),
-        comment: '文件路径',
+        comment: '文件路径(相对于 kb root)',
       },
       file_ext: {
         type: STRING(20),

@@ -1,6 +1,6 @@
 'use strict';
 
-const tableName = 'knowledge_base_push_maps';
+const tableName = 'knowledge_base_push_logs';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -27,20 +27,9 @@ module.exports = {
         type: STRING(20),
         comment: '推送版本',
       },
-      file_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        comment: '文件id',
-      },
-      remote_id: {
-        type: STRING,
-        allowNull: false,
-        comment: '远程id',
-      },
-      kb_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        comment: '所属知识库',
+      status: {
+        type: STRING(20),
+        comment: '状态',
       },
       owner_id: {
         type: INTEGER,

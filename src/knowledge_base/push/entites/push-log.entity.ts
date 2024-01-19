@@ -1,10 +1,10 @@
 import { Column, Model, Table, DataType } from 'sequelize-typescript';
 
 @Table({
-  tableName: 'knowledge_base_push_maps',
+  tableName: 'knowledge_base_push_logs',
   version: true,
 })
-export class PushMap extends Model<PushMap> {
+export class PushLog extends Model<PushLog> {
   @Column({
     type: DataType.INTEGER,
     primaryKey: true,
@@ -20,18 +20,23 @@ export class PushMap extends Model<PushMap> {
   configId: number;
 
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.STRING,
     allowNull: false,
-    field: 'file_id',
   })
-  fileId: number;
+  type: string;
 
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.STRING,
     allowNull: false,
-    field: 'remote_id',
   })
-  remoteId: number;
+  status: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    field: 'push_version',
+  })
+  pushVersion: string;
 
   @Column({
     type: DataType.INTEGER,

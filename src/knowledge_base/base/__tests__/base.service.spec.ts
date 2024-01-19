@@ -224,7 +224,6 @@ describe('BaseDBService', () => {
         // 创建文件
         fs.writeFile(mock_file, 'Hello World!', (err) => {
           if (err) throw err;
-          console.log('File has been created');
         });
       });
 

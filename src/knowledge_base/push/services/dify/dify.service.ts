@@ -83,7 +83,7 @@ export class PushDifyService {
    * @param {string} apiUrl
    * @param {string} documentId
    * @param {string} apiKey
-   * @returns
+   * @returns {string}
    */
   async deleteByFile(
     apiUrl: string,
@@ -118,7 +118,7 @@ export class PushDifyService {
    * @param {string} apiKey
    * @returns {Promise<DifyDocumentDto>}
    */
-  async UpdateByFile(
+  async updateByFile(
     apiUrl: string,
     documentId: string,
     filePath: string,

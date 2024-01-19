@@ -1,43 +1,35 @@
-import { omit, map } from 'lodash';
+import { pick, map } from 'lodash';
 import { Transaction, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { PushConfig } from './push-config.entity';
-import {
-  PushConfigDto,
-  CreatePushConfigDto,
-  UpdatePushConfigDto,
-} from './dtos';
-
-import { BaseService } from '../base/base.service';
+import { PushLog } from '../entites/push-log.entity';
+import { PushLogDto } from '../dtos';
+import { BaseService } from '../../base/base.service';
 
 @Injectable()
-class PushConfigDBService extends BaseService<
-  typeof PushConfig,
-  PushConfigDto
-> {
+class PushLogDBService extends BaseService<typeof PushLog, PushLogDto> {
   constructor(
     @Inject(Sequelize)
     protected readonly sequelize: Sequelize,
-    @InjectModel(PushConfig)
-    protected readonly mainModel: typeof PushConfig,
+    @InjectModel(PushLog)
+    protected readonly mainModel: typeof PushLog,
   ) {
     super(sequelize, mainModel);
   }
 
   /**
    * 创建
-   * @param  {CreatePushConfigDto} pyload
+   * @param  {Partial<PushLogDto>} pyload
    * @param  {number} kbId
    * @param  {number} ownerId
-   * @returns {Promise<PushConfigDto>}
+   * @returns {Promise<PushLogDto>}
    */
   async create(
-    pyload: CreatePushConfigDto,
+    pyload: Partial<PushLogDto>,
     kbId: number,
     ownerId: number,
-  ): Promise<PushConfigDto> {
+  ): Promise<PushLogDto> {
     const data = new this.mainModel({
       ...pyload,
       kbId,
@@ -56,13 +48,13 @@ class PushConfigDBService extends BaseService<
    * @param {WhereOptions} where
    * @param {number} offset
    * @param {number} limit
-   * @returns {Promise<U[]>}
+   * @returns {Promise<PushLogDto[]>}
    */
   async findAll(
     where?: WhereOptions,
     offset?: number,
     limit?: number,
-  ): Promise<PushConfigDto[]> {
+  ): Promise<PushLogDto[]> {
     return this.mainModel.findAll({
       where,
       offset: Math.max(0, offset) || undefined,
@@ -73,31 +65,31 @@ class PushConfigDBService extends BaseService<
   /**
    * 根据id,查找
    * @param {number} id
-   * @returns {Promise<PushConfigDto>}
+   * @returns {Promise<PushLogDto>}
    */
-  async findByPk(id: number): Promise<PushConfigDto> {
+  async findByPk(id: number): Promise<PushLogDto> {
     return this.mainModel.findByPk(id);
   }
 
   /**
    * 根据pk, 更新 pyload
    * @param {number} pk
-   * @param {UpdatePushConfigDto} pyload
+   * @param {Partial<PushLogDto>} pyload
    * @param {Transaction} transaction
-   * @returns {Promise<PushConfigDto>}
+   * @returns {Promise<PushLogDto>}
    */
   async updateByPk(
     pk: number,
-    pyload: UpdatePushConfigDto,
+    pyload: Partial<PushLogDto>,
     transaction?: Transaction,
-  ): Promise<PushConfigDto> {
+  ): Promise<PushLogDto> {
     const instance = await this.mainModel.findByPk(pk);
 
     if (!instance) {
       throw new Error('instance not found');
     }
 
-    const updatePayload = omit(pyload, ['id', 'type']);
+    const updatePayload = pick(pyload, ['status']);
 
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);
@@ -114,24 +106,12 @@ class PushConfigDBService extends BaseService<
   }
 
   /**
-   *
-   * 根据id, 删除
-   * @param {number} id
-   * @param {Transaction} transaction
-   * @returns {Promise<PushConfigDto>}
+   * @returns {Promise<PushLogDto>}
    */
-  async removeByPk(
-    id: number,
-    transaction?: Transaction,
-  ): Promise<PushConfigDto> {
-    const data = await this.mainModel.findByPk(id);
-
-    const options = await this.genOptions(transaction);
-    await data.destroy(options);
-    await this.autoCommit(options, transaction);
-    return data;
+  async removeByPk(): Promise<PushLogDto> {
+    throw new Error('Method not Allow.');
   }
 }
 
 @Injectable()
-export class PushConfigService extends PushConfigDBService {}
+export class PushLogService extends PushLogDBService {}
