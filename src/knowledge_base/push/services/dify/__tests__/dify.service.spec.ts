@@ -177,4 +177,56 @@ describe('PushDifyService', () => {
 
     expect(actual).toEqual(expected);
   });
+
+  describe('queryAllDocuments', () => {
+    it('should query all documents with multiple pages', async () => {
+      jest
+        .spyOn(service, 'queryDocuments')
+        .mockResolvedValueOnce({
+          total: 200,
+          data: new Array(100).fill({ id: 'id1', name: 'title1' }),
+          has_more: true,
+          limit: 100,
+          page: 1,
+        })
+        .mockResolvedValueOnce({
+          total: 200,
+          data: new Array(100).fill({ id: 'id2', name: 'title2' }),
+          has_more: false,
+          limit: 100,
+          page: 2,
+        });
+
+      const actual = await service.queryAllDocuments('url', 'key', 'keyword');
+      const expected = [
+        ...new Array(100).fill({ id: 'id1', name: 'title1' }),
+        ...new Array(100).fill({ id: 'id2', name: 'title2' }),
+      ];
+      expect(actual).toEqual(expected);
+    });
+
+    it('should query all documents with only one page', async () => {
+      jest.spyOn(service, 'queryDocuments').mockResolvedValueOnce({
+        total: 50,
+        data: new Array(50).fill({ id: 'id1', name: 'title1' }),
+        has_more: true,
+        limit: 100,
+        page: 1,
+      });
+
+      const actual = await service.queryAllDocuments('url', 'key', 'keyword');
+      const expected = new Array(50).fill({ id: 'id1', name: 'title1' });
+      expect(actual).toEqual(expected);
+    });
+
+    it('should throw an error when queryDocuments fails', async () => {
+      jest.spyOn(service, 'queryDocuments').mockImplementation(() => {
+        return Promise.reject(new Error('failed'));
+      });
+
+      await expect(
+        service.queryAllDocuments('url', 'key', 'keyword'),
+      ).rejects.toThrow('failed');
+    });
+  });
 });

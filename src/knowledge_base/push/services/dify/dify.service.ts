@@ -180,7 +180,7 @@ export class PushDifyService {
    * @param apiUrl
    * @param apiKey
    * @param keyword
-   * @returns
+   * @returns {Promise<DifyDocumentPageDto[]>}
    */
   async queryAllDocuments(
     apiUrl: string,

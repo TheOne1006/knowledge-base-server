@@ -127,7 +127,17 @@ describe('PushController', () => {
       expect(mockPushLogService.create).not.toHaveBeenCalled();
     });
 
-    // Add more tests here for each scenario in your method
+    it('should not create a new push log if the push version is exists', async () => {
+      mockPushLogService.findLastOne = jest
+        .fn()
+        .mockResolvedValueOnce({ pushVersion: 'v2' })
+        .mockResolvedValueOnce({ pushVersion: 'v1' });
+      mockPushLogService.create = jest.fn().mockResolvedValue({});
+
+      await expect(() =>
+        (controller as any)._runBefore(1, { pushVersion: 'v1' }, {}, { id: 1 }),
+      ).rejects.toThrow(`pushVersion: v1 is exists, please change pushVersion`);
+    });
   });
 
   describe('_removeResidualDataFromPushMap', () => {

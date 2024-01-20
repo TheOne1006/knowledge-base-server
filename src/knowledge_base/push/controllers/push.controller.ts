@@ -177,14 +177,14 @@ export class PushController extends BaseController {
 
     // 与上一个推送不一致(或者为空)， 则新创建,
     if (pushLog?.pushVersion !== pushOption.pushVersion) {
-      const checkPushVersion = await this.pushLogService.findLastOne({
+      const pushVersionIsExists = await this.pushLogService.findLastOne({
         configId,
         pushVersion: pushOption.pushVersion,
       });
 
-      if (checkPushVersion) {
+      if (pushVersionIsExists) {
         throw new Error(
-          `pushVersion: ${pushOption.pushVersion} 已经存在，请更换`,
+          `pushVersion: ${pushOption.pushVersion} is exists, please change pushVersion`,
         );
       }
 
