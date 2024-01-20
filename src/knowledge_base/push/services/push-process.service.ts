@@ -104,6 +104,11 @@ export class PushProcessService {
     }
   }
 
+  /**
+   * 获取全部的 document ids
+   * @param configIns
+   * @returns
+   */
   async getAllRemoteIds(configIns: PushConfigDto): Promise<string[]> {
     this.checkConfig(configIns);
     if (configIns.type === PUSH_TYPE_DIFY) {

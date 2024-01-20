@@ -364,23 +364,32 @@ export class PushController extends BaseController {
     } else {
       return {
         message: 'no data need clear',
+        deleteRemoteIds: [],
+        deleteFailedRemoteIds: [],
       };
     }
 
     // 清理 maps
     await this.pushMapService.batchDeleteByIds(deleteIds);
 
+    const deleteRemoteIds: string[] = [];
+    const deleteFailedRemoteIds: string[] = [];
+
     // 清理所有的 pushProcess
     await eachLimit(allRemoteIds, 3, async (remoteId: string) => {
       try {
         await this.pushProcessService.deleteByFile(remoteId, pushConfig);
+        deleteRemoteIds.push(remoteId);
       } catch (error) {
         this.logger.warn(error.message);
+        deleteFailedRemoteIds.push(remoteId);
       }
     });
 
     return {
       message: 'success',
+      deleteRemoteIds,
+      deleteFailedRemoteIds,
     };
   }
 }

@@ -54,8 +54,8 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   ): Promise<KbDto[]> {
     return this.mainModel.findAll({
       where,
-      offset: offset > 0 ? offset : null,
-      limit: limit > 0 ? limit : null,
+      offset: Math.max(0, offset) || undefined,
+      limit: Math.max(0, limit) || undefined,
     });
   }
 
