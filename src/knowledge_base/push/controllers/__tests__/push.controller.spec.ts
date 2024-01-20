@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PushController } from '../push.controller';
 import { PushConfigService } from '../../services/push-config.service';
 import { PushMapService } from '../../services/push-map.service';
@@ -77,6 +78,10 @@ describe('PushController', () => {
         { provide: KbService, useValue: mockKbService },
         { provide: KbFileService, useValue: mockKbFileService },
         { provide: I18nService, useValue: {} },
+        {
+          provide: WINSTON_MODULE_NEST_PROVIDER,
+          useValue: { error: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -92,7 +97,8 @@ describe('PushController', () => {
     it('should create a new push log if the push version is different', async () => {
       mockPushLogService.findLastOne = jest
         .fn()
-        .mockResolvedValue({ pushVersion: 'v1' });
+        .mockResolvedValueOnce({ pushVersion: 'v1' })
+        .mockResolvedValueOnce(null);
       mockPushLogService.create = jest.fn().mockResolvedValue({});
 
       await (controller as any)._runBefore(

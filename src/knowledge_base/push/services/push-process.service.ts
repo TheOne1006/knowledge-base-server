@@ -103,4 +103,15 @@ export class PushProcessService {
       );
     }
   }
+
+  async getAllRemoteIds(configIns: PushConfigDto): Promise<string[]> {
+    this.checkConfig(configIns);
+    if (configIns.type === PUSH_TYPE_DIFY) {
+      const docs = await this.pushDifyService.queryAllDocuments(
+        configIns.apiUrl,
+        configIns.apiKey,
+      );
+      return docs.map((item) => item.id);
+    }
+  }
 }

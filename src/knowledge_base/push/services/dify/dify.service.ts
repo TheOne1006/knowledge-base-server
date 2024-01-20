@@ -24,6 +24,7 @@ export class PushDifyService {
     filePath: string,
     apiKey: string,
   ): Promise<DifyDocumentDto> {
+    // filePath 重命名 移除掉 / 使用
     const inputData = {
       name: filePath,
       indexing_technique: 'high_quality',
@@ -34,7 +35,7 @@ export class PushDifyService {
 
     // 校验 filePath
     if (!fs.existsSync(filePath)) {
-      throw Error(`文件不存在: ${filePath}`);
+      throw Error(`file not exists: ${filePath}`);
     }
 
     // 根据 filePath 获取文件，然后发送 给 url
@@ -57,13 +58,11 @@ export class PushDifyService {
         })
         .pipe(
           catchError((error: AxiosError) => {
-            console.log('error>>>');
-            console.log(error.response.data);
+            // console.log('error>>>');
+            // console.log(error.response.data);
             const errorData: any = error.response?.data;
             this.logger.error('error:', errorData, ' with endpoint:', url);
-            throw Error(
-              errorData?.message || `未知错误 with ${url}, ${apiKey}`,
-            );
+            throw Error(`错误 with ${url}, ${apiKey}, ${errorData?.message}`);
           }),
         ),
     );
@@ -110,8 +109,8 @@ export class PushDifyService {
         .pipe(
           catchError((error: AxiosError) => {
             const errorData: any = error.response.data;
-            this.logger.error(errorData);
-            throw Error(errorData.message);
+            this.logger.error('error:', errorData, ' with endpoint:', url);
+            throw Error(`错误 with ${url}, ${apiKey}, ${errorData?.message}`);
           }),
         ),
     );
@@ -146,11 +145,20 @@ export class PushDifyService {
   async queryDocuments(
     apiUrl: string,
     apiKey: string,
+    keyword?: string,
+    page?: number,
+    limit: number = 20,
   ): Promise<DifyDocumentPageDto> {
     const url = `${apiUrl}/documents`;
+    const query = {
+      keyword,
+      page,
+      limit: Math.min(limit, 100),
+    };
     const { data } = await firstValueFrom(
       this.httpService
         .get<DifyDocumentPageDto>(url, {
+          params: query,
           headers: {
             Authorization: `Bearer ${apiKey}`,
           },
@@ -158,12 +166,51 @@ export class PushDifyService {
         .pipe(
           catchError((error: AxiosError) => {
             const errorData: any = error.response.data;
-            this.logger.error(errorData);
-            throw Error(errorData.message);
+            this.logger.error('error:', errorData, ' with endpoint:', url);
+            throw Error(`错误 with ${url}, ${apiKey}, ${errorData?.message}`);
           }),
         ),
     );
 
     return data;
+  }
+
+  /**
+   * 获取全部文档
+   * @param apiUrl
+   * @param apiKey
+   * @param keyword
+   * @returns
+   */
+  async queryAllDocuments(
+    apiUrl: string,
+    apiKey: string,
+    keyword?: string,
+  ): Promise<DifyDocumentDto[]> {
+    const limit = 100;
+    const firstPage = await this.queryDocuments(
+      apiUrl,
+      apiKey,
+      keyword,
+      1,
+      limit,
+    );
+    const { total } = firstPage;
+    const pages = Math.ceil(total / limit);
+
+    const promises: Promise<DifyDocumentDto[]>[] = [];
+    for (let i = 2; i <= pages; i++) {
+      promises.push(
+        this.queryDocuments(apiUrl, apiKey, keyword, i, limit).then(
+          (page) => page.data,
+        ),
+      );
+    }
+
+    const allDocuments = await Promise.all(promises).then((results) =>
+      results.flat(),
+    );
+
+    return [...firstPage.data, ...allDocuments];
   }
 }

@@ -162,6 +162,10 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     ids: number[],
     transaction?: Transaction,
   ): Promise<number[]> {
+    if (!ids.length) {
+      return [];
+    }
+
     const options = await this.genOptions(transaction);
     await this.mainModel.destroy({
       where: {

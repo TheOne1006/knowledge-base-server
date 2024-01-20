@@ -258,11 +258,9 @@ export class KbResourceController extends BaseController {
       return !diskFiles.some((dbItem) => dbItem.path === item.filePath);
     });
 
-    if (deleteFiles.length) {
-      await this.kbFileService.batchDeleteByIds(
-        deleteFiles.map((item) => item.id),
-      );
-    }
+    await this.kbFileService.batchDeleteByIds(
+      deleteFiles.map((item) => item.id),
+    );
 
     return {
       created: newFiles.length,
