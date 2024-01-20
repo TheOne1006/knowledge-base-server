@@ -1,5 +1,8 @@
-import { pick, map } from 'lodash';
-import { Transaction, WhereOptions } from 'sequelize';
+// import { pick, map } from 'lodash';
+import {
+  // Transaction,
+  WhereOptions,
+} from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -83,7 +86,7 @@ class PushLogDBService extends BaseService<typeof PushLog, PushLogDto> {
   }
 
   /**
-   * 根据pk, 更新 pyload 禁用
+   * 更新 pyload 禁用
    * @returns {Promise<PushLogDto>}
    */
   async updateByPk(): Promise<PushLogDto> {

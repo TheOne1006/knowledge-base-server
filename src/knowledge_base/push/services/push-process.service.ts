@@ -11,6 +11,20 @@ export class PushProcessService {
   ) {}
 
   /**
+   * 校验 config 数据
+   * @param configIns
+   */
+  private checkConfig(configIns: PushConfigDto) {
+    if (configIns.type === PUSH_TYPE_DIFY) {
+      if (!configIns.apiUrl || !configIns.apiKey) {
+        throw new Error('apiUrl or apiKey is not allow empty');
+      }
+    } else {
+      throw new Error('type is not allow');
+    }
+  }
+
+  /**
    * 推送文件，根据 remoteId 判断是创建还是更新
    * @param filePath
    * @param configIns
@@ -22,13 +36,12 @@ export class PushProcessService {
     configIns: PushConfigDto,
     remoteId?: string,
   ): Promise<string> {
+    this.checkConfig(configIns);
     if (configIns.type === PUSH_TYPE_DIFY) {
       if (remoteId) {
         return this.updateByFile(remoteId, filePath, configIns);
       }
       return this.createByFile(filePath, configIns);
-    } else {
-      throw new Error('type is not allow');
     }
   }
 
@@ -38,7 +51,7 @@ export class PushProcessService {
    * @param configIns
    * @returns
    */
-  async createByFile(
+  private async createByFile(
     filePath: string,
     configIns: PushConfigDto,
   ): Promise<string> {
@@ -49,8 +62,6 @@ export class PushProcessService {
         configIns.apiKey,
       );
       return doc.id;
-    } else {
-      throw new Error('type is not allow');
     }
   }
 
@@ -61,7 +72,7 @@ export class PushProcessService {
    * @param configIns
    * @returns
    */
-  async updateByFile(
+  private async updateByFile(
     remoteId: string,
     filePath: string,
     configIns: PushConfigDto,
@@ -74,8 +85,6 @@ export class PushProcessService {
         configIns.apiKey,
       );
       return doc.id;
-    } else {
-      throw new Error('type is not allow');
     }
   }
 
@@ -84,15 +93,14 @@ export class PushProcessService {
    * @param remoteId
    * @param configIns
    */
-  deleteByFile(remoteId: string, configIns: PushConfigDto) {
+  async deleteByFile(remoteId: string, configIns: PushConfigDto) {
+    this.checkConfig(configIns);
     if (configIns.type === PUSH_TYPE_DIFY) {
-      this.pushDifyService.deleteByFile(
+      await this.pushDifyService.deleteByFile(
         configIns.apiUrl,
         remoteId,
         configIns.apiKey,
       );
-    } else {
-      throw new Error('type is not allow');
     }
   }
 }

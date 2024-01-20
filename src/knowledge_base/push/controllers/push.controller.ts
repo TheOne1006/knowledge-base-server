@@ -24,7 +24,7 @@ import { Roles, SerializerClass, User } from '../../../common/decorators';
 import { RolesGuard } from '../../../common/auth';
 import { ROLE_AUTHENTICATED } from '../../../common/constants';
 import { RequestUser } from '../../../common/interfaces';
-import { PushRunOptionDto, PushMapDto } from '../dtos';
+import { PushRunOptionDto, PushMapDto, PushConfigDto } from '../dtos';
 
 import { config } from '../../../../config';
 import { PushConfigService } from '../services/push-config.service';
@@ -84,6 +84,85 @@ export class PushController extends BaseController {
 
     this.check_owner(pushConfig, owner.id);
 
+    const { kbResRoot, files, ignoreFileIds, pushMapDict } =
+      await this._runBefore(configId, pushOption, pushConfig, owner);
+
+    const pushFlow = async (subscriber: Subscriber<MessageEvent>) => {
+      const fileLen = files.length;
+      for (let i = 0; i < fileLen; i++) {
+        const kbFile = files[i];
+
+        // 跳过可以忽略的文件
+        if (ignoreFileIds.includes(kbFile.id)) {
+          continue;
+        }
+
+        // 推送文件以及增、更 pushMap
+        const remoteId = await this._pushFileAndUpsertPushMap(
+          pushOption.pushVersion,
+          path.join(kbResRoot, kbFile.filePath),
+          pushConfig,
+          pushMapDict,
+          owner,
+          kbFile.id,
+        );
+
+        subscriber.next({
+          data: {
+            remoteId, // 抓取处理连接
+            fileId: kbFile.id, // 当前处理的文件id
+            finish: false, // 是否结束
+            total: files.length,
+            index: i,
+          },
+        });
+      }
+      // 删除 残留在 pushMap 中的数据
+      await this._removeResidualDataFromPushMap(pushMapDict, pushConfig);
+
+      subscriber.next({
+        data: {
+          remoteId: '', // 抓取处理连接
+          fileId: 0, // 当前处理的文件id
+          finish: true, // 是否结束
+          total: files.length,
+          index: files.length,
+        },
+      });
+
+      subscriber.complete();
+    };
+
+    const observable = new Observable<MessageEvent>((subscriber) => {
+      subscriber.next({
+        data: {
+          remoteId: '', // 抓取处理连接
+          fileId: 0, // 当前处理的文件id
+          finish: false, // 是否结束
+          total: files.length,
+          index: 0,
+        },
+      });
+
+      pushFlow(subscriber);
+    });
+    return observable;
+  }
+
+  /**
+   * 执行推送前的准备工作
+   * @param configId
+   * @param pushOption
+   * @param pushConfig
+   * @param owner
+   * @returns
+   */
+  private async _runBefore(
+    configId: number,
+    pushOption: PushRunOptionDto,
+    pushConfig: PushConfigDto,
+    owner: RequestUser,
+  ) {
     let pushLog = await this.pushLogService.findLastOne({
       configId,
     });
@@ -129,99 +208,86 @@ export class PushController extends BaseController {
       .filter((item) => item.pushVersion == pushOption.pushVersion)
       .map((item) => item.fileId);
 
-    const pushFlow = async (subscriber: Subscriber<MessageEvent>) => {
-      const fileLen = files.length;
-      for (let i = 0; i < fileLen; i++) {
-        const kbFile = files[i];
-
-        // 跳过可以忽略的文件
-        if (ignoreFileIds.includes(kbFile.id)) {
-          continue;
-        }
-        const absFilePath = path.join(kbResRoot, kbFile.filePath);
-
-        const isExists = !!pushMapDict[kbFile.id];
-
-        const originRemoteId = isExists ? pushMapDict[kbFile.id].remoteId : '';
-
-        const remoteId = await this.pushProcessService.pushByFile(
-          absFilePath,
-          pushConfig,
-          originRemoteId,
-        );
-
-        if (isExists) {
-          // 弹出 pushMapDict[kbFile.id]
-          const originMap = pushMapDict[kbFile.id];
-          delete pushMapDict[kbFile.id];
-          // 更新
-          await this.pushMapService.updateByPk(originMap.id, {
-            pushVersion: pushOption.pushVersion,
-          });
-        } else {
-          // 新建
-          const newMap = {
-            configId,
-            type: pushConfig.type,
-            fileId: kbFile.id,
-            remoteId,
-            pushVersion: pushOption.pushVersion,
-          };
-          await this.pushMapService.create(newMap, pushConfig.kbId, owner.id);
-        }
-        subscriber.next({
-          data: {
-            remoteId, // 抓取处理连接
-            fileId: kbFile.id, // 当前处理的文件id
-            finish: false, // 是否结束
-            total: files.length,
-            index: i,
-          },
-        });
-      }
-
-      // pushMapDict 转成 array
-      const deleteMaps = [];
-      //  遍历 dict
-      for (const key in pushMapDict) {
-        if (pushMapDict.hasOwnProperty(key)) {
-          const element = pushMapDict[key];
-          deleteMaps.push(element);
-        }
-      }
-
-      // 删除 kb file 不存在的 map
-      await eachLimit(deleteMaps, 3, async (item: PushMapDto) => {
-        await this.pushProcessService.deleteByFile(item.remoteId, pushConfig);
-        await this.pushMapService.removeByPk(item.id);
-      });
-
-      subscriber.next({
-        data: {
-          remoteId: '', // 抓取处理连接
-          fileId: 0, // 当前处理的文件id
-          finish: true, // 是否结束
-          total: files.length,
-          index: files.length,
-        },
-      });
-
-      subscriber.complete();
+    return {
+      kbResRoot,
+      files,
+      ignoreFileIds,
+      pushMapDict,
     };
+  }
 
-    const observable = new Observable<MessageEvent>((subscriber) => {
-      subscriber.next({
-        data: {
-          remoteId: '', // 抓取处理连接
-          fileId: 0, // 当前处理的文件id
-          finish: false, // 是否结束
-          total: files.length,
-          index: 0,
-        },
-      });
+  /**
+   * 删除 残留在 pushMap 中的数据，同时将删除信息 push
+   * @param  {{ [fileId: number]: PushMapDto }} pushMapDict
+   * @param {PushConfigDto} pushConfig
+   */
+  private async _removeResidualDataFromPushMap(
+    pushMapDict: { [fileId: number]: PushMapDto },
+    pushConfig: PushConfigDto,
+  ) {
+    // pushMapDict 转成 array
+    const deleteMaps = [];
+    //  遍历 dict
+    for (const key in pushMapDict) {
+      if (pushMapDict.hasOwnProperty(key)) {
+        const element = pushMapDict[key];
+        deleteMaps.push(element);
+      }
+    }
 
-      pushFlow(subscriber);
+    await eachLimit(deleteMaps, 3, async (item: PushMapDto) => {
+      await this.pushProcessService.deleteByFile(item.remoteId, pushConfig);
+      await this.pushMapService.removeByPk(item.id);
     });
-    return observable;
+  }
+
+  /**
+   * 推送文件以及增、更 pushMap
+   * @param pushVersion
+   * @param absFilePath
+   * @param pushConfig
+   * @param pushMapDict
+   * @param owner
+   * @param kbFileId
+   * @returns
+   */
+  private async _pushFileAndUpsertPushMap(
+    pushVersion: string,
+    absFilePath: string,
+    pushConfig: PushConfigDto,
+    pushMapDict: { [fileId: number]: PushMapDto },
+    owner: RequestUser,
+    kbFileId: number,
+  ): Promise<string> {
+    const originRemoteId = pushMapDict[kbFileId]?.remoteId || '';
+    const isExists = !!originRemoteId;
+
+    const remoteId = await this.pushProcessService.pushByFile(
+      absFilePath,
+      pushConfig,
+      originRemoteId,
+    );
+
+    if (isExists) {
+      // 弹出 pushMapDict[kbFileId]
+      const originMap = pushMapDict[kbFileId];
+      delete pushMapDict[kbFileId];
+      // 更新
+      await this.pushMapService.updateByPk(originMap.id, {
+        pushVersion: pushVersion,
+      });
+    } else {
+      // 新建
+      const newMap = {
+        configId: pushConfig.id,
+        type: pushConfig.type,
+        fileId: kbFileId,
+        remoteId,
+        pushVersion: pushVersion,
+      };
+      await this.pushMapService.create(newMap, pushConfig.kbId, owner.id);
+    }
+
+    return remoteId;
   }
 }
