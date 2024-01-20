@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { PushController } from '../push.controller';
 import { PushConfigService } from '../../services/push-config.service';
 import { PushMapService } from '../../services/push-map.service';
@@ -19,7 +20,10 @@ describe('PushController', () => {
 
   beforeEach(async () => {
     mockPushConfigService = {} as any;
-    mockPushLogService = {} as PushLogService;
+    mockPushLogService = {
+      findLastOne: jest.fn().mockResolvedValue({}),
+      create: jest.fn().mockResolvedValue({}),
+    } as any as PushLogService;
     mockPushMapService = {
       findAll: jest.fn().mockResolvedValue([
         {
@@ -42,6 +46,7 @@ describe('PushController', () => {
         },
       ]),
       removeByPk: jest.fn(),
+      batchDeleteByIds: jest.fn(),
     } as any as PushMapService;
     mockKbFileService = {
       findAll: jest.fn().mockResolvedValue([
@@ -65,6 +70,7 @@ describe('PushController', () => {
     } as any as KbService;
     mockPushProcessService = {
       deleteByFile: jest.fn().mockResolvedValue('delete'),
+      getAllRemoteIds: jest.fn().mockResolvedValue(['remote1', 'remote2']),
     } as any as PushProcessService;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -77,6 +83,10 @@ describe('PushController', () => {
         { provide: KbService, useValue: mockKbService },
         { provide: KbFileService, useValue: mockKbFileService },
         { provide: I18nService, useValue: {} },
+        {
+          provide: WINSTON_MODULE_NEST_PROVIDER,
+          useValue: { error: jest.fn(), warn: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -92,7 +102,8 @@ describe('PushController', () => {
     it('should create a new push log if the push version is different', async () => {
       mockPushLogService.findLastOne = jest
         .fn()
-        .mockResolvedValue({ pushVersion: 'v1' });
+        .mockResolvedValueOnce({ pushVersion: 'v1' })
+        .mockResolvedValueOnce(null);
       mockPushLogService.create = jest.fn().mockResolvedValue({});
 
       await (controller as any)._runBefore(
@@ -121,7 +132,17 @@ describe('PushController', () => {
       expect(mockPushLogService.create).not.toHaveBeenCalled();
     });
 
-    // Add more tests here for each scenario in your method
+    it('should not create a new push log if the push version is exists', async () => {
+      mockPushLogService.findLastOne = jest
+        .fn()
+        .mockResolvedValueOnce({ pushVersion: 'v2' })
+        .mockResolvedValueOnce({ pushVersion: 'v1' });
+      mockPushLogService.create = jest.fn().mockResolvedValue({});
+
+      await expect(() =>
+        (controller as any)._runBefore(1, { pushVersion: 'v1' }, {}, { id: 1 }),
+      ).rejects.toThrow(`pushVersion: v1 is exists, please change pushVersion`);
+    });
   });
 
   describe('_removeResidualDataFromPushMap', () => {
@@ -330,6 +351,114 @@ describe('PushController', () => {
           },
         });
       });
+    });
+  });
+
+  describe('clearAll', () => {
+    it('should clearAll correctly', async () => {
+      const configId = 1;
+      const pushOption = { pushVersion: 'v1' };
+      const owner = { id: 1 } as any;
+      const pushConfig = { id: 1, type: 'dify', kbId: 1 };
+      const allMaps = [
+        {
+          id: 1,
+        },
+        {
+          id: 2,
+        },
+      ];
+
+      mockPushConfigService.findByPk = jest.fn().mockResolvedValue(pushConfig);
+      mockPushMapService.findAll = jest.fn().mockResolvedValue(allMaps);
+      mockPushProcessService.deleteByFile = jest.fn();
+
+      (controller as any).check_owner = jest.fn();
+
+      await controller.clearAll(configId, pushOption, owner);
+
+      expect(mockPushConfigService.findByPk).toHaveBeenCalledWith(configId);
+
+      expect(mockPushLogService.create).toHaveBeenCalledWith(
+        {
+          configId,
+          type: pushConfig.type,
+          pushVersion: pushOption.pushVersion,
+        },
+        pushConfig.kbId,
+        owner.id,
+      );
+
+      expect(mockPushProcessService.deleteByFile).toHaveBeenCalledTimes(
+        allMaps.length,
+      );
+    });
+
+    it('should clearAll with deleteByFile failed', async () => {
+      const configId = 1;
+      const pushOption = { pushVersion: 'v1' };
+      const owner = { id: 1 } as any;
+      const pushConfig = { id: 1, type: 'dify', kbId: 1 };
+      const allMaps = [
+        {
+          id: 1,
+        },
+        {
+          id: 2,
+        },
+      ];
+
+      mockPushConfigService.findByPk = jest.fn().mockResolvedValue(pushConfig);
+      mockPushMapService.findAll = jest.fn().mockResolvedValue(allMaps);
+      mockPushProcessService.deleteByFile = jest
+        .fn()
+        .mockRejectedValueOnce('err');
+
+      (controller as any).check_owner = jest.fn();
+
+      const actual = await controller.clearAll(configId, pushOption, owner);
+
+      expect(mockPushConfigService.findByPk).toHaveBeenCalledWith(configId);
+
+      expect(mockPushLogService.create).toHaveBeenCalledWith(
+        {
+          configId,
+          type: pushConfig.type,
+          pushVersion: pushOption.pushVersion,
+        },
+        pushConfig.kbId,
+        owner.id,
+      );
+
+      expect(mockPushProcessService.deleteByFile).toHaveBeenCalledTimes(
+        allMaps.length,
+      );
+
+      expect(actual.deleteRemoteIds.length).toEqual(1);
+      expect(actual.deleteFailedRemoteIds.length).toEqual(1);
+    });
+
+    it('should clearAll with empty', async () => {
+      const configId = 1;
+      const pushOption = { pushVersion: 'v1' };
+      const owner = { id: 1 } as any;
+      const pushConfig = { id: 1, type: 'dify', kbId: 1 };
+
+      mockPushConfigService.findByPk = jest.fn().mockResolvedValue(pushConfig);
+      mockPushMapService.findAll = jest.fn().mockResolvedValue([]);
+      mockPushProcessService.getAllRemoteIds = jest.fn().mockResolvedValue([]);
+
+      (controller as any).check_owner = jest.fn();
+
+      const actual = await controller.clearAll(configId, pushOption, owner);
+
+      expect(mockPushConfigService.findByPk).toHaveBeenCalledWith(configId);
+
+      expect(mockPushProcessService.deleteByFile).not.toHaveBeenCalled();
+
+      expect(actual.message).toEqual('no data need clear');
+      expect(actual.deleteRemoteIds.length).toEqual(0);
+      expect(actual.deleteFailedRemoteIds.length).toEqual(0);
     });
   });
 });

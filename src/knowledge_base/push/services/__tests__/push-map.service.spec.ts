@@ -40,6 +40,18 @@ const mockBaseData = [
     remoteId: 'id5',
     ...defaultAttr,
   },
+  {
+    id: 6,
+    fileId: 6,
+    remoteId: 'id6',
+    ...defaultAttr,
+  },
+  {
+    id: 7,
+    fileId: 7,
+    remoteId: 'id7',
+    ...defaultAttr,
+  },
 ];
 
 describe('PushMapService', () => {
@@ -139,6 +151,24 @@ describe('PushMapService', () => {
       expect(result).toBeDefined();
       const deleteResult = await service.findByPk(id);
       expect(deleteResult).toBeNull();
+    });
+  });
+
+  describe('batchDeleteByIds', () => {
+    it('should delete instances by their ids', async () => {
+      const ids = [6, 7];
+      const result = await service.batchDeleteByIds(ids);
+      expect(result).toEqual(ids);
+      for (const id of ids) {
+        const deletedInstance = await service.findByPk(id);
+        expect(deletedInstance).toBeNull();
+      }
+    });
+
+    it('should delete instances by empty ids', async () => {
+      const ids = [];
+      const result = await service.batchDeleteByIds(ids);
+      expect(result).toEqual([]);
     });
   });
 });

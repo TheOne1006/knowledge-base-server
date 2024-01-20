@@ -23,6 +23,8 @@ import { KbResourceService } from './process/resource.service';
 import { CrawlerService } from './process/crawler.service';
 import { CrawlerController } from './process/crawler.controller';
 
+// push
+import { PushModule } from './push/push.module';
 @Module({
   imports: [
     SequelizeModule.forFeature([
@@ -30,6 +32,7 @@ import { CrawlerController } from './process/crawler.controller';
       KnowledgeBaseSite,
       KnowledgeBaseFile,
     ]),
+    PushModule,
   ],
   controllers: [
     KbController,

@@ -31,11 +31,14 @@ export async function getAllFilesAndDirectoriesRecursively(
         children,
       });
     } else {
-      files.push({
-        name: item,
-        path: fullPathCrop,
-        isDir: false,
-      });
+      // item 过滤掉 以 .开头的文件名
+      if (!item.startsWith('.')) {
+        files.push({
+          name: item,
+          path: fullPathCrop,
+          isDir: false,
+        });
+      }
     }
   }
   return files;

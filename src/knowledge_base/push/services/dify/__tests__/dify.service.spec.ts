@@ -1,8 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import * as path from 'path';
 import { PushDifyService } from '../dify.service';
 import { of, throwError } from 'rxjs';
+
+const mockFilePath = path.join(__dirname, 'mocks', 'mock.txt');
 
 describe('PushDifyService', () => {
   let service: PushDifyService;
@@ -66,28 +69,36 @@ describe('PushDifyService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should create a document failed', async () => {
-    jest.spyOn(httpMockService, 'post').mockImplementationOnce(() =>
-      throwError(() => ({
-        response: {
-          data: {
-            message: 'failed',
-          },
-        },
-      })),
-    );
-    await expect(service.createByFile('url', 'path', 'key')).rejects.toThrow(
-      'failed',
-    );
-  });
+  describe('createOrUpdateByFile', () => {
+    it('should create a document failed with not exists', async () => {
+      await expect(
+        service.createByFile('url', '/tmp/path/to/not_found', 'key'),
+      ).rejects.toThrow('file not exists: /tmp/path/to/not_found');
+    });
 
-  it('should create a document', async () => {
-    const actual = await service.createByFile('url', 'path', 'key');
-    const expected = {
-      id: 'id1',
-      name: 'title1',
-    };
-    expect(actual).toEqual(expected);
+    it('should create a document failed', async () => {
+      jest.spyOn(httpMockService, 'post').mockImplementationOnce(() =>
+        throwError(() => ({
+          response: {
+            data: {
+              message: 'failed',
+            },
+          },
+        })),
+      );
+      await expect(
+        service.createByFile('url', mockFilePath, 'key'),
+      ).rejects.toThrow('failed');
+    });
+
+    it('should create a document', async () => {
+      const actual = await service.createByFile('url', mockFilePath, 'key');
+      const expected = {
+        id: 'id1',
+        name: 'title1',
+      };
+      expect(actual).toEqual(expected);
+    });
   });
 
   it('should delete a document failed', async () => {
@@ -100,7 +111,7 @@ describe('PushDifyService', () => {
         },
       })),
     );
-    await expect(service.deleteByFile('url', 'path', 'key')).rejects.toThrow(
+    await expect(service.deleteByFile('url', 'docId', 'key')).rejects.toThrow(
       'failed',
     );
   });
@@ -122,12 +133,12 @@ describe('PushDifyService', () => {
       })),
     );
     await expect(
-      service.updateByFile('url', 'id', 'path', 'key'),
+      service.updateByFile('url', 'id', mockFilePath, 'key'),
     ).rejects.toThrow('failed');
   });
 
   it('should update a document', async () => {
-    const actual = await service.updateByFile('url', 'id', 'path', 'key');
+    const actual = await service.updateByFile('url', 'id', mockFilePath, 'key');
     const expected = {
       id: 'id1',
       name: 'title1',
@@ -165,5 +176,57 @@ describe('PushDifyService', () => {
     const actual = await service.queryDocuments('url', 'key');
 
     expect(actual).toEqual(expected);
+  });
+
+  describe('queryAllDocuments', () => {
+    it('should query all documents with multiple pages', async () => {
+      jest
+        .spyOn(service, 'queryDocuments')
+        .mockResolvedValueOnce({
+          total: 200,
+          data: new Array(100).fill({ id: 'id1', name: 'title1' }),
+          has_more: true,
+          limit: 100,
+          page: 1,
+        })
+        .mockResolvedValueOnce({
+          total: 200,
+          data: new Array(100).fill({ id: 'id2', name: 'title2' }),
+          has_more: false,
+          limit: 100,
+          page: 2,
+        });
+
+      const actual = await service.queryAllDocuments('url', 'key', 'keyword');
+      const expected = [
+        ...new Array(100).fill({ id: 'id1', name: 'title1' }),
+        ...new Array(100).fill({ id: 'id2', name: 'title2' }),
+      ];
+      expect(actual).toEqual(expected);
+    });
+
+    it('should query all documents with only one page', async () => {
+      jest.spyOn(service, 'queryDocuments').mockResolvedValueOnce({
+        total: 50,
+        data: new Array(50).fill({ id: 'id1', name: 'title1' }),
+        has_more: true,
+        limit: 100,
+        page: 1,
+      });
+
+      const actual = await service.queryAllDocuments('url', 'key', 'keyword');
+      const expected = new Array(50).fill({ id: 'id1', name: 'title1' });
+      expect(actual).toEqual(expected);
+    });
+
+    it('should throw an error when queryDocuments fails', async () => {
+      jest.spyOn(service, 'queryDocuments').mockImplementation(() => {
+        return Promise.reject(new Error('failed'));
+      });
+
+      await expect(
+        service.queryAllDocuments('url', 'key', 'keyword'),
+      ).rejects.toThrow('failed');
+    });
   });
 });

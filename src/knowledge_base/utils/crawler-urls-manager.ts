@@ -3,7 +3,10 @@ import { uniq, difference } from 'lodash';
 
 import { Logger, Injectable } from '@nestjs/common';
 import { CRAWLER_TYPES, CRAWLER_TYPE_INCREMENTAL } from '../process/constants';
-import { urlAppendSuffix, urlRemoveHash } from './link-format';
+import {
+  urlAppendSuffix,
+  // urlRemoveHash
+} from './link-format';
 
 /**
  * @description 爬虫url管理器

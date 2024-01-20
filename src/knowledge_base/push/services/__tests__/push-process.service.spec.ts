@@ -19,6 +19,9 @@ describe('PushProcessService', () => {
         id: 'remoteId',
       }),
       deleteByFile: jest.fn().mockResolvedValue('success'),
+      queryAllDocuments: jest
+        .fn()
+        .mockResolvedValue([{ id: 'remoteId1' }, { id: 'remoteId2' }]),
     } as any as PushDifyService;
 
     module = await Test.createTestingModule({
@@ -112,7 +115,25 @@ describe('PushProcessService', () => {
       );
     });
 
-    it('should call the erroor method based on type', async () => {
+    it('should call the correct method without remoteId', async () => {
+      const filePath = 'testPath';
+      const configIns = {
+        apiUrl: 'apiUrl',
+        type: PUSH_TYPE_DIFY,
+        apiKey: 'apiKey',
+      } as any;
+
+      await service.pushByFile(filePath, configIns);
+
+      expect(mockDifyService.updateByFile).not.toHaveBeenCalled();
+      expect(mockDifyService.createByFile).toHaveBeenCalledWith(
+        configIns.apiUrl,
+        filePath,
+        configIns.apiKey,
+      );
+    });
+
+    it('should call the error method based on type', async () => {
       const filePath = 'testPath';
       const configIns = {
         apiUrl: 'apiUrl',
@@ -181,6 +202,23 @@ describe('PushProcessService', () => {
       expect(difyService.deleteByFile).toHaveBeenCalledWith(
         configIns.apiUrl,
         remoteId,
+        configIns.apiKey,
+      );
+    });
+  });
+
+  describe('getAllRemoteIds', () => {
+    it('should return all remote ids if config type is PUSH_TYPE_DIFY', async () => {
+      const configIns = {
+        type: PUSH_TYPE_DIFY,
+        apiUrl: 'apiUrl',
+        apiKey: 'apiKey',
+      } as PushConfigDto;
+
+      const result = await service.getAllRemoteIds(configIns);
+      expect(result).toEqual(['remoteId1', 'remoteId2']);
+      expect(difyService.queryAllDocuments).toHaveBeenCalledWith(
+        configIns.apiUrl,
         configIns.apiKey,
       );
     });

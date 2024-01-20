@@ -1,6 +1,7 @@
 import * as path from 'path';
 import {
   Controller,
+  Sse,
   Post,
   Body,
   UseInterceptors,
@@ -10,8 +11,11 @@ import {
   ParseIntPipe,
   SetMetadata,
   MessageEvent,
+  Inject,
 } from '@nestjs/common';
 import { METHOD_METADATA } from '@nestjs/common/constants';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { RequestMethod } from '@nestjs/common/enums/request-method.enum';
 import { ApiTags, ApiSecurity, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { WhereOptions } from 'sequelize';
@@ -24,7 +28,12 @@ import { Roles, SerializerClass, User } from '../../../common/decorators';
 import { RolesGuard } from '../../../common/auth';
 import { ROLE_AUTHENTICATED } from '../../../common/constants';
 import { RequestUser } from '../../../common/interfaces';
-import { PushRunOptionDto, PushMapDto, PushConfigDto } from '../dtos';
+import {
+  PushRunOptionDto,
+  PushMapDto,
+  PushConfigDto,
+  ClearPushResDto,
+} from '../dtos';
 
 import { config } from '../../../../config';
 import { PushConfigService } from '../services/push-config.service';
@@ -52,6 +61,7 @@ export class PushController extends BaseController {
     private readonly pushProcessService: PushProcessService,
     private readonly kbService: KbService,
     private readonly kbFileService: KbFileService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER) protected readonly logger: Logger,
     protected readonly i18n: I18nService,
   ) {
     super(i18n);
@@ -61,7 +71,7 @@ export class PushController extends BaseController {
    * 执行推送
    */
   @SetMetadata(METHOD_METADATA, RequestMethod.POST)
-  @Post('/:configId/run')
+  @Sse(':configId/run')
   @ApiParam({
     name: 'configId',
     example: '1',
@@ -70,7 +80,6 @@ export class PushController extends BaseController {
     required: true,
   })
   @SerializerClass(PushMapDto)
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
   async run(
     @Param(
       'configId',
@@ -168,7 +177,17 @@ export class PushController extends BaseController {
 
     // 与上一个推送不一致(或者为空)， 则新创建,
     if (pushLog?.pushVersion !== pushOption.pushVersion) {
-      // todo pushOption.pushVersion  是否重复
+      const pushVersionIsExists = await this.pushLogService.findLastOne({
+        configId,
+        pushVersion: pushOption.pushVersion,
+      });
+
+      if (pushVersionIsExists) {
+        throw new Error(
+          `pushVersion: ${pushOption.pushVersion} is exists, please change pushVersion`,
+        );
+      }
+
       pushLog = await this.pushLogService.create(
         {
           configId,
@@ -211,7 +230,7 @@ export class PushController extends BaseController {
     const filterPushMapDict: { [id: number]: PushMapDto } = {};
 
     pushMaps
-      .filter((item) => ignoreFileIds.includes(item.fileId))
+      .filter((item) => !ignoreFileIds.includes(item.fileId))
       .forEach((item) => {
         filterPushMapDict[item.fileId] = item;
       });
@@ -296,5 +315,81 @@ export class PushController extends BaseController {
     }
 
     return remoteId;
+  }
+
+  // 清空推送
+  @Post(':configId/clearAll')
+  @ApiParam({
+    name: 'configId',
+    example: '1',
+    description: '清空推送',
+    type: Number,
+    required: true,
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async clearAll(
+    @Param(
+      'configId',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    configId: number,
+    @Body() pushOption: PushRunOptionDto,
+    @User() owner: RequestUser,
+  ): Promise<ClearPushResDto> {
+    const pushConfig = await this.service.findByPk(configId);
+    this.check_owner(pushConfig, owner.id);
+
+    // 清理 maps
+    const allMaps = await this.pushMapService.findAll({
+      configId,
+      ownerId: owner.id,
+      kbId: pushConfig.kbId,
+    });
+    const deleteIds = allMaps.map((item) => item.id);
+
+    // 清理所有的 pushProcess
+    const allRemoteIds =
+      await this.pushProcessService.getAllRemoteIds(pushConfig);
+
+    if (allRemoteIds.length || deleteIds.length) {
+      await this.pushLogService.create(
+        {
+          configId,
+          type: pushConfig.type,
+          pushVersion: pushOption.pushVersion,
+        },
+        pushConfig.kbId,
+        owner.id,
+      );
+    } else {
+      return {
+        message: 'no data need clear',
+        deleteRemoteIds: [],
+        deleteFailedRemoteIds: [],
+      };
+    }
+
+    // 清理 maps
+    await this.pushMapService.batchDeleteByIds(deleteIds);
+
+    const deleteRemoteIds: string[] = [];
+    const deleteFailedRemoteIds: string[] = [];
+
+    // 清理所有的 pushProcess
+    await eachLimit(allRemoteIds, 3, async (remoteId: string) => {
+      try {
+        await this.pushProcessService.deleteByFile(remoteId, pushConfig);
+        deleteRemoteIds.push(remoteId);
+      } catch (error) {
+        this.logger.warn(error.message);
+        deleteFailedRemoteIds.push(remoteId);
+      }
+    });
+
+    return {
+      message: 'success',
+      deleteRemoteIds,
+      deleteFailedRemoteIds,
+    };
   }
 }

@@ -71,6 +71,10 @@ module.exports = {
         comment: '是否删除',
       },
     });
+
+    await queryInterface.addIndex(tableName, ['config_id', 'file_id'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

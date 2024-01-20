@@ -56,6 +56,7 @@ describe.skip('PushDifyService on truely remote server', () => {
     });
 
     it('updateByFile: should send a post request and return the document', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
       const url = `${API_URL}/${DATATSET_ID}`;
       const filePath = path.join(__dirname, 'mocks', 'mock-update.txt');
       const actual = await service.updateByFile(

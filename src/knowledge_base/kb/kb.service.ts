@@ -54,8 +54,8 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   ): Promise<KbDto[]> {
     return this.mainModel.findAll({
       where,
-      offset: offset > 0 ? offset : null,
-      limit: limit > 0 ? limit : null,
+      offset: Math.max(0, offset) || undefined,
+      limit: Math.max(0, limit) || undefined,
     });
   }
 
@@ -153,6 +153,7 @@ export class KbService extends KbServiceDB {
   async getUploadFiles(kb: KbDto): Promise<FileStatDto[]> {
     const uploadRoot = this.getKbUploadRoot(kb);
     const kbResRoot = this.getKbRoot(kb);
+    this.checkDir(uploadRoot);
     return this.getFiles(uploadRoot, false, kbResRoot);
   }
 
