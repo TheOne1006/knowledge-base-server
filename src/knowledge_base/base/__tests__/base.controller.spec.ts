@@ -14,7 +14,7 @@ describe('BaseController', () => {
 
   beforeEach(async () => {
     i18n = {
-      t: jest.fn().mockReturnValue('error.KB_NOT_OWNER'),
+      t: jest.fn().mockReturnValue('error.INS_NOT_OWNER'),
     } as any as I18nService;
 
     controller = new BaseTestController(i18n);
@@ -31,7 +31,7 @@ describe('BaseController', () => {
       expect(() => (controller as any).check_owner(ins, ownerId)).toThrow(
         BadRequestException,
       );
-      expect(i18n.t).toHaveBeenCalledWith('error.KB_NOT_OWNER');
+      expect(i18n.t).toHaveBeenCalledWith('error.INS_NOT_OWNER');
     });
 
     it('should not throw BadRequestException if ownerId matches', () => {
@@ -48,7 +48,7 @@ describe('BaseController', () => {
       expect(() => (controller as any).check_owner(ins, ownerId)).toThrow(
         BadRequestException,
       );
-      expect(i18n.t).toHaveBeenCalledWith('error.KB_NOT_OWNER');
+      expect(i18n.t).toHaveBeenCalledWith('error.INS_NOT_OWNER');
     });
   });
 });

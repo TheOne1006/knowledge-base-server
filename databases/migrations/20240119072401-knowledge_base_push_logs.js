@@ -1,6 +1,6 @@
 'use strict';
 
-const tableName = 'knowledge_base_files';
+const tableName = 'knowledge_base_push_logs';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -14,35 +14,23 @@ module.exports = {
         autoIncrement: true,
         comment: 'id',
       },
-      file_path: {
-        type: STRING(350),
-        comment: '文件路径(相对于 kb root)',
-      },
-      file_ext: {
-        type: STRING(20),
-        comment: '文件扩展名',
-      },
-      source_type: {
-        type: STRING(20),
-        comment: '来源方式',
-      },
-      source_url: {
-        type: STRING(500),
-        comment: '来源网址',
-      },
-      summary: {
-        type: STRING(500),
-        comment: '总结',
-      },
-      site_id: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        comment: '所属站点',
-      },
-      kb_id: {
+      config_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        comment: '所属知识库',
+        comment: '配置id',
+      },
+      type: {
+        type: STRING(20),
+        comment: '推送类型',
+      },
+      push_version: {
+        type: STRING(20),
+        comment: '推送版本',
+      },
+      kb_id: {
+        type: INTEGER,
+        allowNull: false,
+        comment: '知识库id',
       },
       owner_id: {
         type: INTEGER,
@@ -74,16 +62,8 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex(tableName, ['file_path'], {
-      unique: false,
-    });
-
-    await queryInterface.addIndex(tableName, ['owner_id'], {
-      unique: false,
-    });
-
-    await queryInterface.addIndex(tableName, ['kb_id'], {
-      unique: false,
+    await queryInterface.addIndex(tableName, ['config_id', 'push_version'], {
+      unique: true,
     });
   },
 

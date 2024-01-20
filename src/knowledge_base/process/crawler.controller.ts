@@ -7,7 +7,7 @@ import {
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
-  // Query,
+  // Query,c
   // Put,
   // Delete,
   Param,
@@ -180,7 +180,8 @@ export class CrawlerController extends BaseController {
             urlManager.addUrlsFromCrawler(links);
             // 保存 html
             const filePath = await this.kbResService.saveHtml(
-              kbSiteResRoot,
+              kbResRoot,
+              bkSiteIns.title,
               url,
               html,
             );
