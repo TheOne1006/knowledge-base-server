@@ -153,6 +153,7 @@ export class KbService extends KbServiceDB {
   async getUploadFiles(kb: KbDto): Promise<FileStatDto[]> {
     const uploadRoot = this.getKbUploadRoot(kb);
     const kbResRoot = this.getKbRoot(kb);
+    this.checkDir(uploadRoot);
     return this.getFiles(uploadRoot, false, kbResRoot);
   }
 

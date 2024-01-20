@@ -1,7 +1,7 @@
 import * as path from 'path';
 import {
   Controller,
-  Post,
+  Sse,
   Body,
   UseInterceptors,
   UseGuards,
@@ -13,7 +13,12 @@ import {
 } from '@nestjs/common';
 import { METHOD_METADATA } from '@nestjs/common/constants';
 import { RequestMethod } from '@nestjs/common/enums/request-method.enum';
-import { ApiTags, ApiSecurity, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiSecurity,
+  // ApiResponse,
+  ApiParam,
+} from '@nestjs/swagger';
 import { WhereOptions } from 'sequelize';
 import { I18nService } from 'nestjs-i18n';
 import { eachLimit } from 'async';
@@ -61,7 +66,7 @@ export class PushController extends BaseController {
    * 执行推送
    */
   @SetMetadata(METHOD_METADATA, RequestMethod.POST)
-  @Post('/:configId/run')
+  @Sse(':configId/run')
   @ApiParam({
     name: 'configId',
     example: '1',
@@ -70,7 +75,6 @@ export class PushController extends BaseController {
     required: true,
   })
   @SerializerClass(PushMapDto)
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
   async run(
     @Param(
       'configId',

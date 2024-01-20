@@ -36,6 +36,7 @@ export class KnowledgeBaseFile extends Model<KnowledgeBaseFile> {
 
   @Column({
     type: DataType.INTEGER,
+    allowNull: false,
     field: 'kb_id',
   })
   kbId: number;

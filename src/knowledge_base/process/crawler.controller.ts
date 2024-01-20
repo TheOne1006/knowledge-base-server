@@ -54,6 +54,7 @@ import { CrawlerService } from './crawler.service';
 import { CrawlerDto } from './dtos';
 import { FILE_SOURCE_TYPE_CRAWLER } from '../base/constants';
 import { CrawlerUrlsManager } from '../utils/crawler-urls-manager';
+// import { SkipInterceptor } from '../../core/interceptors/skip.interceptor';
 
 const prefix = config.API_V1;
 
@@ -201,13 +202,13 @@ export class CrawlerController extends BaseController {
             // save html to page
             urlManager.clearRetryUrl(url);
           } catch (error) {
-            logger.warn(`error at ${url}, ${error.message}`);
+            logger.warn(`error at ${url}, errMsg: ${error.message}`);
             completed = false;
             retry = urlManager.getUrlRetryUrlTimes(url);
             urlManager.addRetryUrl(url);
           }
 
-          logger.info(`crawler finish at ${url}, ${completed}`);
+          logger.info(`crawler finish at ${url}, completed: ${completed}`);
 
           subscriber.next({
             data: {

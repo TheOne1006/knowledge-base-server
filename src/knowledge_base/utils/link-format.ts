@@ -36,6 +36,20 @@ export function urlAppendSuffix(
 }
 
 /**
+ * 校验 url
+ * @param url
+ * @returns
+ */
+export function isValidUrl(url: string) {
+  try {
+    new URL(url);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
  * url 删除 # 后面的内容
  * @param url
  * @returns
@@ -59,5 +73,10 @@ export function urlRemoveHash(url: string | URL): URL {
  * @returns
  */
 export function toAbsoluteURL(base: string, relative: string) {
-  return new URL(relative, base).href;
+  try {
+    return new URL(relative, base).href;
+  } catch (error) {
+    console.error('error url with', relative, base);
+    throw error;
+  }
 }

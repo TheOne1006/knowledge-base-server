@@ -11,7 +11,7 @@ import {
   // Browser,
 } from 'langchain/document_loaders/web/playwright';
 import { Injectable, Inject } from '@nestjs/common';
-import { urlRemoveHash, toAbsoluteURL } from '../utils/link-format';
+import { urlRemoveHash, toAbsoluteURL, isValidUrl } from '../utils/link-format';
 
 PlaywrightWebBaseLoader.imports = async () => ({ chromium });
 
@@ -71,14 +71,20 @@ export class CrawlerService {
     const urlObj = new URL(url);
     const hostname = `${urlObj.protocol}//${urlObj.hostname}`;
 
-    const loader = new PlaywrightWebBaseLoader(url, {
-      launchOptions: {
-        headless: true,
-      },
-      gotoOptions: {
-        waitUntil: 'domcontentloaded',
-      },
-    });
+    let loader: PlaywrightWebBaseLoader;
+    try {
+      loader = new PlaywrightWebBaseLoader(url, {
+        launchOptions: {
+          headless: true,
+        },
+        gotoOptions: {
+          waitUntil: 'domcontentloaded',
+        },
+      });
+    } catch (error) {
+      this.logger.error('PlaywrightWebBaseLoader error with', url);
+      throw error;
+    }
 
     // 读取 loaderr 的 pageContent，放入 cheerio 中
     const docs = await loader.load();
@@ -93,8 +99,8 @@ export class CrawlerService {
       .map((_, el) => $(el).attr('href'))
       .get();
 
-    // 删除hash
-    links = links.map((link) => urlRemoveHash(link).href);
+    // 过滤 url 后, 删除hash
+    links = links.filter(isValidUrl).map((link) => urlRemoveHash(link).href);
 
     // 去重
     const linkSet = new Set(links);

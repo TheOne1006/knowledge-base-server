@@ -32,6 +32,11 @@ export class PushDifyService {
       },
     };
 
+    // 校验 filePath
+    if (!fs.existsSync(filePath)) {
+      throw Error(`文件不存在: ${filePath}`);
+    }
+
     // 根据 filePath 获取文件，然后发送 给 url
     const formData = new FormData();
     const file = fs.createReadStream(filePath);
@@ -52,9 +57,13 @@ export class PushDifyService {
         })
         .pipe(
           catchError((error: AxiosError) => {
-            const errorData: any = error.response.data;
-            this.logger.error(errorData);
-            throw Error(errorData.message);
+            console.log('error>>>');
+            console.log(error.response.data);
+            const errorData: any = error.response?.data;
+            this.logger.error('error:', errorData, ' with endpoint:', url);
+            throw Error(
+              errorData?.message || `未知错误 with ${url}, ${apiKey}`,
+            );
           }),
         ),
     );
@@ -64,7 +73,7 @@ export class PushDifyService {
 
   /**
    * 创建文档
-   * @param {string} url
+   * @param {string} apiUrl
    * @param {string} filePath
    * @param {string} apiKey
    * @returns
