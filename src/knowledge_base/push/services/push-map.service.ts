@@ -121,28 +121,6 @@ class PushMapDBService extends BaseService<typeof PushMap, PushMapDto> {
     await this.autoCommit(options, transaction);
     return data;
   }
-
-  /**
-   * 批量删除
-   * @param {number[]} ids
-   * @param {Transaction} transaction
-   * @returns {Promise<number[]>}
-   */
-  async batchDeleteByIds(
-    ids: number[],
-    transaction?: Transaction,
-  ): Promise<number[]> {
-    const options = await this.genOptions(transaction);
-    await this.mainModel.destroy({
-      where: {
-        id: ids,
-      },
-      ...options,
-    });
-    await this.autoCommit(options, transaction);
-
-    return ids;
-  }
 }
 
 @Injectable()

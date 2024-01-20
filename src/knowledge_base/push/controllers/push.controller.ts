@@ -84,18 +84,17 @@ export class PushController extends BaseController {
 
     this.check_owner(pushConfig, owner.id);
 
-    const { kbResRoot, files, ignoreFileIds, pushMapDict } =
-      await this._runBefore(configId, pushOption, pushConfig, owner);
+    const { kbResRoot, files, pushMapDict } = await this._runBefore(
+      configId,
+      pushOption,
+      pushConfig,
+      owner,
+    );
 
     const pushFlow = async (subscriber: Subscriber<MessageEvent>) => {
       const fileLen = files.length;
       for (let i = 0; i < fileLen; i++) {
         const kbFile = files[i];
-
-        // 跳过可以忽略的文件
-        if (ignoreFileIds.includes(kbFile.id)) {
-          continue;
-        }
 
         // 推送文件以及增、更 pushMap
         const remoteId = await this._pushFileAndUpsertPushMap(
@@ -196,23 +195,31 @@ export class PushController extends BaseController {
       this.pushMapService.findAll(pushMapWhere),
     ]);
 
-    const pushMapDict: { [id: number]: PushMapDto } = {};
-    pushMaps.forEach((item) => {
-      pushMapDict[item.fileId] = item;
-    });
-
     const kbResRoot = this.kbService.getKbRoot(kbIns);
+
+    // 过滤 files 以及 pushMaps
 
     // 最终版本相同可以忽略
     const ignoreFileIds = pushMaps
       .filter((item) => item.pushVersion == pushOption.pushVersion)
       .map((item) => item.fileId);
 
+    const filterFiles = files.filter(
+      (item) => !ignoreFileIds.includes(item.id),
+    );
+
+    const filterPushMapDict: { [id: number]: PushMapDto } = {};
+
+    pushMaps
+      .filter((item) => ignoreFileIds.includes(item.fileId))
+      .forEach((item) => {
+        filterPushMapDict[item.fileId] = item;
+      });
+
     return {
       kbResRoot,
-      files,
-      ignoreFileIds,
-      pushMapDict,
+      files: filterFiles,
+      pushMapDict: filterPushMapDict,
     };
   }
 
