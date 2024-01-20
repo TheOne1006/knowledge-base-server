@@ -16,7 +16,7 @@ module.exports = {
       },
       file_path: {
         type: STRING(350),
-        comment: '文件路径',
+        comment: '文件路径(相对于 kb root)',
       },
       file_ext: {
         type: STRING(20),
@@ -27,12 +27,17 @@ module.exports = {
         comment: '来源方式',
       },
       source_url: {
-        type: STRING(200),
+        type: STRING(500),
         comment: '来源网址',
       },
       summary: {
-        type: STRING(200),
+        type: STRING(500),
         comment: '总结',
+      },
+      site_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        comment: '所属站点',
       },
       kb_id: {
         type: Sequelize.INTEGER,

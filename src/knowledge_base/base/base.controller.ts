@@ -11,7 +11,7 @@ export abstract class BaseController {
    */
   protected check_owner(ins: any, ownerId: number) {
     if (ins?.ownerId !== ownerId) {
-      const message = this.i18n.t('error.KB_NOT_OWNER');
+      const message = this.i18n.t('error.INS_NOT_OWNER');
       throw new BadRequestException(message);
     }
   }

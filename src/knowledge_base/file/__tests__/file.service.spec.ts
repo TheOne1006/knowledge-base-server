@@ -6,11 +6,16 @@ import { KnowledgeBaseFile } from '../file.entity';
 
 import { DatabaseModule } from '../../../core/database/database.module';
 import { LoggerModule } from '../../../core/logger/logger.module';
+import {
+  FILE_SOURCE_TYPE_UPLOAD,
+  // FILE_SOURCE_TYPE_CRAWLER,
+} from '../../base/constants';
 
 const defaultAttr = {
   fileExt: 'html',
   ownerId: 1,
   kbId: 1,
+  sourceType: FILE_SOURCE_TYPE_UPLOAD,
 };
 
 const mockData = [
@@ -33,6 +38,11 @@ const mockData = [
     ...defaultAttr,
     filePath: '/xxx/path/to/file5.html',
     id: 5,
+  },
+  {
+    ...defaultAttr,
+    filePath: '/xxx/path/to/file6.html',
+    id: 6,
   },
 ];
 
@@ -103,7 +113,12 @@ describe('KbFileService', () => {
         ];
         const ownerId = 1;
         const kId = 1;
-        const result = await service.batchCreate(dtos, kId, ownerId);
+        const result = await service.batchCreate(
+          dtos,
+          ownerId,
+          kId,
+          FILE_SOURCE_TYPE_UPLOAD,
+        );
         expect(result).toBeDefined();
         // 最后一个元素
         const last = mockData[mockData.length - 1];
@@ -134,29 +149,30 @@ describe('KbFileService', () => {
       });
     });
 
-    describe.skip('updateByPk', () => {
-      // it('should update a instance by its primary key', async () => {
-      //   const pk = 3;
-      //   const dto = {
-      //     ...defaultAttr,
-      //     desc: 'update',
-      //   };
-      //   const result = await service.updateByPk(pk, dto);
-      //   expect(result).toBeDefined();
-      //   expect(result.desc).toEqual(dto.desc);
-      // });
-      // it('should update a instance by error primary key', async () => {
-      //   const pk = 100000;
-      //   const dto = {
-      //     ...defaultAttr,
-      //     desc: 'update',
-      //   };
+    describe('updateByPk', () => {
+      it('should update a instance by its primary key', async () => {
+        const pk = 3;
+        const dto = {
+          summary: 'update',
+          sourceUrl: 'http://xxx.com',
+        };
+        const result = await service.updateByPk(pk, dto);
+        expect(result).toBeDefined();
+        expect(result.summary).toEqual(dto.summary);
+        expect(result.sourceUrl).toEqual(dto.sourceUrl);
+      });
 
-      //   // 检测报错
-      //   await expect(service.updateByPk(pk, dto)).rejects.toThrow(
-      //     'instance not found',
-      //   );
-      // });
+      it('should update a instance by error primary key', async () => {
+        const pk = 100000;
+        const dto = {
+          ...defaultAttr,
+          summary: 'update',
+        };
+        // 检测报错
+        await expect(service.updateByPk(pk, dto)).rejects.toThrow(
+          'instance not found',
+        );
+      });
     });
 
     describe('removeByPk', () => {
@@ -166,6 +182,85 @@ describe('KbFileService', () => {
         expect(result).toBeDefined();
         const deleteResult = await service.findByPk(id);
         expect(deleteResult).toBeNull();
+      });
+    });
+
+    describe('batchDeleteByIds', () => {
+      it('should remove some instances by primary keys', async () => {
+        const result = await service.batchDeleteByIds([5, 6]);
+        expect(result).toBeDefined();
+        const deleteResult = await service.findByPk(5);
+        expect(deleteResult).toBeNull();
+      });
+    });
+
+    describe('findOrCreate', () => {
+      it('should return an existing instance if it exists', async () => {
+        const payload = {
+          filePath: '/xxx/path/to/file.html',
+          fileExt: 'html',
+        };
+        const kbId = 1;
+        const ownerId = 1;
+
+        const result = await service.findOrCreate(
+          payload,
+          payload.filePath,
+          kbId,
+          ownerId,
+        );
+
+        expect(result.id).toEqual(1);
+      });
+
+      it('should create a new instance if it does not exist', async () => {
+        const payload = {
+          filePath: '/xxx/path/to/newfile-findOrCreate.html',
+          fileExt: 'html',
+        };
+        const kbId = 1;
+        const siteId = 1;
+        const ownerId = 1;
+
+        const result = await service.findOrCreate(
+          payload,
+          payload.filePath,
+          kbId,
+          ownerId,
+          siteId,
+        );
+
+        expect(result).toMatchObject({
+          ...payload,
+          kbId,
+          ownerId,
+        });
+      });
+    });
+  });
+
+  describe('File operation', () => {
+    describe('getFilePath', () => {
+      it('should return the correct file path when the instance filePath starts with dots', () => {
+        const kbResRoot = '/root/path';
+        const instance = {
+          filePath: '../relative/path/to/file.html',
+        } as any;
+
+        const result = service.getFilePath(kbResRoot, instance);
+
+        expect(result).toEqual('/root/path/relative/path/to/file.html');
+      });
+
+      it('should return the correct file path when the instance filePath does not start with dots', () => {
+        const kbResRoot = '/root/path';
+        const instance = {
+          filePath: 'relative/path/to/file.html',
+        } as any;
+
+        const result = service.getFilePath(kbResRoot, instance);
+
+        expect(result).toEqual('/root/path/relative/path/to/file.html');
       });
     });
   });

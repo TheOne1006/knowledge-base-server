@@ -73,15 +73,16 @@ describe('KbResourceService', () => {
   });
 
   it('should save html', async () => {
-    const kbSiteResRoot = '/test/root';
+    const kbRoot = '/root';
+    const kbSiteTitle = 'test';
     const url = 'http://test.com';
     const html = '<html></html>';
     const urlObj = urlAppendSuffix(url);
-    const filePath = `${kbSiteResRoot}${urlObj.pathname}`;
+    const filePath = `${kbRoot}/${kbSiteTitle}${urlObj.pathname}`;
 
     mockFs.writeFile.mockResolvedValueOnce(undefined);
 
-    await service.saveHtml(kbSiteResRoot, url, html);
+    await service.saveHtml(kbRoot, kbSiteTitle, url, html);
 
     expect(mockFs.writeFile).toHaveBeenCalledWith(filePath, html);
   });

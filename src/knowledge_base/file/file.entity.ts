@@ -25,11 +25,27 @@ export class KnowledgeBaseFile extends Model<KnowledgeBaseFile> {
   @Column({ type: DataType.STRING, allowNull: false, field: 'file_ext' })
   fileExt: string;
 
+  @Column({ type: DataType.STRING, field: 'source_type' })
+  sourceType: string;
+
+  @Column({ type: DataType.STRING, field: 'source_url' })
+  sourceUrl: string;
+
+  @Column({ type: DataType.STRING, field: 'summary' })
+  summary: string;
+
   @Column({
     type: DataType.INTEGER,
+    allowNull: false,
     field: 'kb_id',
   })
   kbId: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    field: 'site_id',
+  })
+  siteId: number;
 
   @Column({
     type: DataType.INTEGER,

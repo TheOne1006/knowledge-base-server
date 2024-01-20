@@ -144,7 +144,25 @@ describe('KbService', () => {
       const result = service.getKbRoot(kb);
       const expected = `${RESOURCES_ROOT}/1/title`;
       expect(result).toEqual(expected);
-      // Add more assertions based on your business logic
+    });
+  });
+
+  describe('getKbUploadRoot', () => {
+    it('should get the root uploads of a knowledge base', () => {
+      const kb = { title: 'title', ownerId: 1 } as KbDto;
+      const result = service.getKbUploadRoot(kb);
+      const expected = `${RESOURCES_ROOT}/1/title/_uploads`;
+      expect(result).toEqual(expected);
+    });
+  });
+
+  describe('getUploadFiles', () => {
+    it('should get upload files of a knowledge base', async () => {
+      const expected = [];
+
+      const kb = { title: 'title', ownerId: 1 } as KbDto;
+      const actual = await service.getUploadFiles(kb);
+      expect(actual).toEqual(expected);
     });
   });
 

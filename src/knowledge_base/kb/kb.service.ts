@@ -10,11 +10,6 @@ import { KbDto, CreateKbDto, UpdateKbDto } from './dtos';
 import { FileStatDto } from '../utils/dtos';
 
 import { BaseService } from '../base/base.service';
-import { checkDir } from '../utils/check-dir';
-import {
-  getAllFilesAndDirectoriesRecursively,
-  flatFileAndDirRecursively,
-} from '../utils/recursion-files';
 
 export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   constructor(
@@ -59,8 +54,8 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   ): Promise<KbDto[]> {
     return this.mainModel.findAll({
       where,
-      offset: offset > 0 ? offset : null,
-      limit: limit > 0 ? limit : null,
+      offset: Math.max(0, offset) || undefined,
+      limit: Math.max(0, limit) || undefined,
     });
   }
 
@@ -142,7 +137,33 @@ export class KbService extends KbServiceDB {
   }
 
   /**
+   * 获取资源库上传文件的目录 = getKbRoot() + _uploads
+   * @param {KbDto} kb
+   * @returns {string}
+   */
+  getKbUploadRoot(kb: KbDto): string {
+    return `${this.getKbRoot(kb)}/_uploads`;
+  }
+
+  /**
+   * 获取资源库的上传文件
+   * @param {KbDto} kb
+   * @returns {Promise<FileStatDto[]>}
+   */
+  async getUploadFiles(kb: KbDto): Promise<FileStatDto[]> {
+    const uploadRoot = this.getKbUploadRoot(kb);
+    const kbResRoot = this.getKbRoot(kb);
+    this.checkDir(uploadRoot);
+    return this.getFiles(uploadRoot, false, kbResRoot);
+  }
+
+  /**
    * 递归获取所有文件信息
+   * @param {KbDto} kb
+   * @param {string} subDir
+   * @param {boolean} isRecursion
+   * @param {string} ignorePathPrefix
+   * @returns {Promise<FileStatDto[]>}
    */
   async getAllFiles(
     kb: KbDto,

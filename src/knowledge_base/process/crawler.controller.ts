@@ -7,7 +7,7 @@ import {
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
-  // Query,
+  // Query,c
   // Put,
   // Delete,
   Param,
@@ -47,11 +47,14 @@ import { RequestUser } from '../../common/interfaces';
 import { config } from '../../../config';
 import { KbService } from '../kb/kb.service';
 import { KbSiteService } from '../site/site.service';
+import { KbFileService } from '../file/file.service';
 import { BaseController } from '../base/base.controller';
 import { KbResourceService } from './resource.service';
 import { CrawlerService } from './crawler.service';
 import { CrawlerDto } from './dtos';
+import { FILE_SOURCE_TYPE_CRAWLER } from '../base/constants';
 import { CrawlerUrlsManager } from '../utils/crawler-urls-manager';
+// import { SkipInterceptor } from '../../core/interceptors/skip.interceptor';
 
 const prefix = config.API_V1;
 
@@ -66,6 +69,7 @@ export class CrawlerController extends BaseController {
   constructor(
     private readonly kbService: KbService,
     private readonly kbSiteService: KbSiteService,
+    private readonly kbFileService: KbFileService,
     private readonly crawlerService: CrawlerService,
     private readonly kbResService: KbResourceService,
     protected readonly i18n: I18nService,
@@ -103,22 +107,22 @@ export class CrawlerController extends BaseController {
     @Body() crawlerOption: CrawlerDto,
     @User() user: RequestUser,
   ): Promise<Observable<MessageEvent>> {
-    const [bkIns, bkSiteIns] = await Promise.all([
+    const [kbIns, bkSiteIns] = await Promise.all([
       this.kbService.findByPk(pk),
       this.kbSiteService.findByPk(siteId),
     ]);
-    this.check_owner(bkIns, user.id);
+    this.check_owner(kbIns, user.id);
     this.check_owner(bkSiteIns, user.id);
 
     // 获取站点的目录
-    const kbResRoot = this.kbService.getKbRoot(bkIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns);
     const kbSiteResRoot = this.kbSiteService.getKbSiteRoot(
       kbResRoot,
       bkSiteIns,
     );
 
     const localAllPaths = await this.kbService.getAllFiles(
-      bkIns,
+      kbIns,
       bkSiteIns.title,
       false,
       kbSiteResRoot,
@@ -176,16 +180,35 @@ export class CrawlerController extends BaseController {
             // 加入 urls 队列中
             urlManager.addUrlsFromCrawler(links);
             // 保存 html
-            await this.kbResService.saveHtml(kbSiteResRoot, url, html);
+            const filePath = await this.kbResService.saveHtml(
+              kbResRoot,
+              bkSiteIns.title,
+              url,
+              html,
+            );
+
+            // 入库
+            await this.kbFileService.findOrCreate(
+              {
+                fileExt: 'html',
+                sourceType: FILE_SOURCE_TYPE_CRAWLER,
+                sourceUrl: url,
+              },
+              filePath,
+              kbIns.id,
+              user.id,
+              bkSiteIns.id,
+            );
+            // save html to page
             urlManager.clearRetryUrl(url);
           } catch (error) {
-            logger.warn(`error at ${url}, ${error.message}`);
+            logger.warn(`error at ${url}, errMsg: ${error.message}`);
             completed = false;
             retry = urlManager.getUrlRetryUrlTimes(url);
             urlManager.addRetryUrl(url);
           }
 
-          logger.info(`crawler finish at ${url}, ${completed}`);
+          logger.info(`crawler finish at ${url}, completed: ${completed}`);
 
           subscriber.next({
             data: {
