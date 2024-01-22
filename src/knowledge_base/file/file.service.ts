@@ -1,5 +1,5 @@
 import { pick, map } from 'lodash';
-import { Transaction, WhereOptions } from 'sequelize';
+import { WhereOptions, OrderItem } from 'sequelize';
 import * as path from 'path';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
@@ -38,9 +38,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       ownerId,
     });
 
-    const options = await this.genOptions();
-    const instance = await data.save(options);
-    await this.autoCommit(options);
+    const instance = await data.save();
 
     return instance;
   }
@@ -58,7 +56,6 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     ownerId: number,
     kbId: number,
     sourceType: string,
-    transaction?: Transaction,
   ): Promise<KbFileDto[]> {
     const data = pyloads.map((payload) => ({
       ...payload,
@@ -67,9 +64,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       kbId,
     }));
 
-    const options = await this.genOptions(transaction);
-    const instances = await this.mainModel.bulkCreate(data, options);
-    await this.autoCommit(options, transaction);
+    const instances = await this.mainModel.bulkCreate(data);
 
     return instances;
   }
@@ -85,11 +80,13 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     where?: WhereOptions,
     offset?: number,
     limit?: number,
+    order?: OrderItem,
   ): Promise<KbFileDto[]> {
     return this.mainModel.findAll({
       where,
       offset: Math.max(0, offset) || undefined,
       limit: Math.max(0, limit) || undefined,
+      order: [order],
     });
   }
 
@@ -106,14 +103,9 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    * 根据pk, 更新 只接受 pyload
    * @param {number} pk
    * @param {UpdateKbFileDto} pyload
-   * @param {KbFileDto} transaction
    * @returns {Promise<KbFileDto>}
    */
-  async updateByPk(
-    pk: number,
-    pyload: UpdateKbFileDto,
-    transaction?: Transaction,
-  ): Promise<KbFileDto> {
+  async updateByPk(pk: number, pyload: UpdateKbFileDto): Promise<KbFileDto> {
     const instance = await this.mainModel.findByPk(pk);
 
     if (!instance) {
@@ -129,9 +121,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       }
     });
 
-    const options = await this.genOptions(transaction);
-    await instance.save(options);
-    await this.autoCommit(options, transaction);
+    await instance.save();
 
     return instance;
   }
@@ -140,41 +130,30 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    *
    * 根据id, 删除
    * @param {number} id
-   * @param {Transaction} transaction
    * @returns {Promise<KbFileDto>}
    */
-  async removeByPk(id: number, transaction?: Transaction): Promise<KbFileDto> {
+  async removeByPk(id: number): Promise<KbFileDto> {
     const data = await this.mainModel.findByPk(id);
 
-    const options = await this.genOptions(transaction);
-    await data.destroy(options);
-    await this.autoCommit(options, transaction);
+    await data.destroy();
     return data;
   }
 
   /**
    * 批量删除
    * @param {number[]} ids
-   * @param {Transaction} transaction
    * @returns {Promise<number[]>}
    */
-  async batchDeleteByIds(
-    ids: number[],
-    transaction?: Transaction,
-  ): Promise<number[]> {
+  async batchDeleteByIds(ids: number[]): Promise<number[]> {
     if (!ids.length) {
       return [];
     }
 
-    const options = await this.genOptions(transaction);
     await this.mainModel.destroy({
       where: {
         id: ids,
       },
-      ...options,
     });
-    await this.autoCommit(options, transaction);
-
     return ids;
   }
 

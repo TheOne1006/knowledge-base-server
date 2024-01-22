@@ -10,6 +10,7 @@ import {
   Delete,
   Param,
   ParseIntPipe,
+  Header,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -20,6 +21,8 @@ import {
 } from '@nestjs/swagger';
 import { WhereOptions } from 'sequelize';
 import { I18nService } from 'nestjs-i18n';
+import type { Response } from 'express';
+import { ExpressResponse } from '../../common/decorators/express-res.decorator';
 
 import { SerializerInterceptor } from '../../common/interceptors/serializer.interceptor';
 import { Roles, SerializerClass, User } from '../../common/decorators';
@@ -33,6 +36,10 @@ import { KbFileService } from './file.service';
 import { KbService } from '../kb/kb.service';
 import { BaseController } from '../base/base.controller';
 import { ReqDataCountDto } from '../base/res-data-count.dto';
+import {
+  FILE_SOURCE_TYPE_UPLOAD,
+  // FILE_SOURCE_TYPE_CRAWLER,
+} from '../base/constants';
 
 const prefix = config.API_V1;
 
@@ -43,11 +50,11 @@ const prefix = config.API_V1;
 
 @UseGuards(RolesGuard)
 @Roles(ROLE_AUTHENTICATED)
-@Controller(`${prefix}/kb-file`)
+@Controller(`${prefix}/kb-files`)
 @ApiSecurity('api_key')
-@ApiTags('kb-file')
+@ApiTags('kb-files')
 @UseInterceptors(SerializerInterceptor)
-@Controller('kb-file')
+@Controller('kb-files')
 export class KbFileController extends BaseController {
   constructor(
     private readonly service: KbFileService,
@@ -118,6 +125,7 @@ export class KbFileController extends BaseController {
    * 获取owner文件列表
    */
   @Get()
+  @Header('Access-Control-Expose-Headers', 'X-Total-Count')
   @ApiOperation({
     summary: '所有者的知识库文件列表',
   })
@@ -129,47 +137,110 @@ export class KbFileController extends BaseController {
     required: false,
   })
   @ApiQuery({
-    name: 'offset',
-    description: 'offset',
-    example: 1,
+    name: 'siteId',
+    example: '1',
+    description: '站点id',
     type: Number,
     required: false,
   })
   @ApiQuery({
-    name: 'limit',
-    description: 'limit',
-    example: 10,
-    type: Number,
+    name: 'filePath',
+    example: '/xxx/x.html',
+    description: '文件路径',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'fileExt',
+    example: 'html',
+    description: '后缀',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'sourceType',
+    example: FILE_SOURCE_TYPE_UPLOAD,
+    description: '来源',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'sourceUrl',
+    example: 'https://xxx',
+    description: '来源网址',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_sort',
+    description: '排序字段',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_order',
+    description: '排序方式',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_end',
+    description: '结束索引',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_start',
+    description: '开始索引',
     required: false,
   })
   @SerializerClass(KbFileDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async ownerlist(
-    @Param(
+    @ExpressResponse() res: Response,
+    @User() owner: RequestUser,
+    @Query(
       'kbId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
     kbId: number,
     @Query(
-      'offset',
+      'siteId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    offset: number,
+    siteId: number,
+    @Query('filePath') filePath: string,
+    @Query('sourceType') sourceType: string,
+    @Query('sourceUrl') sourceUrl: string,
     @Query(
-      'limit',
+      '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    limit: number,
-    @User() owner: RequestUser,
+    start: number,
+    @Query(
+      '_end',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    end: number,
+    @Query('_sort') sort?: string,
+    @Query('_order') order?: string,
   ): Promise<KbFileDto[]> {
-    const where: WhereOptions = {
+    const originWhere: WhereOptions = {
       ownerId: owner.id,
     };
-    if (kbId) {
-      where.kbId = kbId;
-    }
 
-    const list = await this.service.findAll(where, offset, limit);
+    const exactSearch = { kbId, siteId, sourceType };
+    const fuzzyMatch = {
+      filePath,
+      sourceUrl,
+    };
+
+    const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
+    const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
+    const [sortAttr, sortBy] = this.buildSearchOrder(sort, order);
+
+    const list = await this.service.findAll(where, offset, limit, [
+      sortAttr,
+      sortBy,
+    ]);
+
+    const count = await this.service.count(where);
+
+    res.set('X-Total-Count', `messages ${start}-${end}/${count}`);
+
     return list;
   }
 
@@ -235,7 +306,6 @@ export class KbFileController extends BaseController {
 
   /**
    * 删除知识某个文件
-   * todo 同步删除
    */
   @Delete('/:id')
   @ApiOperation({

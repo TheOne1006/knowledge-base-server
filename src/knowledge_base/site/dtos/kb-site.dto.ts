@@ -22,10 +22,8 @@ export class KbSiteDto {
 
   kbId: number;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

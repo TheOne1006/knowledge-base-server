@@ -1,5 +1,10 @@
 import { Sequelize } from 'sequelize-typescript';
-import { Transactionable, WhereOptions, Transaction } from 'sequelize';
+import {
+  Transactionable,
+  WhereOptions,
+  Transaction,
+  OrderItem,
+} from 'sequelize';
 import { FileStatDto } from '../utils/dtos';
 import {
   getAllFilesAndDirectoriesRecursively,
@@ -87,12 +92,14 @@ abstract class BaseDBService<T extends BaseModelT, U> {
    * @param {WhereOptions} where
    * @param {number} offset
    * @param {number} limit
+   * @param {OrderItem} order
    * @returns {Promise<U[]>}
    */
   abstract findAll(
     where?: WhereOptions,
     offset?: number,
     limit?: number,
+    order?: OrderItem,
   ): Promise<U[]>;
 
   /**

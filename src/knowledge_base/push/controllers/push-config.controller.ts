@@ -11,6 +11,7 @@ import {
   Delete,
   Param,
   ParseIntPipe,
+  Header,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -22,7 +23,8 @@ import {
 } from '@nestjs/swagger';
 import { WhereOptions } from 'sequelize';
 import { I18nService } from 'nestjs-i18n';
-
+import type { Response } from 'express';
+import { ExpressResponse } from '../../../common/decorators/express-res.decorator';
 import { SerializerInterceptor } from '../../../common/interceptors/serializer.interceptor';
 import { Roles, SerializerClass, User } from '../../../common/decorators';
 import { RolesGuard } from '../../../common/auth';
@@ -139,6 +141,7 @@ export class PushConfigController extends BaseController {
    * 获取owner文件列表
    */
   @Get()
+  @Header('Access-Control-Expose-Headers', 'X-Total-Count')
   @ApiOperation({
     summary: '所有者的推送配置列表',
   })
@@ -150,47 +153,89 @@ export class PushConfigController extends BaseController {
     required: false,
   })
   @ApiQuery({
-    name: 'offset',
-    description: 'offset',
-    example: 1,
-    type: Number,
+    name: 'title',
+    description: 'title',
     required: false,
   })
   @ApiQuery({
-    name: 'limit',
-    description: 'limit',
-    example: 10,
-    type: Number,
+    name: 'desc',
+    description: 'desc',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'type',
+    description: 'type',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_sort',
+    description: '排序字段',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_order',
+    description: '排序方式',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_end',
+    description: '结束索引',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_start',
+    description: '开始索引',
     required: false,
   })
   @SerializerClass(PushConfigDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async ownerlist(
+    @ExpressResponse() res: Response,
+    @User() owner: RequestUser,
     @Query(
       'kbId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
     kbId: number,
+    @Query('title') title: string,
+    @Query('desc') desc: string,
+    @Query('type') type: string,
     @Query(
-      'offset',
+      '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    offset: number,
+    start: number,
     @Query(
-      'limit',
+      '_end',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    limit: number,
-    @User() owner: RequestUser,
+    end: number,
+    @Query('_sort') sort?: string,
+    @Query('_order') order?: string,
   ): Promise<PushConfigDto[]> {
-    const where: WhereOptions = {
+    const originWhere: WhereOptions = {
       ownerId: owner.id,
     };
-    if (kbId) {
-      where.kbId = kbId;
-    }
 
-    const list = await this.service.findAll(where, offset, limit);
+    const exactSearch = { kbId, type };
+    const fuzzyMatch = {
+      title,
+      desc,
+    };
+
+    const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
+    const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
+    const [sortAttr, sortBy] = this.buildSearchOrder(sort, order);
+
+    const list = await this.service.findAll(where, offset, limit, [
+      sortAttr,
+      sortBy,
+    ]);
+
+    const count = await this.service.count(where);
+
+    res.set('X-Total-Count', `messages ${start}-${end}/${count}`);
+
     return list;
   }
 

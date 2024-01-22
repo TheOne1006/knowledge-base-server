@@ -61,10 +61,7 @@ class MockBaseService extends BaseService<typeof MockBaseModel, MockBaseDto> {
       ...pyload,
     });
 
-    const options = await this.genOptions();
-    const instance = await data.save(options);
-    await this.autoCommit(options);
-
+    const instance = await data.save();
     return instance;
   }
 
@@ -74,9 +71,7 @@ class MockBaseService extends BaseService<typeof MockBaseModel, MockBaseDto> {
 
   async updateByPk(id: number, pyload: any): Promise<MockBaseDto> {
     const data = await this.mainModel.findByPk(id);
-    const options = await this.genOptions();
-    const instance = await data.update(pyload, options);
-    await this.autoCommit(options);
+    const instance = await data.update(pyload);
 
     return instance;
   }

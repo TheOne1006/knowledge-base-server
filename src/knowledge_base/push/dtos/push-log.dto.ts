@@ -16,7 +16,6 @@ export class PushLogDto {
 
   kbId: number;
 
-  @Exclude()
   updatedAt: Date;
 
   createdAt: Date;

@@ -1,5 +1,5 @@
 import { omit, map } from 'lodash';
-import { Transaction, WhereOptions } from 'sequelize';
+import { WhereOptions, OrderItem } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -33,9 +33,8 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
       ...pyload,
       ownerId,
     });
-    const options = await this.genOptions();
-    const instance = await data.save(options);
-    await this.autoCommit(options);
+
+    const instance = await data.save();
 
     return instance;
   }
@@ -45,17 +44,20 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
    * @param {WhereOptions} where
    * @param {number} offset
    * @param {number} limit
+   * @param {OrderItem} order
    * @returns {Promise<KbDto[]>}
    */
   async findAll(
     where?: WhereOptions,
     offset?: number,
     limit?: number,
+    order?: OrderItem,
   ): Promise<KbDto[]> {
     return this.mainModel.findAll({
       where,
       offset: Math.max(0, offset) || undefined,
       limit: Math.max(0, limit) || undefined,
+      order: [order],
     });
   }
 
@@ -72,14 +74,9 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
    * 根据pk, 更新
    * @param {number} pk
    * @param {UpdateKbDto} pyload
-   * @param {Transaction} transaction
    * @returns {Promise<KbDto>}
    */
-  async updateByPk(
-    pk: number,
-    pyload: UpdateKbDto,
-    transaction?: Transaction,
-  ): Promise<KbDto> {
+  async updateByPk(pk: number, pyload: UpdateKbDto): Promise<KbDto> {
     const instance = await this.mainModel.findByPk(pk);
 
     if (!instance) {
@@ -95,9 +92,7 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
       }
     });
 
-    const options = await this.genOptions(transaction);
-    await instance.save(options);
-    await this.autoCommit(options, transaction);
+    await instance.save();
 
     return instance;
   }
@@ -105,15 +100,12 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
   /**
    * 根据id, 删除
    * @param {number} id
-   * @param {Transaction} transaction
    * @returns {Promise<KbDto>}
    */
-  async removeByPk(id: number, transaction?: Transaction): Promise<KbDto> {
+  async removeByPk(id: number): Promise<KbDto> {
     const data = await this.mainModel.findByPk(id);
 
-    const options = await this.genOptions(transaction);
-    await data.destroy(options);
-    await this.autoCommit(options, transaction);
+    await data.destroy();
     return data;
   }
 }

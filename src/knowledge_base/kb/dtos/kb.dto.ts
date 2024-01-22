@@ -14,10 +14,8 @@ export class KbDto {
 
   ownerId: number;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

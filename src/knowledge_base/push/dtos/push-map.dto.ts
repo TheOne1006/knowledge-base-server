@@ -20,10 +20,8 @@ export class PushMapDto {
 
   kbId: number;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

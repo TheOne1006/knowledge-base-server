@@ -11,6 +11,7 @@ import {
   Delete,
   Param,
   ParseIntPipe,
+  Header,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -22,6 +23,8 @@ import {
 } from '@nestjs/swagger';
 import { WhereOptions } from 'sequelize';
 import { I18nService } from 'nestjs-i18n';
+import type { Response } from 'express';
+import { ExpressResponse } from '../../common/decorators/express-res.decorator';
 
 import { SerializerInterceptor } from '../../common/interceptors/serializer.interceptor';
 import { Roles, SerializerClass, User } from '../../common/decorators';
@@ -40,11 +43,11 @@ const prefix = config.API_V1;
 
 @UseGuards(RolesGuard)
 @Roles(ROLE_AUTHENTICATED)
-@Controller(`${prefix}/kb-site`)
+@Controller(`${prefix}/kb-sites`)
 @ApiSecurity('api_key')
-@ApiTags('kb-site')
+@ApiTags('kb-sites')
 @UseInterceptors(SerializerInterceptor)
-@Controller('kb-site')
+@Controller('kb-sites')
 export class KbSiteController extends BaseController {
   constructor(
     private readonly service: KbSiteService,
@@ -131,6 +134,7 @@ export class KbSiteController extends BaseController {
    * 获取owner文件列表
    */
   @Get()
+  @Header('Access-Control-Expose-Headers', 'X-Total-Count')
   @ApiOperation({
     summary: '所有者的知识库文件列表',
   })
@@ -142,47 +146,90 @@ export class KbSiteController extends BaseController {
     required: false,
   })
   @ApiQuery({
-    name: 'offset',
-    description: 'offset',
-    example: 1,
-    type: Number,
+    name: 'hostname',
+    description: 'hostname',
     required: false,
   })
   @ApiQuery({
-    name: 'limit',
-    description: 'limit',
-    example: 10,
-    type: Number,
+    name: 'title',
+    description: 'title',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'desc',
+    description: 'desc',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_sort',
+    description: '排序字段',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_order',
+    description: '排序方式',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_end',
+    description: '结束索引',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_start',
+    description: '开始索引',
     required: false,
   })
   @SerializerClass(KbSiteDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async ownerlist(
+    @ExpressResponse() res: Response,
+    @User() owner: RequestUser,
     @Query(
       'kbId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
     kbId: number,
+    @Query('title') title: string,
+    @Query('desc') desc: string,
+    @Query('hostname') hostname: string,
     @Query(
-      'offset',
+      '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    offset: number,
+    start: number,
     @Query(
-      'limit',
+      '_end',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    limit: number,
-    @User() owner: RequestUser,
+    end: number,
+    @Query('_sort') sort?: string,
+    @Query('_order') order?: string,
   ): Promise<KbSiteDto[]> {
-    const where: WhereOptions = {
+    const originWhere: WhereOptions = {
       ownerId: owner.id,
     };
-    if (kbId) {
-      where.kbId = kbId;
-    }
 
-    const list = await this.service.findAll(where, offset, limit);
+    const exactSearch = { kbId };
+    const fuzzyMatch = {
+      title,
+      desc,
+      hostname,
+    };
+
+    const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
+    const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
+    const [sortAttr, sortBy] = this.buildSearchOrder(sort, order);
+
+    const list = await this.service.findAll(where, offset, limit, [
+      sortAttr,
+      sortBy,
+    ]);
+
+    const count = await this.service.count(where);
+
+    res.set('X-Total-Count', `messages ${start}-${end}/${count}`);
+
     return list;
   }
 

@@ -60,11 +60,11 @@ const prefix = config.API_V1;
 
 @UseGuards(RolesGuard)
 @Roles(ROLE_AUTHENTICATED)
-@Controller(`${prefix}/kb`)
+@Controller(`${prefix}/kbs`)
 @ApiSecurity('api_key')
-@ApiTags('kb')
+@ApiTags('kbs')
 @UseInterceptors(SerializerInterceptor)
-@Controller('kb')
+@Controller('kbs')
 export class CrawlerController extends BaseController {
   constructor(
     private readonly kbService: KbService,

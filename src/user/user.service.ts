@@ -1,5 +1,4 @@
 // import * as _ from 'lodash';
-import { Transaction, SaveOptions } from 'sequelize';
 import { createHash } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -80,18 +79,11 @@ export class UserService {
   /**
    * 根据id, 删除用户
    * @param id number
-   * @returns Promise<UserDto>
+   * @returns {Promise<UserDto>}
    */
-  async removeByPk(id: number, transaction?: Transaction): Promise<UserDto> {
+  async removeByPk(id: number): Promise<UserDto> {
     const data = await this.userModel.findByPk(id);
-
-    const options: SaveOptions = {};
-    if (transaction) {
-      options.transaction = transaction;
-    }
-
-    await data.destroy(options);
-
+    await data.destroy();
     return data;
   }
 
@@ -99,13 +91,8 @@ export class UserService {
    * password 更新
    * @param userID 用户名
    * @param inputPassword 密码
-   * @param transaction
    */
-  async updatePasswordByPk(
-    userID: number,
-    inputPassword: string,
-    transaction?: Transaction,
-  ) {
+  async updatePasswordByPk(userID: number, inputPassword: string) {
     const instance = await this.userModel.findByPk(userID);
 
     if (!instance) {
@@ -119,12 +106,7 @@ export class UserService {
     instance.password = password;
     instance.updatedAt = new Date();
 
-    const options: SaveOptions = {};
-    if (transaction) {
-      options.transaction = transaction;
-    }
-
-    await instance.save(options);
+    await instance.save();
 
     return instance;
   }

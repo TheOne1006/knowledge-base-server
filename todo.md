@@ -7,9 +7,11 @@
 [x] jest 覆盖率
 [] 测试
 [] 部署
-[] 文件上传
+[x] 文件上传
+  - langchain 链
 [] 抓取任务
   - 并发
   - jQuery 介入
   - 自定义提取信息
-[] 对接 api
+[] 对接 api _order
+1. test

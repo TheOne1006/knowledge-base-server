@@ -22,10 +22,8 @@ export class KbFileDto {
 
   siteId?: number;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()
