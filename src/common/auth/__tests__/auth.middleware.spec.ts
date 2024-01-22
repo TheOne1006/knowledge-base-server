@@ -76,7 +76,7 @@ describe('AuthMiddleware', () => {
       const mockToken = '_mock1,super-admin';
       const mockReq = {
         headers: {
-          bktoken: mockToken,
+          token: mockToken,
         },
         ip: '127.0.0.1',
       } as any as Request;
@@ -99,7 +99,7 @@ describe('AuthMiddleware', () => {
     });
 
     it('should return user with check', async () => {
-      const token = 'bkToken';
+      const token = 'token';
       const mockReq = {
         headers: {
           token: token,
