@@ -156,4 +156,45 @@ describe('UserService', () => {
       });
     });
   });
+
+  describe('check()', () => {
+    it('should return null if user does not exist', async () => {
+      jest.spyOn((service as any).userModel, 'findOne').mockResolvedValue(null);
+      const result = await service.check('nonexistent', 'password');
+      expect(result).toBeNull();
+    });
+
+    it('should return null if password does not match', async () => {
+      const mockUser = {
+        username: 'existing',
+        salt: '123',
+        password: 'wrongpassword',
+        toJSON: () => this,
+      };
+      jest
+        .spyOn((service as any).userModel, 'findOne')
+        .mockResolvedValue(mockUser);
+      const result = await service.check('existing', 'password');
+      expect(result).toBeNull();
+    });
+
+    it('should return user if username and password match', async () => {
+      const mockUser = {
+        id: 1,
+        salt: '123',
+        password: '482c811da5d5b4bc6d497ffa98491e38',
+        username: 'John',
+        toJSON: () => ({
+          id: 1,
+          username: 'John',
+        }),
+      };
+      jest
+        .spyOn((service as any).userModel, 'findOne')
+        .mockResolvedValue(mockUser);
+
+      const result = await service.check('existing', 'password');
+      expect(result).toEqual(mockUser.toJSON());
+    });
+  });
 });
