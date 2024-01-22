@@ -128,4 +128,30 @@ export class UserService {
 
     return instance;
   }
+
+  /**
+   * 检查用户
+   * @param {string} username
+   * @param {string} password
+   * @returns {Promise<UserDto | null>}
+   */
+  async check(username: string, password: string): Promise<UserDto | null> {
+    const user = await this.userModel.findOne({
+      where: {
+        username,
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    const encryptedPassword = encryptPassword(password, user.salt);
+
+    if (encryptedPassword !== user.password) {
+      return null;
+    }
+
+    return user.toJSON();
+  }
 }
