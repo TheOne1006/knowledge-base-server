@@ -11,17 +11,19 @@ import {
   // Delete,
   Param,
   ParseIntPipe,
+  ParseBoolPipe,
   UploadedFiles,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Query,
 } from '@nestjs/common';
 import {
   ApiOperation,
   ApiTags,
   ApiSecurity,
   ApiResponse,
-  // ApiQuery,
+  ApiQuery,
   ApiParam,
   ApiBody,
   ApiConsumes,
@@ -132,6 +134,47 @@ export class KbResourceController extends BaseController {
     }
 
     return targetPaths;
+  }
+
+  @Get(':id/diskFiles')
+  @ApiParam({
+    name: 'id',
+    example: '1',
+    description: '知识库id',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'subDir',
+    example: 'title',
+    description: '子目录',
+  })
+  @ApiQuery({
+    name: 'isRecursion',
+    example: 'true',
+    description: '是否为递归显示',
+    type: Boolean,
+  })
+  @SerializerClass(FileStatDto)
+  async diskFiles(
+    @Param('id', ParseIntPipe) pk: number,
+    @User() user: RequestUser,
+    @Query('subDir') subDir?: string,
+    @Query('isRecursion', ParseBoolPipe) isRecursion?: boolean,
+  ): Promise<FileStatDto[]> {
+    const kbIns = await this.kbService.findByPk(pk);
+    this.check_owner(kbIns, user.id);
+
+    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    await this.kbResService.checkDir(kbResRoot);
+
+    const files = await this.kbService.getAllFiles(
+      kbIns,
+      subDir,
+      isRecursion,
+      kbResRoot,
+    );
+
+    return files;
   }
 
   /**

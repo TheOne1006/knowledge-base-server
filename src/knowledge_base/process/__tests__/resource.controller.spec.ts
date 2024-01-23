@@ -127,6 +127,60 @@ describe('KbResourceController', () => {
     });
   });
 
+  describe('diskFiles', () => {
+    it('should return files successfully', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const subDir = 'subDir';
+      const isRecursion = true;
+
+      KbServiceMock.findByPk = jest.fn().mockResolvedValue({
+        id: kbId,
+        title: 'title',
+        ownerId: mockUser.id,
+      });
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbResourceServiceMock.checkDir = jest.fn().mockResolvedValue(true);
+
+      KbServiceMock.getAllFiles = jest
+        .fn()
+        .mockResolvedValue([{ path: '/path1.txt' }, { path: '/path2.txt' }]);
+
+      const result = await controller.diskFiles(
+        kbId,
+        mockUser,
+        subDir,
+        isRecursion,
+      );
+
+      expect(KbServiceMock.findByPk).toHaveBeenCalledWith(kbId);
+      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith({
+        id: kbId,
+        title: 'title',
+        ownerId: mockUser.id,
+      });
+      expect(KbResourceServiceMock.checkDir).toHaveBeenCalledWith('/kbRoot');
+      expect(KbServiceMock.getAllFiles).toHaveBeenCalledWith(
+        {
+          id: kbId,
+          title: 'title',
+          ownerId: mockUser.id,
+        },
+        subDir,
+        isRecursion,
+        '/kbRoot',
+      );
+      expect(result).toEqual([{ path: '/path1.txt' }, { path: '/path2.txt' }]);
+    });
+  });
+
   describe('syncFilesToDb', () => {
     it('should sync files to db successfully', async () => {
       const mockUser = {
