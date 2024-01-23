@@ -31,13 +31,17 @@ export abstract class BaseController {
     fuzzyMatch: { [key: string]: any } = {},
   ): WhereOptions {
     Object.keys(exactSearch).forEach((key) => {
-      where[key] = exactSearch[key];
+      if (exactSearch[key]) {
+        where[key] = exactSearch[key];
+      }
     });
 
     Object.keys(fuzzyMatch).forEach((key) => {
-      where[key] = {
-        [Op.like]: `%${fuzzyMatch[key]}%`,
-      };
+      if (fuzzyMatch[key]) {
+        where[key] = {
+          [Op.like]: `%${fuzzyMatch[key]}%`,
+        };
+      }
     });
 
     return where;
