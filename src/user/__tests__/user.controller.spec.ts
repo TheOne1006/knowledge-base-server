@@ -60,7 +60,11 @@ describe('UserController', () => {
 
   describe('READ', () => {
     it('users list', async () => {
-      const actual = await controller.list();
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+
+      const actual = await controller.list(mockRes);
       expect(actual.length).toBeGreaterThan(1);
     });
 

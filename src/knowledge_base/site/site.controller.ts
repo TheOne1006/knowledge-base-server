@@ -189,20 +189,20 @@ export class KbSiteController extends BaseController {
       'kbId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    kbId: number,
-    @Query('title') title: string,
-    @Query('desc') desc: string,
-    @Query('hostname') hostname: string,
+    kbId?: number,
+    @Query('title') title?: string,
+    @Query('desc') desc?: string,
+    @Query('hostname') hostname?: string,
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    start: number,
+    start?: number,
     @Query(
       '_end',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    end: number,
+    end?: number,
     @Query('_sort') sort?: string,
     @Query('_order') order?: string,
   ): Promise<KbSiteDto[]> {
@@ -219,12 +219,9 @@ export class KbSiteController extends BaseController {
 
     const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
     const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
-    const [sortAttr, sortBy] = this.buildSearchOrder(sort, order);
+    const searchOrder = this.buildSearchOrder(sort, order);
 
-    const list = await this.service.findAll(where, offset, limit, [
-      sortAttr,
-      sortBy,
-    ]);
+    const list = await this.service.findAll(where, offset, limit, searchOrder);
 
     const count = await this.service.count(where);
 

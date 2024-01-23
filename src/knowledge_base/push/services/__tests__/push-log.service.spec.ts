@@ -92,6 +92,12 @@ describe('PushLogService', () => {
       expect(result).toBeDefined();
       expect(result.length).toBeGreaterThan(2);
     });
+
+    it('should return instances with args', async () => {
+      const result = await service.findAll({}, 0, 10, ['id', 'desc']);
+      expect(result).toBeDefined();
+      expect(result.length).toBeGreaterThan(2);
+    });
   });
 
   describe('findByPk', () => {

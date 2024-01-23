@@ -104,10 +104,10 @@ describe('KbSiteService', () => {
         expect(result.length).toBeGreaterThan(2);
       });
 
-      it('should return all instance', async () => {
-        const result = await service.findAll(undefined, 1, 3);
+      it('should return instances with args', async () => {
+        const result = await service.findAll({}, 0, 10, ['id', 'desc']);
         expect(result).toBeDefined();
-        expect(result.length).toBeGreaterThan(1);
+        expect(result.length).toBeGreaterThan(2);
       });
     });
 

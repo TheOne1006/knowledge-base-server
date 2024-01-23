@@ -14,7 +14,7 @@
     "start:prod": "cross-env NODE_ENV=production node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
-    "test:noinitdb": "cross-env SKIP_INIT_DB=1 jest",
+    "test:f": "cross-env SKIP_INIT_DB=1 jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:cov:report": "jest --coverage --reporters",

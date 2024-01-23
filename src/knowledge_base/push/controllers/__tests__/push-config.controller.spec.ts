@@ -46,7 +46,18 @@ describe('PushConfigController', () => {
   });
 
   it('should get owner list', async () => {
-    expect(await controller.ownerlist(1, 1, 10, { id: 1 } as any)).toEqual([]);
+    const user = {
+      id: 1,
+      username: 'user',
+      email: '',
+      roles: [],
+    };
+
+    const mockRes = {
+      set: jest.fn(),
+    } as any;
+
+    expect(await controller.ownerlist(mockRes, user, 1, 'title')).toEqual([]);
   });
 
   it('should get count', async () => {

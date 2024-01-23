@@ -97,6 +97,12 @@ describe('KbService', () => {
       expect(result).toBeDefined();
       expect(result.length).toBeGreaterThan(2);
     });
+
+    it('should return all instance with order', async () => {
+      const result = await service.findAll(undefined, 1, 10, ['id', 'DESC']);
+      expect(result).toBeDefined();
+      expect(result.length).toBeGreaterThan(1);
+    });
   });
 
   describe('findByPk', () => {

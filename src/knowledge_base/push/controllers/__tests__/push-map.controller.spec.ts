@@ -38,9 +38,18 @@ describe('PushMapController', () => {
   });
 
   it('should get owner list', async () => {
-    expect(await controller.ownerlist(1, 1, 10, 10, { id: 1 } as any)).toEqual(
-      [],
-    );
+    const mockRes = {
+      set: jest.fn(),
+    } as any;
+    const user = {
+      id: 1,
+      username: 'user',
+      email: '',
+      roles: [],
+    };
+    const actual = await controller.ownerlist(mockRes, user, 1, 1);
+
+    expect(actual).toEqual([]);
   });
 
   it('should get count', async () => {

@@ -98,7 +98,12 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(1, 1, 1, user);
+
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+
+      const actual = await controller.ownerlist(mockRes, user, 1, 1);
 
       expect(actual.length).toBeGreaterThan(1);
     });
@@ -110,7 +115,10 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(undefined, 1, 1, user);
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+      const actual = await controller.ownerlist(mockRes, user, undefined, 1);
 
       expect(actual.length).toBeGreaterThan(1);
     });

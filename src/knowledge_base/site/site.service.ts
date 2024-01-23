@@ -58,7 +58,7 @@ class KbSiteServiceDB extends BaseService<typeof KnowledgeBaseSite, KbSiteDto> {
       where,
       offset: Math.max(0, offset) || undefined,
       limit: Math.max(0, limit) || undefined,
-      order: [order],
+      order: order && [order],
     });
   }
 

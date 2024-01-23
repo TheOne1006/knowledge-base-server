@@ -154,44 +154,36 @@ export class KbController extends BaseController {
   async ownerlist(
     @ExpressResponse() res: Response,
     @User() owner: RequestUser,
-    @Query('title') title: string,
-    @Query('desc') desc: string,
+    @Query('title') title?: string,
+    @Query('desc') desc?: string,
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    start: number,
+    start?: number,
     @Query(
       '_end',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    end: number,
+    end?: number,
     @Query('_sort') sort?: string,
     @Query('_order') order?: string,
   ): Promise<KbDto[]> {
-    const where: WhereOptions = {
+    const originWhere: WhereOptions = {
       ownerId: owner.id,
     };
 
-    const preWhere = {
+    const exactSearch = {};
+    const fuzzyMatch = {
       title,
       desc,
     };
 
-    Object.keys(preWhere).forEach((key) => {
-      if (preWhere[key]) {
-        where[key] = preWhere[key];
-      }
-    });
+    const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
+    const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
+    const searchOrder = this.buildSearchOrder(sort, order);
 
-    // order and limit
-    const [sortAttr, sortBy] = sort && order ? [sort, order] : ['id', 'desc'];
-    const offset = start || 0;
-    const limit = end - start > 0 ? end - start + 1 : 0;
-    const list = await this.service.findAll(where, offset, limit, [
-      sortAttr,
-      sortBy,
-    ]);
+    const list = await this.service.findAll(where, offset, limit, searchOrder);
 
     const count = await this.service.count(where);
 

@@ -57,7 +57,7 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
       where,
       offset: Math.max(0, offset) || undefined,
       limit: Math.max(0, limit) || undefined,
-      order: [order],
+      order: order && [order],
     });
   }
 

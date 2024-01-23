@@ -54,7 +54,7 @@ export abstract class BaseController {
     end?: number,
   ): [number, number] {
     const offset = start || 0;
-    const limit = end - start > 0 ? end - start + 1 : 0;
+    const limit = end - start > 0 ? end - start : 0;
     return [offset, limit];
   }
 
@@ -64,8 +64,15 @@ export abstract class BaseController {
    * @param {string} order
    * @returns
    */
-  protected buildSearchOrder(sort?: string, order?: string): [string, string] {
-    const [sortAttr, sortBy] = sort && order ? [sort, order] : ['id', 'desc'];
-    return [sortAttr, sortBy];
+  protected buildSearchOrder(
+    sort?: string,
+    order?: string,
+  ): [string, string] | undefined {
+    if (!sort) {
+      return undefined;
+    }
+
+    const sortBy = order === 'desc' ? 'DESC' : 'ASC';
+    return [sort, sortBy];
   }
 }

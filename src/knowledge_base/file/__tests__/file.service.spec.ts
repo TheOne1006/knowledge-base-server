@@ -133,8 +133,8 @@ describe('KbFileService', () => {
         expect(result.length).toBeGreaterThan(2);
       });
 
-      it('should return all instance', async () => {
-        const result = await service.findAll(undefined, 1, 2);
+      it('should return all instance with order', async () => {
+        const result = await service.findAll(undefined, 1, 2, ['id', 'DESC']);
         expect(result).toBeDefined();
         expect(result.length).toBeGreaterThan(1);
       });
