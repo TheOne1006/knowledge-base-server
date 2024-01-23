@@ -181,6 +181,62 @@ describe('KbResourceController', () => {
     });
   });
 
+  describe('privewFile', () => {
+    it('should throw an error if the file does not exist', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const filePath = 'nonexistent.txt';
+
+      KbServiceMock.findByPk = jest.fn().mockResolvedValue({
+        id: kbId,
+        title: 'title',
+        ownerId: mockUser.id,
+      });
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbServiceMock.checkPathExist = jest.fn().mockResolvedValue(false);
+
+      await expect(
+        controller.privewFile(kbId, mockUser, {} as any, filePath),
+      ).rejects.toThrow('not exist file');
+    });
+
+    it('should send the file if it exists', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const filePath = 'existent.txt';
+
+      KbServiceMock.findByPk = jest.fn().mockResolvedValue({
+        id: kbId,
+        title: 'title',
+        ownerId: mockUser.id,
+      });
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbServiceMock.checkPathExist = jest.fn().mockResolvedValue(true);
+
+      const res = {
+        sendFile: jest.fn(),
+      };
+
+      await controller.privewFile(kbId, mockUser, res as any, filePath);
+
+      expect(res.sendFile).toHaveBeenCalledWith('/kbRoot/existent.txt');
+    });
+  });
+
   describe('syncFilesToDb', () => {
     it('should sync files to db successfully', async () => {
       const mockUser = {

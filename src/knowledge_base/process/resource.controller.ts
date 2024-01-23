@@ -17,6 +17,7 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -30,7 +31,7 @@ import {
 } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { I18nService } from 'nestjs-i18n';
-
+import type { Response } from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
 // import { WhereOptions } from 'sequelize';
@@ -147,12 +148,14 @@ export class KbResourceController extends BaseController {
     name: 'subDir',
     example: 'title',
     description: '子目录',
+    required: false,
   })
   @ApiQuery({
     name: 'isRecursion',
     example: 'true',
     description: '是否为递归显示',
     type: Boolean,
+    required: false,
   })
   @SerializerClass(FileStatDto)
   async diskFiles(
@@ -175,6 +178,42 @@ export class KbResourceController extends BaseController {
     );
 
     return files;
+  }
+
+  @Get(':id/privewFile')
+  @ApiParam({
+    name: 'id',
+    example: '1',
+    description: '知识库id',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'filePath',
+    example: 'xxx/xxx',
+    description: '文件目录',
+    required: true,
+  })
+  async privewFile(
+    @Param('id', ParseIntPipe) pk: number,
+    @User() user: RequestUser,
+    @Res() res: Response,
+    @Query() filePath: string,
+  ) {
+    const kbIns = await this.kbService.findByPk(pk);
+    this.check_owner(kbIns, user.id);
+
+    const kbResRoot = this.kbService.getKbRoot(kbIns);
+
+    const targetFilePath = join(kbResRoot, filePath);
+
+    const isExists = await this.kbService.checkPathExist(targetFilePath);
+
+    if (!isExists) {
+      throw new Error('not exist file');
+    }
+    // const ext = targetFilePath.split('.').pop();
+    // res.download(file);
+    res.sendFile(targetFilePath);
   }
 
   /**
