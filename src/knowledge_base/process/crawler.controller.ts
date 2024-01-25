@@ -114,6 +114,8 @@ export class CrawlerController extends BaseController {
     this.check_owner(kbIns, user.id);
     this.check_owner(bkSiteIns, user.id);
 
+    const logger = this.logger;
+
     // 获取站点的目录
     const kbResRoot = this.kbService.getKbRoot(kbIns);
     const kbSiteResRoot = this.kbSiteService.getKbSiteRoot(
@@ -154,8 +156,6 @@ export class CrawlerController extends BaseController {
       crawlerOption.type,
       localPathUrls,
     );
-
-    const logger = this.logger;
 
     const crawlFlow = async (subscriber: Subscriber<MessageEvent>) => {
       // 当 i < maxConnections 或者 i < fullUrls.length 时, 继续抓取
@@ -251,6 +251,7 @@ export class CrawlerController extends BaseController {
         },
       });
 
+      logger.info('starting crawlFlow');
       crawlFlow(subscriber);
     });
 

@@ -130,6 +130,11 @@ export class KbController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -156,6 +161,8 @@ export class KbController extends BaseController {
     @User() owner: RequestUser,
     @Query('title') title?: string,
     @Query('desc') desc?: string,
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
@@ -173,7 +180,9 @@ export class KbController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = {};
+    const exactSearch = {
+      id,
+    };
     const fuzzyMatch = {
       title,
       desc,
@@ -197,20 +206,6 @@ export class KbController extends BaseController {
     name: 'ownerId',
     description: 'ownerId',
     example: 1,
-    type: Number,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'offset',
-    description: 'offset',
-    example: 1,
-    type: Number,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'limit',
-    example: 10,
     type: Number,
     required: false,
   })

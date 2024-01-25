@@ -49,10 +49,12 @@ describe('KbResourceController', () => {
           ownerId: 1,
         },
       ]),
+
       batchDeleteByIds: jest.fn().mockImplementation(() => true),
     } as any as KbFileService;
 
     KbServiceMock = {
+      uploadDirName: '/tmp',
       getUploadFiles: jest.fn().mockImplementation(() => []),
       getKbUploadRoot: jest.fn().mockImplementation(() => '/tmp'),
       findByPk: jest.fn().mockImplementation(() => ({
@@ -121,9 +123,22 @@ describe('KbResourceController', () => {
         email: 'test@example.com',
         roles: [],
       };
-      const result = await controller.uploadFiles(1, mockFiles, mockUser);
-      const expected = mockFiles.map((file) => file.originalname);
-      expect(result).toEqual(expected);
+
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation((_res, originalname) => `/tmp/${originalname}`);
+
+      KbFileServiceMock.findOrCreate = jest
+        .fn()
+        .mockImplementation((_, filePath) => ({
+          filePath,
+        }));
+
+      const actual = await controller.uploadFiles(1, mockFiles, mockUser);
+      const expected = mockFiles.map((file) => ({
+        filePath: `${KbServiceMock.uploadDirName}/${file.originalname}`,
+      }));
+      expect(actual).toEqual(expected);
     });
   });
 
@@ -201,6 +216,9 @@ describe('KbResourceController', () => {
       KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
 
       KbServiceMock.checkPathExist = jest.fn().mockResolvedValue(false);
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockResolvedValue('/kbRoot/nonexistent.txt');
 
       await expect(
         controller.privewFile(kbId, mockUser, {} as any, filePath),
@@ -226,6 +244,9 @@ describe('KbResourceController', () => {
       KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
 
       KbServiceMock.checkPathExist = jest.fn().mockResolvedValue(true);
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation(() => '/kbRoot/existent.txt');
 
       const res = {
         sendFile: jest.fn(),

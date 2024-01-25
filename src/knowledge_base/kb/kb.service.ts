@@ -112,6 +112,7 @@ export class KbServiceDB extends BaseService<typeof KnowledgeBase, KbDto> {
 
 @Injectable()
 export class KbService extends KbServiceDB {
+  uploadDirName = '_uploads';
   constructor(
     @Inject(Sequelize)
     protected readonly sequelize: Sequelize,
@@ -121,6 +122,7 @@ export class KbService extends KbServiceDB {
   ) {
     super(sequelize, mainModel, logger);
   }
+
   /**
    * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
    */
@@ -134,7 +136,7 @@ export class KbService extends KbServiceDB {
    * @returns {string}
    */
   getKbUploadRoot(kb: KbDto): string {
-    return `${this.getKbRoot(kb)}/_uploads`;
+    return `${this.getKbRoot(kb)}/${this.uploadDirName}`;
   }
 
   /**

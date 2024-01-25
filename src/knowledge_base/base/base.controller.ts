@@ -76,7 +76,7 @@ export abstract class BaseController {
       return undefined;
     }
 
-    const sortBy = order === 'desc' ? 'DESC' : 'ASC';
+    const sortBy = order?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
     return [sort, sortBy];
   }
 }

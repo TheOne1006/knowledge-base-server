@@ -247,7 +247,7 @@ describe('KbFileService', () => {
           filePath: '../relative/path/to/file.html',
         } as any;
 
-        const result = service.getFilePath(kbResRoot, instance);
+        const result = service.getFilePath(kbResRoot, instance.filePath);
 
         expect(result).toEqual('/root/path/relative/path/to/file.html');
       });
@@ -258,7 +258,7 @@ describe('KbFileService', () => {
           filePath: 'relative/path/to/file.html',
         } as any;
 
-        const result = service.getFilePath(kbResRoot, instance);
+        const result = service.getFilePath(kbResRoot, instance.filePath);
 
         expect(result).toEqual('/root/path/relative/path/to/file.html');
       });

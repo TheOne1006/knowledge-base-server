@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  // Body,
+  Body,
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
@@ -18,6 +18,7 @@ import {
   FileTypeValidator,
   Query,
   Res,
+  // Delete,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -33,13 +34,13 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { I18nService } from 'nestjs-i18n';
 import type { Response } from 'express';
 import * as fs from 'fs';
-import { join } from 'path';
 // import { WhereOptions } from 'sequelize';
 import { SerializerInterceptor } from '../../common/interceptors/serializer.interceptor';
 import { Roles, User, SerializerClass } from '../../common/decorators';
 import { RolesGuard } from '../../common/auth';
 import { ROLE_AUTHENTICATED } from '../../common/constants';
 import { RequestUser } from '../../common/interfaces';
+import { FileNameEncodePipe } from '../pipes/file-name.encode.pipe';
 
 import { config } from '../../../config';
 import { KbService } from '../kb/kb.service';
@@ -50,7 +51,7 @@ import { KbResourceService } from './resource.service';
 import { ENUM_FILE_SOURCE_TYPES } from '../base/constants';
 import { FileStatDto } from '../utils/dtos';
 import { KbFileDto } from '../file/dtos';
-import { SyncFilesToDBDto } from './dtos';
+import { SyncFilesToDBDto, RemoveDiskFiles } from './dtos';
 
 const prefix = config.API_V1;
 
@@ -72,10 +73,6 @@ export class KbResourceController extends BaseController {
     super(i18n);
   }
 
-  /**
-   * 根据 id upload
-   * todo: 进度条
-   */
   @Post(':id/upload')
   @ApiParam({
     name: 'id',
@@ -84,7 +81,7 @@ export class KbResourceController extends BaseController {
     type: Number,
   })
   @ApiOperation({
-    summary: ' 根据 id 查找库',
+    summary: ' 上传文件到知识库',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -101,40 +98,113 @@ export class KbResourceController extends BaseController {
       },
     },
   })
+  @SerializerClass(KbFileDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @UseInterceptors(FilesInterceptor('files'))
   async uploadFiles(
     @Param('id', ParseIntPipe) pk: number,
     @UploadedFiles(
+      new FileNameEncodePipe(),
       new ParseFilePipe({
         validators: [
           // 20M
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 20 }), // bytes
           // pdf html 图片 word JSON jsonl text md 等格式
+          // md mimetype: 'application/octet-stream',
           new FileTypeValidator({
-            fileType: /(jpg|jpeg|png|pdf|html|doc|docx|json|jsonl|txt|md)$/,
+            fileType: /(octet-stream|pdf|html|doc|docx|json|jsonl|txt)$/,
           }),
         ],
       }),
     )
     files: Array<Express.Multer.File>,
-    @User() user: RequestUser,
-  ): Promise<string[]> {
+    @User() owner: RequestUser,
+  ): Promise<KbFileDto[]> {
     const kbIns = await this.kbService.findByPk(pk);
-    this.check_owner(kbIns, user.id);
+    this.check_owner(kbIns, owner.id);
 
     const kbUploadResRoot = this.kbService.getKbUploadRoot(kbIns);
     await this.kbResService.checkDir(kbUploadResRoot);
 
-    const targetPaths = [];
+    const targetFiles: KbFileDto[] = [];
+    await this.kbResService.checkDir(kbUploadResRoot);
     // save to disk
     for (const file of files) {
-      const targetPath = join(kbUploadResRoot, file.originalname);
-      targetPaths.push(file.originalname);
+      const targetPath = this.kbFileService.getFilePath(
+        kbUploadResRoot,
+        file.originalname,
+      );
       await fs.promises.writeFile(targetPath, file.buffer);
+      // save to db
+      const kbFileIns = {
+        filePath: `${this.kbService.uploadDirName}/${file.originalname}`,
+        fileExt: file.originalname.split('.').pop(),
+        sourceType: ENUM_FILE_SOURCE_TYPES.UPLOAD,
+      };
+
+      // 如果存在则跳过
+      const uploadItem = await this.kbFileService.findOrCreate(
+        kbFileIns,
+        kbFileIns.filePath,
+        kbIns.id,
+        owner.id,
+      );
+
+      targetFiles.push(uploadItem);
     }
 
-    return targetPaths;
+    return targetFiles;
+  }
+
+  @Post(':id/removeDiskFiles')
+  @ApiParam({
+    name: 'id',
+    example: '1',
+    description: '知识库id',
+    type: Number,
+  })
+  @ApiOperation({
+    summary: '通过文件路径删除文件',
+  })
+  @SerializerClass(KbFileDto)
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @UseInterceptors(FilesInterceptor('files'))
+  async removeDiskFile(
+    @Param('id', ParseIntPipe) pk: number,
+    @User() user: RequestUser,
+    @Body() pyload: RemoveDiskFiles,
+  ) {
+    const kbIns = await this.kbService.findByPk(pk);
+    this.check_owner(kbIns, user.id);
+
+    const files = pyload.filePaths;
+    const kbResRoot = this.kbService.getKbRoot(kbIns);
+
+    const target: KbFileDto[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const filePath = files[i];
+      const absFilePath = this.kbFileService.getFilePath(kbResRoot, filePath);
+      const isExists = await this.kbService.checkPathExist(absFilePath);
+
+      // 删除 disk
+      if (isExists) {
+        await this.kbFileService.removeFile(absFilePath);
+      }
+
+      // 尝试删除 db
+      const kbFileIns = await this.kbFileService.findOne({
+        kbId: pk,
+        filePath,
+      });
+
+      if (kbFileIns) {
+        const deleteFileIns = await this.kbFileService.removeByPk(kbFileIns.id);
+        target.push(deleteFileIns);
+      }
+    }
+
+    return target;
   }
 
   @Get(':id/diskFiles')
@@ -197,14 +267,14 @@ export class KbResourceController extends BaseController {
     @Param('id', ParseIntPipe) pk: number,
     @User() user: RequestUser,
     @Res() res: Response,
-    @Query() filePath: string,
+    @Query('filePath') filePath: string,
   ) {
     const kbIns = await this.kbService.findByPk(pk);
     this.check_owner(kbIns, user.id);
 
     const kbResRoot = this.kbService.getKbRoot(kbIns);
 
-    const targetFilePath = join(kbResRoot, filePath);
+    const targetFilePath = this.kbFileService.getFilePath(kbResRoot, filePath);
 
     const isExists = await this.kbService.checkPathExist(targetFilePath);
 

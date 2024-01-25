@@ -189,6 +189,11 @@ export class PushMapController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -231,6 +236,8 @@ export class PushMapController extends BaseController {
     @Query('remoteId') remoteId?: string,
     @Query('type') type?: string,
     @Query('pushVersion') pushVersion?: string,
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
@@ -248,7 +255,7 @@ export class PushMapController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId, configId, fileId, type };
+    const exactSearch = { kbId, configId, fileId, type, id };
     const fuzzyMatch = {
       remoteId,
       pushVersion,

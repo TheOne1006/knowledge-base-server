@@ -161,6 +161,11 @@ export class KbSiteController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -185,23 +190,16 @@ export class KbSiteController extends BaseController {
   async ownerlist(
     @ExpressResponse() res: Response,
     @User() owner: RequestUser,
-    @Query(
-      'kbId',
-      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
-    )
+    @Query('kbId', new ParseIntPipe({ optional: true }))
     kbId?: number,
     @Query('title') title?: string,
     @Query('desc') desc?: string,
     @Query('hostname') hostname?: string,
-    @Query(
-      '_start',
-      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
-    )
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
+    @Query('_start', new ParseIntPipe({ optional: true }))
     start?: number,
-    @Query(
-      '_end',
-      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
-    )
+    @Query('_end', new ParseIntPipe({ optional: true }))
     end?: number,
     @Query('_sort') sort?: string,
     @Query('_order') order?: string,
@@ -210,7 +208,7 @@ export class KbSiteController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId };
+    const exactSearch = { kbId, id };
     const fuzzyMatch = {
       title,
       desc,
@@ -312,14 +310,18 @@ export class KbSiteController extends BaseController {
     example: '1',
     description: '知识库id',
     type: Number,
+    required: false,
   })
   @SerializerClass(KbSiteDto)
   async create(
-    @Query('kbId', ParseIntPipe) kbId: number,
+    @Query('kbId', new ParseIntPipe({ optional: true })) kbIdQ: number,
     @Body() newKbSite: CreateKbSiteDto,
     @User() owner: RequestUser,
   ): Promise<KbSiteDto> {
+    const kbId = newKbSite.kbId || kbIdQ;
     const kb = await this.kbService.findByPk(kbId);
+    console.log(kb);
+    console.log(owner);
     this.check_owner(kb, owner.id);
     const newSite = await this.service.create(newKbSite, kbId, owner.id);
 

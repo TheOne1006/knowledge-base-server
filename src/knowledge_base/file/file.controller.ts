@@ -168,6 +168,11 @@ export class KbFileController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -205,6 +210,8 @@ export class KbFileController extends BaseController {
     @Query('filePath') filePath?: string,
     @Query('sourceType') sourceType?: string,
     @Query('sourceUrl') sourceUrl?: string,
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
@@ -222,7 +229,7 @@ export class KbFileController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId, siteId, sourceType };
+    const exactSearch = { kbId, siteId, sourceType, id };
     const fuzzyMatch = {
       filePath,
       sourceUrl,
@@ -322,7 +329,7 @@ export class KbFileController extends BaseController {
     const kbRoot = this.kbService.getKbRoot(kb);
 
     // 文件的绝对路径
-    const fileAbsPath = this.service.getFilePath(kbRoot, ins);
+    const fileAbsPath = this.service.getFilePath(kbRoot, ins.filePath);
 
     const isExist = await this.service.checkPathExist(fileAbsPath);
 

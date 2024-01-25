@@ -100,6 +100,16 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
   }
 
   /**
+   * @param {WhereOptions} where
+   * @returns {Promise<PushLogDto>}
+   */
+  async findOne(where?: WhereOptions): Promise<KbFileDto> {
+    return this.mainModel.findOne({
+      where,
+    });
+  }
+
+  /**
    * 根据pk, 更新 只接受 pyload
    * @param {number} pk
    * @param {UpdateKbFileDto} pyload
@@ -206,12 +216,12 @@ export class KbFileService extends KbFileDBService {
   /**
    * 获取文件路径
    * @param {string} kbResRoot
-   * @param {KbFileDto} instance
+   * @param {string} filePath
    * @returns {string}
    */
-  getFilePath(kbResRoot: string, instance: KbFileDto): string {
+  getFilePath(kbResRoot: string, filePath: string): string {
     // filePath 删除 最左边的 ..., 避免越界
-    const filePath = instance.filePath.replace(/^[\.]+/, '');
-    return path.join(kbResRoot, filePath).toString();
+    const trimFilePath = filePath.replace(/^[\.]+/, '');
+    return path.join(kbResRoot, trimFilePath).toString();
   }
 }

@@ -85,4 +85,10 @@ export class CreateKbSiteDto {
   })
   @IsArray()
   removeSelectors: string[];
+
+  @ApiProperty({
+    example: '1',
+    description: 'kbId',
+  })
+  kbId?: number;
 }

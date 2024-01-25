@@ -168,6 +168,11 @@ export class PushConfigController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -200,6 +205,8 @@ export class PushConfigController extends BaseController {
     @Query('title') title?: string,
     @Query('desc') desc?: string,
     @Query('type') type?: string,
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
@@ -217,7 +224,7 @@ export class PushConfigController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId, type };
+    const exactSearch = { kbId, type, id };
     const fuzzyMatch = {
       title,
       desc,

@@ -13,5 +13,16 @@
   - 并发
   - jQuery 介入
   - 自定义提取信息
-[] 对接 api _order
-1. test
+[] 对接 api 
+  - http://localhost:3000/v1/kbs?id=2
+
+```
+  @ApiQuery({
+    name: 'kbId',
+    example: '1',
+    description: '知识库id',
+    type: Number,
+    required: false,
+  })
+```
+

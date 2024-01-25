@@ -177,6 +177,11 @@ export class PushLogController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
     name: '_order',
     description: '排序方式',
     required: false,
@@ -213,6 +218,8 @@ export class PushLogController extends BaseController {
     configId?: number,
     @Query('type') type?: string,
     @Query('pushVersion') pushVersion?: string,
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
@@ -230,7 +237,7 @@ export class PushLogController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId, configId, type };
+    const exactSearch = { kbId, configId, type, id };
     const fuzzyMatch = {
       pushVersion,
     };
