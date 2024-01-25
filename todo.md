@@ -14,15 +14,6 @@
   - jQuery 介入
   - 自定义提取信息
 [] 对接 api 
-  - http://localhost:3000/v1/kbs?id=2
-
-```
-  @ApiQuery({
-    name: 'kbId',
-    example: '1',
-    description: '知识库id',
-    type: Number,
-    required: false,
-  })
-```
+  - 删除目录
+  - file.filePath  统一格式， 使用 '/' 开头
 

@@ -54,7 +54,7 @@ describe('KbResourceController', () => {
     } as any as KbFileService;
 
     KbServiceMock = {
-      uploadDirName: '/tmp',
+      uploadDirName: 'tmp',
       checkPathExist: jest.fn().mockImplementation(() => true),
       getUploadFiles: jest.fn().mockImplementation(() => []),
       getKbUploadRoot: jest.fn().mockImplementation(() => '/tmp'),
@@ -137,7 +137,7 @@ describe('KbResourceController', () => {
 
       const actual = await controller.uploadFiles(1, mockFiles, mockUser);
       const expected = mockFiles.map((file) => ({
-        filePath: `${KbServiceMock.uploadDirName}/${file.originalname}`,
+        filePath: `/${KbServiceMock.uploadDirName}/${file.originalname}`,
       }));
       expect(actual).toEqual(expected);
     });
@@ -290,6 +290,11 @@ describe('KbResourceController', () => {
         },
       ];
 
+      KbServiceMock.safeJoinPath = jest
+        .fn()
+        .mockImplementation((kbRoot, filePath) => `${kbRoot}/${filePath}`);
+      KbServiceMock.removeDir = jest.fn();
+
       KbServiceMock.getAllFiles = jest
         .fn()
         .mockReturnValueOnce([
@@ -335,6 +340,15 @@ describe('KbResourceController', () => {
         mockPayload,
       );
 
+      expect(KbServiceMock.removeDir).toHaveBeenCalledTimes(2);
+      expect(KbServiceMock.removeDir).toHaveBeenNthCalledWith(
+        1,
+        '/kbRoot/tmp1',
+      );
+      expect(KbServiceMock.removeDir).toHaveBeenNthCalledWith(
+        2,
+        '/kbRoot/tmpnofound',
+      );
       expect(actual).toEqual(expected);
     });
   });

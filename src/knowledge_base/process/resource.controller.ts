@@ -137,7 +137,7 @@ export class KbResourceController extends BaseController {
       await fs.promises.writeFile(targetPath, file.buffer);
       // save to db
       const kbFileIns = {
-        filePath: `${this.kbService.uploadDirName}/${file.originalname}`,
+        filePath: `/${this.kbService.uploadDirName}/${file.originalname}`,
         fileExt: file.originalname.split('.').pop(),
         sourceType: ENUM_FILE_SOURCE_TYPES.UPLOAD,
       };
@@ -182,6 +182,7 @@ export class KbResourceController extends BaseController {
     const target: KbFileDto[] = [];
 
     const files = [];
+    const removeDirs = [];
 
     // 遍历 originFiles 处理文件夹
     for (let i = 0; i < originFiles.length; i++) {
@@ -192,6 +193,7 @@ export class KbResourceController extends BaseController {
       if (/\./.test(pathOrFileName)) {
         files.push(originPath);
       } else {
+        removeDirs.push(this.kbService.safeJoinPath(kbResRoot, pathOrFileName));
         // 处理目录
         const subFiles = await this.kbService.getAllFiles(
           kbIns,
@@ -228,6 +230,8 @@ export class KbResourceController extends BaseController {
         target.push(deleteFileIns);
       }
     }
+
+    await Promise.all(removeDirs.map((item) => this.kbService.removeDir(item)));
 
     return target;
   }

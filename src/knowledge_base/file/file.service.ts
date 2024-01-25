@@ -32,6 +32,16 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     kbId: number,
     ownerId: number,
   ): Promise<KbFileDto> {
+    let filePath = pyload?.filePath || '';
+
+    // 1.md
+    if (filePath.length <= 4) {
+      throw new Error('error filePath');
+    }
+
+    if (!filePath.startsWith('/')) {
+      filePath = `/${filePath}`;
+    }
     const data = new this.mainModel({
       ...pyload,
       kbId,
@@ -62,6 +72,9 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       sourceType,
       ownerId,
       kbId,
+      filePath: payload.filePath.startsWith('/')
+        ? payload.filePath
+        : `/${payload.filePath}`,
     }));
 
     const instances = await this.mainModel.bulkCreate(data);

@@ -320,8 +320,6 @@ export class KbSiteController extends BaseController {
   ): Promise<KbSiteDto> {
     const kbId = newKbSite.kbId || kbIdQ;
     const kb = await this.kbService.findByPk(kbId);
-    console.log(kb);
-    console.log(owner);
     this.check_owner(kb, owner.id);
     const newSite = await this.service.create(newKbSite, kbId, owner.id);
 
@@ -365,7 +363,6 @@ export class KbSiteController extends BaseController {
 
   /**
    * 删除知识某个文件
-   * todo: 同步删除 目录
    */
   @Delete('/:id')
   @ApiOperation({
