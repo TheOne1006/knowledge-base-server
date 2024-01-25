@@ -149,7 +149,8 @@ export class CrawlerController extends BaseController {
 
     // url 管理
     const urlManager = new CrawlerUrlsManager(
-      bkSiteIns.pattern,
+      bkSiteIns.matchPatterns,
+      bkSiteIns.ignorePatterns,
       fullUrls,
       maxConnections,
       maxConnections,

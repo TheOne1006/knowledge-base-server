@@ -177,7 +177,8 @@ describe('KbController', () => {
           desc: 'title',
           hostname: 'http://xxx.com/',
           startUrls: ['/start'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
         };
         const kbId = 1;
@@ -213,7 +214,8 @@ describe('KbController', () => {
           desc: 'title',
           hostname: 'http://xxx.com/',
           startUrls: ['/start'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
         };
 

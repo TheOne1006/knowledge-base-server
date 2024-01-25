@@ -16,7 +16,9 @@ export class KbSiteDto {
 
   removeSelectors: string[];
 
-  pattern: string;
+  matchPatterns: string[];
+
+  ignorePatterns: string[];
 
   ownerId: number;
 

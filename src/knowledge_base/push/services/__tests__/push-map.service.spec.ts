@@ -95,7 +95,8 @@ describe('PushMapService', () => {
       const dto: any = {
         ...defaultAttr,
         remoteId: 'idNext',
-        fileId: 2,
+        configId: 2,
+        fileId: 8,
       };
       const kbId = 1;
       const ownerId = 1;

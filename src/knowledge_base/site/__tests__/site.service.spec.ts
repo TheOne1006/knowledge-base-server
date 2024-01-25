@@ -12,7 +12,8 @@ const defaultAttr = {
   hostname: 'http://www.example.com/',
   startUrls: ['/', '/start'],
   removeSelectors: [],
-  pattern: 'http',
+  matchPatterns: ['http'],
+  ignorePatterns: [],
   ownerId: 1,
   kbId: 1,
 };
@@ -84,7 +85,8 @@ describe('KbSiteService', () => {
           desc: 'desc',
           hostname: 'http://www.s.com',
           startUrls: ['/'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
         };
         const ownerId = 1;

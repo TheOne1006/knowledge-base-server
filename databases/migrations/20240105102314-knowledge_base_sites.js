@@ -34,9 +34,15 @@ module.exports = {
         defaultValue: [],
         comment: '起始网站的地址',
       },
-      pattern: {
-        type: Sequelize.STRING(255),
-        comment: '正则',
+      match_patterns: {
+        type: JSON,
+        defaultValue: [],
+        comment: '命中的正则',
+      },
+      ignore_patterns: {
+        type: JSON,
+        defaultValue: [],
+        comment: '忽略的正则',
       },
       remove_selectors: {
         type: Sequelize.JSON,

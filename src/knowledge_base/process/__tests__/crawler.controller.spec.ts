@@ -54,7 +54,7 @@ describe('CrawlerController', () => {
         findByPk: jest.fn().mockImplementation(() => ({
           id: 1,
           title: 'title',
-          pattern: 'http',
+          matchPatterns: ['http'],
           ownerId: 1,
         })),
         getKbSiteRoot: jest.fn().mockImplementation(() => '/path/site'),

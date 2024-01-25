@@ -1,6 +1,5 @@
 import { pick, map } from 'lodash';
 import { WhereOptions, OrderItem } from 'sequelize';
-import * as path from 'path';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
