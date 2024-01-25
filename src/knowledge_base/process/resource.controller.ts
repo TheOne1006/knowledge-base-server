@@ -169,7 +169,7 @@ export class KbResourceController extends BaseController {
   @SerializerClass(KbFileDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @UseInterceptors(FilesInterceptor('files'))
-  async removeDiskFile(
+  async removeDiskFiles(
     @Param('id', ParseIntPipe) pk: number,
     @User() user: RequestUser,
     @Body() pyload: RemoveDiskFiles,

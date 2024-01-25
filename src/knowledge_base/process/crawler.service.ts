@@ -95,7 +95,7 @@ export class CrawlerService {
       docs = await loader.load();
     } catch (error) {
       // console.log(error);
-      throw new Error('error  ....');
+      throw error;
     }
     this.logger.info('load finish:', url);
     const html = docs[0].pageContent;
