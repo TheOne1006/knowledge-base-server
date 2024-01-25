@@ -220,8 +220,6 @@ export class KbFileService extends KbFileDBService {
    * @returns {string}
    */
   getFilePath(kbResRoot: string, filePath: string): string {
-    // filePath 删除 最左边的 ..., 避免越界
-    const trimFilePath = filePath.replace(/^[\.]+/, '');
-    return path.join(kbResRoot, trimFilePath).toString();
+    return this.safeJoinPath(kbResRoot, filePath);
   }
 }

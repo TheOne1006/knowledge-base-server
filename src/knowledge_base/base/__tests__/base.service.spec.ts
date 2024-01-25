@@ -197,6 +197,60 @@ describe('BaseDBService', () => {
       expect(result).toBeTruthy();
     });
 
+    describe('getFiles', () => {
+      let mock_dir: string;
+      beforeEach(async () => {
+        mock_dir = path.join(__dirname, 'mock_dir2');
+      });
+
+      it('should return files with default params', async () => {
+        const result = await service['getFiles'](mock_dir);
+        const expected = [
+          {
+            isDir: true,
+            name: 'mock_dir3',
+            path: path.join(__dirname, 'mock_dir2', 'mock_dir3'),
+            children: [
+              {
+                isDir: false,
+                name: 'mock_1.txt',
+                path: path.join(
+                  __dirname,
+                  'mock_dir2',
+                  'mock_dir3',
+                  'mock_1.txt',
+                ),
+              },
+            ],
+          },
+        ];
+
+        expect(result).toEqual(expected);
+      });
+
+      it('should return files with default params', async () => {
+        const result = await service['getFiles'](
+          mock_dir,
+          false,
+          mock_dir + '/',
+        );
+        const expected = [
+          {
+            isDir: false,
+            name: 'mock_1.txt',
+            path: path.join('mock_dir3', 'mock_1.txt'),
+          },
+        ];
+        expect(result).toEqual(expected);
+      });
+
+      it('should return files with error root', async () => {
+        const result = await service['getFiles'](mock_dir + 'no_found_dir');
+        const expected = [];
+        expect(result).toEqual(expected);
+      });
+    });
+
     describe('removeDir', () => {
       let mock_dir: string;
       beforeEach(async () => {

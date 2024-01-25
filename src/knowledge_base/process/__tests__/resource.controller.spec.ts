@@ -264,6 +264,79 @@ describe('KbResourceController', () => {
       });
       expect(actual).toEqual(expected);
     });
+
+    it('should remove disk files with dirs', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const mockPayload = {
+        filePaths: ['file1.txt', 'file2.txt', '/tmp/tmp1', '/tmp/tmpnofound'],
+      };
+
+      const expected = [
+        {
+          id: 1,
+          filePath: 'file1.txt',
+          fileExt: 'txt',
+        },
+        {
+          id: 3,
+          filePath: '/tmp/tmp1/file1.txt',
+          fileExt: 'txt',
+        },
+      ];
+
+      KbServiceMock.getAllFiles = jest
+        .fn()
+        .mockReturnValueOnce([
+          {
+            path: '/tmp/tmp1/file1.txt',
+          },
+        ])
+        .mockReturnValueOnce([]);
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation((kbRoot, filePath) => `${kbRoot}/${filePath}`);
+
+      KbServiceMock.checkPathExist = jest
+        .fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+      KbFileServiceMock.removeFile = jest.fn().mockResolvedValue(true);
+
+      KbFileServiceMock.findOne = jest
+        .fn()
+        .mockImplementationOnce(({ kbId, filePath }) => ({
+          id: kbId,
+          filePath,
+          fileExt: 'txt',
+        }))
+        .mockImplementationOnce(({ kbId, filePath }) => ({
+          id: kbId,
+          filePath,
+          fileExt: 'txt',
+        }));
+
+      KbFileServiceMock.removeByPk = jest
+        .fn()
+        .mockResolvedValueOnce(expected[0])
+        .mockResolvedValueOnce(expected[1]);
+
+      const actual = await controller.removeDiskFiles(
+        kbId,
+        mockUser,
+        mockPayload,
+      );
+
+      expect(actual).toEqual(expected);
+    });
   });
 
   describe('diskFiles', () => {

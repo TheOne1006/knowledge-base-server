@@ -168,7 +168,6 @@ export class KbResourceController extends BaseController {
   })
   @SerializerClass(KbFileDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @UseInterceptors(FilesInterceptor('files'))
   async removeDiskFiles(
     @Param('id', ParseIntPipe) pk: number,
     @User() user: RequestUser,
@@ -177,10 +176,36 @@ export class KbResourceController extends BaseController {
     const kbIns = await this.kbService.findByPk(pk);
     this.check_owner(kbIns, user.id);
 
-    const files = pyload.filePaths;
+    const originFiles = pyload.filePaths;
     const kbResRoot = this.kbService.getKbRoot(kbIns);
 
     const target: KbFileDto[] = [];
+
+    const files = [];
+
+    // 遍历 originFiles 处理文件夹
+    for (let i = 0; i < originFiles.length; i++) {
+      const originPath = originFiles[i];
+
+      const pathOrFileName = originPath.split('/').pop();
+      // 包含 . 的为具体文件
+      if (/\./.test(pathOrFileName)) {
+        files.push(originPath);
+      } else {
+        // 处理目录
+        const subFiles = await this.kbService.getAllFiles(
+          kbIns,
+          pathOrFileName,
+          false,
+          kbResRoot,
+        );
+
+        for (let j = 0; j < subFiles.length; j++) {
+          const subFile = subFiles[j];
+          files.push(subFile.path);
+        }
+      }
+    }
 
     for (let i = 0; i < files.length; i++) {
       const filePath = files[i];

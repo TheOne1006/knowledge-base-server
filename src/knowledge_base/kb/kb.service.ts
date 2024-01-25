@@ -127,7 +127,7 @@ export class KbService extends KbServiceDB {
    * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
    */
   getKbRoot(kb: KbDto) {
-    return `${this.getResourceRoot()}/${kb.ownerId}/${kb.title}`;
+    return this.safeJoinPath(this.getResourceRoot(), `${kb.ownerId}`, kb.title);
   }
 
   /**
@@ -136,7 +136,7 @@ export class KbService extends KbServiceDB {
    * @returns {string}
    */
   getKbUploadRoot(kb: KbDto): string {
-    return `${this.getKbRoot(kb)}/${this.uploadDirName}`;
+    return this.safeJoinPath(this.getKbRoot(kb), this.uploadDirName);
   }
 
   /**
@@ -167,7 +167,7 @@ export class KbService extends KbServiceDB {
   ): Promise<FileStatDto[]> {
     let root = this.getKbRoot(kb);
     if (subDir) {
-      root = `${root}/${subDir}`;
+      root = this.safeJoinPath(root, subDir);
     }
 
     return this.getFiles(root, isRecursion, ignorePathPrefix);

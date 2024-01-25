@@ -1,4 +1,5 @@
 import { Sequelize } from 'sequelize-typescript';
+import { join } from 'path';
 import {
   Transactionable,
   WhereOptions,
@@ -165,6 +166,11 @@ export abstract class BaseService<
     isRecursion: boolean = true,
     ignorePathPrefix: string = '',
   ): Promise<FileStatDto[]> {
+    const pathExist = await this.checkPathExist(root);
+    if (!pathExist) {
+      return [];
+    }
+
     const files = await getAllFilesAndDirectoriesRecursively(
       root,
       ignorePathPrefix,
@@ -212,5 +218,18 @@ export abstract class BaseService<
    */
   async removeFile(filePath: string): Promise<boolean> {
     return removeFile(filePath);
+  }
+
+  /**
+   * 安全版版的 join
+   * @param prev
+   * @param paths
+   * @returns
+   */
+  safeJoinPath(prev: string, ...paths: string[]): string {
+    const reg = /^[\.]+/;
+    // filePath 删除 最左边的 ..., 避免越界
+    const safePaths = paths.map((item) => item.replace(reg, ''));
+    return join(prev, ...safePaths).toString();
   }
 }
