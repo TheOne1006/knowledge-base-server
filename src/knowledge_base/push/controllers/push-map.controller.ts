@@ -270,7 +270,7 @@ export class PushMapController extends BaseController {
       pushVersion,
     };
     const whereIn = {
-      ids,
+      id: ids,
     };
 
     const where = this.buildSearchWhere(

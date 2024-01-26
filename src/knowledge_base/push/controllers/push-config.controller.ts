@@ -239,7 +239,7 @@ export class PushConfigController extends BaseController {
       desc,
     };
     const whereIn = {
-      ids,
+      id: ids,
     };
 
     const where = this.buildSearchWhere(

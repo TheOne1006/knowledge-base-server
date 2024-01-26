@@ -252,7 +252,7 @@ export class PushLogController extends BaseController {
     };
 
     const whereIn = {
-      ids,
+      id: ids,
     };
 
     const where = this.buildSearchWhere(
