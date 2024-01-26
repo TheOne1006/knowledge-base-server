@@ -19,9 +19,18 @@ describe('PushController', () => {
   let mockKbService: KbService;
 
   beforeEach(async () => {
-    mockPushConfigService = {} as any;
+    mockPushConfigService = {
+      findByPk: jest.fn().mockResolvedValue({
+        id: 1,
+        title: 'title',
+        ownerId: 1,
+      }),
+    } as any;
     mockPushLogService = {
-      findLastOne: jest.fn().mockResolvedValue({}),
+      findLastOne: jest.fn().mockResolvedValue({
+        ownerId: 1,
+        pushVersion: 'init',
+      }),
       create: jest.fn().mockResolvedValue({}),
     } as any as PushLogService;
     mockPushMapService = {
@@ -63,6 +72,11 @@ describe('PushController', () => {
           fielPath: '/tmp/xxx/10000.md',
         },
       ]),
+      findByPk: jest.fn().mockResolvedValue({
+        id: 2,
+        fielPath: '/tmp/xxx/1.md',
+        ownerId: 1,
+      }),
     } as any as KbFileService;
     mockKbService = {
       getKbRoot: jest.fn().mockResolvedValue('/tmp/xxx'),
@@ -358,6 +372,72 @@ describe('PushController', () => {
     });
   });
 
+  describe('runSigleToLast', () => {
+    it('should runSigleToLast with isExists correctly', async () => {
+      mockPushMapService.findOne = jest.fn().mockResolvedValue({
+        id: 1,
+        remoteId: '012138',
+        ownerId: 1,
+      });
+
+      mockPushLogService.findLastOne = jest.fn().mockResolvedValue({
+        ownerId: 1,
+        pushVersion: 'init2',
+      });
+      mockKbService.safeJoinPath = jest
+        .fn()
+        .mockResolvedValue('/tmp/tmp2/tmp3.txt');
+      mockPushProcessService.pushByFile = jest.fn().mockResolvedValue('012138');
+      mockPushMapService.updateByPk = jest.fn().mockResolvedValue({
+        id: 1,
+        remoteId: '012138',
+        ownerId: 1,
+      });
+
+      const actual = await controller.runSigleToLast(1, 1, { id: 1 } as any);
+
+      const expected = {
+        id: 1,
+        remoteId: '012138',
+        ownerId: 1,
+      };
+
+      expect(actual).toEqual(expected);
+
+      expect(mockPushMapService.updateByPk).toHaveBeenCalledWith(1, {
+        pushVersion: 'init2',
+      });
+    });
+
+    it('should runSigleToLast to create newMap', async () => {
+      mockPushMapService.findOne = jest.fn().mockResolvedValue(undefined);
+
+      mockPushLogService.findLastOne = jest.fn().mockResolvedValue({
+        ownerId: 1,
+        pushVersion: 'init3',
+      });
+      mockKbService.safeJoinPath = jest
+        .fn()
+        .mockResolvedValue('/tmp/tmp2/tmp3.txt');
+      mockPushProcessService.pushByFile = jest.fn().mockResolvedValue('012138');
+      mockPushMapService.create = jest.fn().mockResolvedValue({
+        id: 1,
+        remoteId: '012138',
+        ownerId: 1,
+      });
+
+      const actual = await controller.runSigleToLast(1, 1, { id: 1 } as any);
+
+      const expected = {
+        id: 1,
+        remoteId: '012138',
+        ownerId: 1,
+      };
+
+      expect(actual).toEqual(expected);
+    });
+  });
+
   describe('clearAll', () => {
     it('should clearAll correctly', async () => {
       const configId = 1;
@@ -463,6 +543,27 @@ describe('PushController', () => {
       expect(actual.message).toEqual('no data need clear');
       expect(actual.deleteRemoteIds.length).toEqual(0);
       expect(actual.deleteFailedRemoteIds.length).toEqual(0);
+    });
+  });
+
+  describe('clearSigle', () => {
+    it('should clearSigle correctly', async () => {
+      mockPushMapService.findOne = jest.fn().mockResolvedValue({
+        id: 1,
+        fileId: 1,
+        ownerId: 1,
+      });
+      mockPushProcessService.deleteByFile = jest.fn();
+      mockPushMapService.removeByPk = jest.fn();
+
+      const actual = await controller.clearSigle(1, 1, { id: 1 } as any);
+      const expected = {
+        id: 1,
+        fileId: 1,
+        ownerId: 1,
+      };
+
+      expect(actual).toEqual(expected);
     });
   });
 });

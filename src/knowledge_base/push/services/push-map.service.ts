@@ -74,6 +74,16 @@ class PushMapDBService extends BaseService<typeof PushMap, PushMapDto> {
   }
 
   /**
+   * @param {WhereOptions} where
+   * @returns {Promise<PushMapDto>}
+   */
+  async findOne(where?: WhereOptions): Promise<PushMapDto> {
+    return this.mainModel.findOne({
+      where,
+    });
+  }
+
+  /**
    * 根据pk, 更新 pyload
    * @param {number} pk
    * @param {Partial<PushMapDto>} pyload

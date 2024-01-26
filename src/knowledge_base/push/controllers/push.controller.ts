@@ -7,6 +7,7 @@ import {
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
+  Post,
   Param,
   ParseIntPipe,
   SetMetadata,
@@ -81,11 +82,7 @@ export class PushController extends BaseController {
   })
   @SerializerClass(PushMapDto)
   async run(
-    @Param(
-      'configId',
-      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
-    )
-    configId: number,
+    @Param('configId', ParseIntPipe) configId: number,
     @Body() pushOption: PushRunOptionDto,
     @User() owner: RequestUser,
   ): Promise<Observable<MessageEvent>> {
@@ -173,6 +170,89 @@ export class PushController extends BaseController {
       pushFlow(subscriber);
     });
     return observable;
+  }
+
+  @Post(':configId/run/:fileId')
+  @ApiParam({
+    name: 'configId',
+    example: '1',
+    description: '配置id',
+    type: Number,
+    required: true,
+  })
+  @ApiParam({
+    name: 'fileId',
+    example: '1',
+    description: '文件id',
+    type: Number,
+    required: true,
+  })
+  @SerializerClass(PushMapDto)
+  async runSigleToLast(
+    @Param('configId', ParseIntPipe) configId: number,
+    @Param('fileId', ParseIntPipe) fileId: number,
+    @User() owner: RequestUser,
+  ) {
+    const [pushConfig, kbFileIns, lastPushLog, pushMapIns] = await Promise.all([
+      this.service.findByPk(configId),
+      this.kbFileService.findByPk(fileId),
+      this.pushLogService.findLastOne({
+        configId,
+      }),
+      this.pushMapService.findOne({
+        configId,
+        fileId,
+      }),
+    ]);
+
+    this.check_owner(pushConfig, owner.id);
+    this.check_owner(kbFileIns, owner.id);
+    if (!lastPushLog) {
+      throw new Error('unfound last push log');
+    }
+    this.check_owner(lastPushLog, owner.id);
+    pushMapIns && this.check_owner(pushMapIns, owner.id);
+
+    const kbIns = await this.kbService.findByPk(pushConfig.kbId);
+
+    const isExists = !!pushMapIns;
+    const originRemoteId = pushMapIns?.remoteId || '';
+
+    const kbResRoot = this.kbService.getKbRoot(kbIns);
+
+    const absFilePath = this.kbService.safeJoinPath(
+      kbResRoot,
+      kbFileIns.filePath,
+    );
+
+    const remoteId = await this.pushProcessService.pushByFile(
+      absFilePath,
+      pushConfig,
+      originRemoteId,
+    );
+
+    let newPushMapIns: PushMapDto;
+    if (isExists) {
+      newPushMapIns = await this.pushMapService.updateByPk(pushMapIns.id, {
+        pushVersion: lastPushLog.pushVersion,
+      });
+    } else {
+      // 新建
+      const newMap = {
+        configId: pushConfig.id,
+        type: pushConfig.type,
+        fileId: fileId,
+        remoteId,
+        pushVersion: lastPushLog.pushVersion,
+      };
+      newPushMapIns = await this.pushMapService.create(
+        newMap,
+        pushConfig.kbId,
+        owner.id,
+      );
+    }
+
+    return newPushMapIns;
   }
 
   /**
@@ -409,5 +489,45 @@ export class PushController extends BaseController {
       deleteRemoteIds,
       deleteFailedRemoteIds,
     };
+  }
+
+  @Delete(':configId/clear/:fileId')
+  @ApiParam({
+    name: 'configId',
+    example: '1',
+    description: '清空推送',
+    type: Number,
+    required: true,
+  })
+  @ApiParam({
+    name: 'fileId',
+    example: '1',
+    description: '文件id',
+    type: Number,
+    required: true,
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @SerializerClass(PushMapDto)
+  async clearSigle(
+    @Param('configId', ParseIntPipe) configId: number,
+    @Param('fileId', ParseIntPipe) fileId: number,
+    @User() owner: RequestUser,
+  ): Promise<PushMapDto> {
+    const [pushConfig, pushMapIns] = await Promise.all([
+      this.service.findByPk(configId),
+      this.pushMapService.findOne({
+        configId,
+        fileId,
+      }),
+    ]);
+
+    this.check_owner(pushConfig, owner.id);
+    this.check_owner(pushMapIns, owner.id);
+
+    await this.pushProcessService.deleteByFile(pushMapIns.remoteId, pushConfig);
+
+    await this.pushMapService.removeByPk(pushMapIns.id);
+
+    return pushMapIns;
   }
 }

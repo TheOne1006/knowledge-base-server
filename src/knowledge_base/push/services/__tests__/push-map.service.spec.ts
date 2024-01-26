@@ -131,6 +131,15 @@ describe('PushMapService', () => {
     });
   });
 
+  describe('findOne', () => {
+    it('should return a instances by its id', async () => {
+      const id = 1;
+      const result = await service.findOne({ id });
+      expect(result).toBeDefined();
+      expect(result.id).toEqual(1);
+    });
+  });
+
   describe('updateByPk', () => {
     it('should update a instances by its primary key', async () => {
       const pk = 1;
