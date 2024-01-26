@@ -22,9 +22,6 @@ export class CreatePushConfigDto {
   })
   title: string;
 
-  @IsString({
-    message: i18nValidationMessage('validation.STRING'),
-  })
   @ApiProperty({
     example: 'desc',
     description: '简介',
@@ -63,4 +60,10 @@ export class CreatePushConfigDto {
     message: i18nValidationMessage('validation.STRING'),
   })
   apiKey: string;
+
+  @ApiProperty({
+    example: '1',
+    description: '知识库id',
+  })
+  kbId?: number;
 }

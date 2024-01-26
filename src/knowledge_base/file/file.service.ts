@@ -43,6 +43,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     }
     const data = new this.mainModel({
       ...pyload,
+      filePath,
       kbId,
       ownerId,
     });
@@ -214,6 +215,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
         {
           ...pyload,
           ...where,
+          filePath,
         },
         kbId,
         ownerId,

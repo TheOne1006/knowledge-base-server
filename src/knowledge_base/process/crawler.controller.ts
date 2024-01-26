@@ -8,7 +8,7 @@ import {
   UseGuards,
   // ValidationPipe,
   // Query,c
-  // Put,
+  Put,
   // Delete,
   Param,
   ParseIntPipe,
@@ -28,7 +28,7 @@ import {
   // ApiBody,
   // ApiConsumes,
 } from '@nestjs/swagger';
-import { FilesInterceptor } from '@nestjs/platform-express';
+// import { FilesInterceptor } from '@nestjs/platform-express';
 import { eachLimit } from 'async';
 import { Observable, Subscriber } from 'rxjs';
 import { I18nService } from 'nestjs-i18n';
@@ -51,7 +51,7 @@ import { KbFileService } from '../file/file.service';
 import { BaseController } from '../base/base.controller';
 import { KbResourceService } from './resource.service';
 import { CrawlerService } from './crawler.service';
-import { CrawlerDto } from './dtos';
+import { CrawlerDto, CrawlerResultDto } from './dtos';
 import { FILE_SOURCE_TYPE_CRAWLER } from '../base/constants';
 import { CrawlerUrlsManager } from '../utils/crawler-urls-manager';
 // import { SkipInterceptor } from '../../core/interceptors/skip.interceptor';
@@ -99,20 +99,19 @@ export class CrawlerController extends BaseController {
     summary: 'crawler 抓取 数据',
   })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @UseInterceptors(FilesInterceptor('files'))
-  @SerializerClass(CrawlerDto)
+  @SerializerClass(CrawlerResultDto)
   async crawler(
     @Param('id', ParseIntPipe) pk: number,
     @Param('siteId', ParseIntPipe) siteId: number,
     @Body() crawlerOption: CrawlerDto,
     @User() user: RequestUser,
   ): Promise<Observable<MessageEvent>> {
-    const [kbIns, bkSiteIns] = await Promise.all([
+    const [kbIns, kbSiteIns] = await Promise.all([
       this.kbService.findByPk(pk),
       this.kbSiteService.findByPk(siteId),
     ]);
     this.check_owner(kbIns, user.id);
-    this.check_owner(bkSiteIns, user.id);
+    this.check_owner(kbSiteIns, user.id);
 
     const logger = this.logger;
 
@@ -120,24 +119,24 @@ export class CrawlerController extends BaseController {
     const kbResRoot = this.kbService.getKbRoot(kbIns);
     const kbSiteResRoot = this.kbSiteService.getKbSiteRoot(
       kbResRoot,
-      bkSiteIns,
+      kbSiteIns,
     );
 
     const localAllPaths = await this.kbService.getAllFiles(
       kbIns,
-      bkSiteIns.title,
+      kbSiteIns.title,
       false,
       kbSiteResRoot,
     );
 
     const completedPaths = localAllPaths.map((item) => item.path);
     const localPathUrls = this.kbSiteService.convertPathsToUrls(
-      bkSiteIns,
+      kbSiteIns,
       completedPaths,
     );
 
     // 获取开始的urls
-    const fullUrls = this.kbSiteService.getFullStartUrls(bkSiteIns);
+    const fullUrls = this.kbSiteService.getFullStartUrls(kbSiteIns);
     // 长度与 fullUrls 一致
     // const completed = new Array(fullUrls.length).fill(false);
 
@@ -149,8 +148,8 @@ export class CrawlerController extends BaseController {
 
     // url 管理
     const urlManager = new CrawlerUrlsManager(
-      bkSiteIns.matchPatterns,
-      bkSiteIns.ignorePatterns,
+      kbSiteIns.matchPatterns,
+      kbSiteIns.ignorePatterns,
       fullUrls,
       maxConnections,
       maxConnections,
@@ -174,7 +173,7 @@ export class CrawlerController extends BaseController {
             const { links, html } = await this.crawlerService.crawlLinksAndHtml(
               url,
               crawlerOption.linkSelector,
-              bkSiteIns.removeSelectors,
+              kbSiteIns.removeSelectors,
             );
 
             logger.info(`crawlLinksAndHtml finish at ${url}`);
@@ -183,7 +182,7 @@ export class CrawlerController extends BaseController {
             // 保存 html
             const filePath = await this.kbResService.saveHtml(
               kbResRoot,
-              bkSiteIns.title,
+              kbSiteIns.title,
               url,
               html,
             );
@@ -198,7 +197,7 @@ export class CrawlerController extends BaseController {
               filePath,
               kbIns.id,
               user.id,
-              bkSiteIns.id,
+              kbSiteIns.id,
             );
             // save html to page
             urlManager.clearRetryUrl(url);
@@ -257,5 +256,80 @@ export class CrawlerController extends BaseController {
     });
 
     return observable;
+  }
+
+  @Put(':id/site/:siteId/crawler/:fileId')
+  @ApiParam({
+    name: 'id',
+    example: '1',
+    description: '知识库id',
+    type: Number,
+  })
+  @ApiParam({
+    name: 'siteId',
+    example: '1',
+    description: '站点',
+    type: Number,
+  })
+  @ApiParam({
+    name: 'fileId',
+    example: '1',
+    description: '对应文件id',
+    type: Number,
+  })
+  @ApiOperation({
+    summary: 'crawler 抓取某条数据',
+  })
+  @SerializerClass(CrawlerResultDto)
+  async updateSigleWePage(
+    @Param('id', ParseIntPipe) pk: number,
+    @Param('siteId', ParseIntPipe) siteId: number,
+    @Param('fileId', ParseIntPipe) fileId: number,
+    @User() user: RequestUser,
+  ): Promise<CrawlerResultDto> {
+    const [kbIns, kbSiteIns, kbFile] = await Promise.all([
+      this.kbService.findByPk(pk),
+      this.kbSiteService.findByPk(siteId),
+      this.kbFileService.findByPk(fileId),
+    ]);
+    this.check_owner(kbIns, user.id);
+    this.check_owner(kbSiteIns, user.id);
+    this.check_owner(kbFile, user.id);
+
+    // 获取站点的目录
+    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const sourceUrl = kbFile.sourceUrl;
+
+    this.logger.info(`start at ${sourceUrl}`);
+
+    let completed = false;
+
+    try {
+      const { html } = await this.crawlerService.crawlLinksAndHtml(
+        sourceUrl,
+        undefined,
+        kbSiteIns.removeSelectors,
+      );
+      this.logger.info(`crawlLinksAndHtml finish at ${sourceUrl}`);
+      // 保存 html
+      await this.kbResService.saveHtml(
+        kbResRoot,
+        kbSiteIns.title,
+        sourceUrl,
+        html,
+      );
+      completed = true;
+    } catch (error) {
+      this.logger.warn('crawl failed');
+    }
+
+    return {
+      url: sourceUrl,
+      completed,
+      retry: 0,
+      finish: true,
+      total: 1,
+      index: 1,
+    };
   }
 }

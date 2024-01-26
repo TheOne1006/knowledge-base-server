@@ -11,6 +11,7 @@ import {
   Param,
   ParseIntPipe,
   Header,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -173,6 +174,12 @@ export class KbFileController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'ids',
+    description: '逗号分隔',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -210,8 +217,11 @@ export class KbFileController extends BaseController {
     @Query('filePath') filePath?: string,
     @Query('sourceType') sourceType?: string,
     @Query('sourceUrl') sourceUrl?: string,
+    @Query('fileExt') fileExt?: string,
     @Query('id', new ParseIntPipe({ optional: true }))
     id?: number,
+    @Query('ids', new ParseArrayPipe({ optional: true }))
+    ids?: number[],
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
@@ -229,13 +239,22 @@ export class KbFileController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId, siteId, sourceType, id };
+    const exactSearch = { kbId, siteId, sourceType, id, fileExt };
     const fuzzyMatch = {
       filePath,
       sourceUrl,
     };
 
-    const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
+    const whereIn = {
+      ids,
+    };
+
+    const where = this.buildSearchWhere(
+      originWhere,
+      exactSearch,
+      fuzzyMatch,
+      whereIn,
+    );
     const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
     const searchOrder = this.buildSearchOrder(sort, order);
 

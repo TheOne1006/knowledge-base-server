@@ -292,7 +292,12 @@ describe('KbResourceController', () => {
 
       KbServiceMock.safeJoinPath = jest
         .fn()
-        .mockImplementation((kbRoot, filePath) => `${kbRoot}/${filePath}`);
+        .mockImplementation((kbRoot: string, filePath: string) => {
+          if (filePath.startsWith('/')) {
+            return `${kbRoot}${filePath}`;
+          }
+          return `${kbRoot}/${filePath}`;
+        });
       KbServiceMock.removeDir = jest.fn();
 
       KbServiceMock.getAllFiles = jest
@@ -343,11 +348,11 @@ describe('KbResourceController', () => {
       expect(KbServiceMock.removeDir).toHaveBeenCalledTimes(2);
       expect(KbServiceMock.removeDir).toHaveBeenNthCalledWith(
         1,
-        '/kbRoot/tmp1',
+        '/kbRoot/tmp/tmp1',
       );
       expect(KbServiceMock.removeDir).toHaveBeenNthCalledWith(
         2,
-        '/kbRoot/tmpnofound',
+        '/kbRoot/tmp/tmpnofound',
       );
       expect(actual).toEqual(expected);
     });

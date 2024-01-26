@@ -1,8 +1,8 @@
-import * as path from 'path';
+// import * as path from 'path';
 import {
   Controller,
   Sse,
-  Post,
+  Delete,
   Body,
   UseInterceptors,
   UseGuards,
@@ -102,28 +102,44 @@ export class PushController extends BaseController {
 
     const pushFlow = async (subscriber: Subscriber<MessageEvent>) => {
       const fileLen = files.length;
+
       for (let i = 0; i < fileLen; i++) {
         const kbFile = files[i];
 
-        // 推送文件以及增、更 pushMap
-        const remoteId = await this._pushFileAndUpsertPushMap(
-          pushOption.pushVersion,
-          path.join(kbResRoot, kbFile.filePath),
-          pushConfig,
-          pushMapDict,
-          owner,
-          kbFile.id,
-        );
+        try {
+          // 推送文件以及增、更 pushMap
+          const remoteId = await this._pushFileAndUpsertPushMap(
+            pushOption.pushVersion,
+            this.kbService.safeJoinPath(kbResRoot, kbFile.filePath),
+            pushConfig,
+            pushMapDict,
+            owner,
+            kbFile.id,
+          );
 
-        subscriber.next({
-          data: {
-            remoteId, // 抓取处理连接
-            fileId: kbFile.id, // 当前处理的文件id
-            finish: false, // 是否结束
-            total: files.length,
-            index: i,
-          },
-        });
+          subscriber.next({
+            data: {
+              remoteId, // 抓取处理连接
+              success: true,
+              fileId: kbFile.id, // 当前处理的文件id
+              finish: false, // 是否结束
+              total: files.length,
+              index: i,
+            },
+          });
+        } catch (error) {
+          this.logger.error(error);
+          subscriber.next({
+            data: {
+              remoteId: '', // 抓取处理连接
+              success: false,
+              fileId: kbFile.id, // 当前处理的文件id
+              finish: false, // 是否结束
+              total: files.length,
+              index: i,
+            },
+          });
+        }
       }
       // 删除 残留在 pushMap 中的数据
       await this._removeResidualDataFromPushMap(pushMapDict, pushConfig);
@@ -131,6 +147,7 @@ export class PushController extends BaseController {
       subscriber.next({
         data: {
           remoteId: '', // 抓取处理连接
+          success: true,
           fileId: 0, // 当前处理的文件id
           finish: true, // 是否结束
           total: files.length,
@@ -145,6 +162,7 @@ export class PushController extends BaseController {
       subscriber.next({
         data: {
           remoteId: '', // 抓取处理连接
+          success: true,
           fileId: 0, // 当前处理的文件id
           finish: false, // 是否结束
           total: files.length,
@@ -318,7 +336,7 @@ export class PushController extends BaseController {
   }
 
   // 清空推送
-  @Post(':configId/clearAll')
+  @Delete(':configId/clearAll')
   @ApiParam({
     name: 'configId',
     example: '1',

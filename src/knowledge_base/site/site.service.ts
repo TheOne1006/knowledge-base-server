@@ -117,32 +117,32 @@ export class KbSiteService extends KbSiteServiceDB {
   /**
    * 获取 站点的本地 根目录
    * @param {string} kbResRoot
-   * @param {KbSiteDto} bkSiteIns
+   * @param {KbSiteDto} kbSiteIns
    * @returns {string}
    */
-  getKbSiteRoot(kbResRoot: string, bkSiteIns: KbSiteDto): string {
-    return `${kbResRoot}/${bkSiteIns.title}`;
+  getKbSiteRoot(kbResRoot: string, kbSiteIns: KbSiteDto): string {
+    return `${kbResRoot}/${kbSiteIns.title}`;
   }
 
   /**
    * 获取完整版的 startUrls
-   * @param {KbSiteDto} bkSiteIns
+   * @param {KbSiteDto} kbSiteIns
    * @returns {string[]}
    */
-  getFullStartUrls(bkSiteIns: KbSiteDto): string[] {
-    const startUrls = bkSiteIns.startUrls;
-    return this.convertPathsToUrls(bkSiteIns, startUrls);
+  getFullStartUrls(kbSiteIns: KbSiteDto): string[] {
+    const startUrls = kbSiteIns.startUrls;
+    return this.convertPathsToUrls(kbSiteIns, startUrls);
   }
 
   /**
    * 将本地文件路径转换成 url
-   * @param {KbSiteDto} bkSiteIns
+   * @param {KbSiteDto} kbSiteIns
    * @param {string[]} paths
    * @returns {string[]}
    */
-  convertPathsToUrls(bkSiteIns: KbSiteDto, paths: string[]): string[] {
+  convertPathsToUrls(kbSiteIns: KbSiteDto, paths: string[]): string[] {
     const urls = paths.map((item) => {
-      const urlObj = new URL(item, bkSiteIns.hostname);
+      const urlObj = new URL(item, kbSiteIns.hostname);
       return urlObj.href;
     });
 

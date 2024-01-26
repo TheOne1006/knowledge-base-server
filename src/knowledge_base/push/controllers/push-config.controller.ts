@@ -12,6 +12,7 @@ import {
   Param,
   ParseIntPipe,
   Header,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -173,6 +174,12 @@ export class PushConfigController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'ids',
+    description: '逗号分隔',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -207,6 +214,8 @@ export class PushConfigController extends BaseController {
     @Query('type') type?: string,
     @Query('id', new ParseIntPipe({ optional: true }))
     id?: number,
+    @Query('ids', new ParseArrayPipe({ optional: true }))
+    ids?: number[],
     @Query(
       '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
@@ -229,8 +238,16 @@ export class PushConfigController extends BaseController {
       title,
       desc,
     };
+    const whereIn = {
+      ids,
+    };
 
-    const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
+    const where = this.buildSearchWhere(
+      originWhere,
+      exactSearch,
+      fuzzyMatch,
+      whereIn,
+    );
     const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
     const searchOrder = this.buildSearchOrder(sort, order);
 
@@ -324,13 +341,15 @@ export class PushConfigController extends BaseController {
     example: '1',
     description: '知识库id',
     type: Number,
+    required: false,
   })
   @SerializerClass(PushConfigDto)
   async create(
-    @Query('kbId', ParseIntPipe) kbId: number,
+    @Query('kbId', new ParseIntPipe({ optional: true })) kbIdQ: number,
     @Body() newObj: CreatePushConfigDto,
     @User() owner: RequestUser,
   ): Promise<PushConfigDto> {
+    const kbId = newObj.kbId || kbIdQ;
     const kb = await this.kbService.findByPk(kbId);
     this.check_owner(kb, owner.id);
     const newSite = await this.service.create(newObj, kbId, owner.id);

@@ -48,6 +48,7 @@ export class UpdateKbSiteDto {
     description: '正则表示,',
   })
   @IsString({
+    each: true,
     message: i18nValidationMessage('validation.STRING'),
   })
   @IsArray()
@@ -58,6 +59,7 @@ export class UpdateKbSiteDto {
     description: '剔除规则，由于 matchPatterns',
   })
   @IsString({
+    each: true,
     message: i18nValidationMessage('validation.STRING'),
   })
   @IsArray()

@@ -172,7 +172,7 @@ export class KbResourceController extends BaseController {
     @Param('id', ParseIntPipe) pk: number,
     @User() user: RequestUser,
     @Body() pyload: RemoveDiskFiles,
-  ) {
+  ): Promise<KbFileDto[]> {
     const kbIns = await this.kbService.findByPk(pk);
     this.check_owner(kbIns, user.id);
 
@@ -193,7 +193,7 @@ export class KbResourceController extends BaseController {
       if (/\./.test(pathOrFileName)) {
         files.push(originPath);
       } else {
-        removeDirs.push(this.kbService.safeJoinPath(kbResRoot, pathOrFileName));
+        removeDirs.push(this.kbService.safeJoinPath(kbResRoot, originPath));
         // 处理目录
         const subFiles = await this.kbService.getAllFiles(
           kbIns,
@@ -223,6 +223,7 @@ export class KbResourceController extends BaseController {
       const kbFileIns = await this.kbFileService.findOne({
         kbId: pk,
         filePath,
+        ownerId: user.id,
       });
 
       if (kbFileIns) {

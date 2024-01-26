@@ -57,9 +57,21 @@ describe('BaseController', () => {
     it('should correctly add exact search parameters', () => {
       const where = {};
       const exactSearch = { key1: 'value1', key2: 'value2', key3: undefined };
-      const actual = controller['buildSearchWhere'](where, exactSearch);
+      const whereIn = { key5: [1, 2, '', undefined] };
+      const actual = controller['buildSearchWhere'](
+        where,
+        exactSearch,
+        {},
+        whereIn,
+      );
 
-      const expected = { key1: 'value1', key2: 'value2' };
+      const expected = {
+        key1: 'value1',
+        key2: 'value2',
+        key5: {
+          [Op.in]: [1, 2],
+        },
+      };
       expect(actual).toEqual(expected);
     });
 
@@ -70,7 +82,30 @@ describe('BaseController', () => {
         key1: { [Op.like]: '%value1%' },
         key2: { [Op.like]: '%value2%' },
       };
-      const result = controller['buildSearchWhere'](where, {}, fuzzyMatch);
+      const result = controller['buildSearchWhere'](where, {}, fuzzyMatch, {});
+      expect(result).toEqual(expected);
+    });
+
+    it('should correctly add whereIn match parameters', () => {
+      const where = {};
+      const fuzzyMatch = {};
+      const whereIn = {
+        key1: [1, 2, 3, undefined],
+        key2: 1213,
+      };
+      const expected = {
+        key1: {
+          [Op.in]: [1, 2, 3],
+        },
+      };
+
+      const result = controller['buildSearchWhere'](
+        where,
+        {},
+        fuzzyMatch,
+        whereIn as any,
+      );
+
       expect(result).toEqual(expected);
     });
 
@@ -86,6 +121,7 @@ describe('BaseController', () => {
         where,
         exactSearch,
         fuzzyMatch,
+        {},
       );
       expect(result).toEqual(expected);
     });

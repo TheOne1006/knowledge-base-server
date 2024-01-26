@@ -12,6 +12,7 @@ import {
   Param,
   ParseIntPipe,
   Header,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -166,6 +167,12 @@ export class KbSiteController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'ids',
+    description: '逗号分隔',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
     name: '_sort',
     description: '排序字段',
     required: false,
@@ -197,6 +204,8 @@ export class KbSiteController extends BaseController {
     @Query('hostname') hostname?: string,
     @Query('id', new ParseIntPipe({ optional: true }))
     id?: number,
+    @Query('ids', new ParseArrayPipe({ optional: true }))
+    ids?: number[],
     @Query('_start', new ParseIntPipe({ optional: true }))
     start?: number,
     @Query('_end', new ParseIntPipe({ optional: true }))
@@ -215,7 +224,16 @@ export class KbSiteController extends BaseController {
       hostname,
     };
 
-    const where = this.buildSearchWhere(originWhere, exactSearch, fuzzyMatch);
+    const whereIn = {
+      ids,
+    };
+
+    const where = this.buildSearchWhere(
+      originWhere,
+      exactSearch,
+      fuzzyMatch,
+      whereIn,
+    );
     const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
     const searchOrder = this.buildSearchOrder(sort, order);
 

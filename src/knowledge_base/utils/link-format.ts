@@ -76,7 +76,7 @@ export function toAbsoluteURL(base: string, relative: string) {
   try {
     return new URL(relative, base).href;
   } catch (error) {
-    console.error('error url with', relative, base);
+    // console.error('error url with', relative, base);
     throw error;
   }
 }

@@ -67,6 +67,9 @@ describe('PushController', () => {
     mockKbService = {
       getKbRoot: jest.fn().mockResolvedValue('/tmp/xxx'),
       findByPk: jest.fn().mockResolvedValue({}),
+      safeJoinPath: jest
+        .fn()
+        .mockImplementation((start, filePath) => `${start}/${filePath}`),
     } as any as KbService;
     mockPushProcessService = {
       deleteByFile: jest.fn().mockResolvedValue('delete'),
@@ -270,15 +273,15 @@ describe('PushController', () => {
 
       mockPushConfigService.findByPk = jest.fn().mockResolvedValue(pushConfig);
 
-      (controller as any).check_owner = jest.fn();
-      (controller as any)._runBefore = jest
+      controller['check_owner'] = jest.fn();
+      controller['_runBefore'] = jest
         .fn()
         .mockResolvedValue({ kbResRoot, files, pushMapDict });
 
-      (controller as any)._pushFileAndUpsertPushMap = jest
+      controller['_pushFileAndUpsertPushMap'] = jest
         .fn()
         .mockResolvedValue('remote1');
-      (controller as any)._removeResidualDataFromPushMap = jest
+      controller['_removeResidualDataFromPushMap'] = jest
         .fn()
         .mockResolvedValue({});
 
@@ -309,6 +312,7 @@ describe('PushController', () => {
             expect(
               (controller as any)._pushFileAndUpsertPushMap,
             ).toHaveBeenCalledTimes(files.length);
+
             expect(
               (controller as any)._removeResidualDataFromPushMap,
             ).toHaveBeenCalledWith(pushMapDict, pushConfig);

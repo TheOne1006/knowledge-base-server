@@ -85,6 +85,9 @@ module.exports = {
     await queryInterface.addIndex(tableName, ['kb_id'], {
       unique: false,
     });
+    await queryInterface.addIndex(tableName, ['kb_id', 'file_path'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

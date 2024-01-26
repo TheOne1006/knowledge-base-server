@@ -6,8 +6,8 @@ import {
   Length,
   Matches,
   IsArray,
-  MinLength,
-  MaxLength,
+  // MinLength,
+  // MaxLength,
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
@@ -69,6 +69,7 @@ export class CreateKbSiteDto {
     description: '正则表示,',
   })
   @IsString({
+    each: true,
     message: i18nValidationMessage('validation.STRING'),
   })
   @IsArray()
@@ -79,6 +80,7 @@ export class CreateKbSiteDto {
     description: '剔除规则，由于 matchPatterns',
   })
   @IsString({
+    each: true,
     message: i18nValidationMessage('validation.STRING'),
   })
   @IsArray()

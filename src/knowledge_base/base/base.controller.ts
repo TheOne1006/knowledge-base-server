@@ -23,12 +23,14 @@ export abstract class BaseController {
    * @param {WhereOptions} where
    * @param {{ [key: string]: any }} exactSearch 精准搜索
    * @param {{ [key: string]: any }} fuzzyMatch 模糊匹配
+   * @param {{ [key: string]: any[] }} whereIn 模糊匹配
    * @returns {WhereOptions}
    */
   protected buildSearchWhere(
     where: WhereOptions = {},
     exactSearch: { [key: string]: any } = {},
     fuzzyMatch: { [key: string]: any } = {},
+    whereIn: { [key: string]: any[] } = {},
   ): WhereOptions {
     Object.keys(exactSearch).forEach((key) => {
       if (exactSearch[key]) {
@@ -40,6 +42,16 @@ export abstract class BaseController {
       if (fuzzyMatch[key]) {
         where[key] = {
           [Op.like]: `%${fuzzyMatch[key]}%`,
+        };
+      }
+    });
+
+    Object.keys(whereIn).forEach((key) => {
+      const current = Array.isArray(whereIn[key]) ? whereIn[key] : [];
+      const inVals = current.filter((item) => item);
+      if (inVals.length) {
+        where[key] = {
+          [Op.in]: inVals,
         };
       }
     });
