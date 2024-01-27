@@ -103,11 +103,11 @@ describe('KbFileService', () => {
       it('should create a new instance', async () => {
         const dtos = [
           {
-            filePath: '/tmp/path/to/file.txt',
+            filePath: '/tmp_batch/path/to/file.txt',
             fileExt: 'txt',
           },
           {
-            filePath: '/tmp/path/to/file2.txt',
+            filePath: 'tmp_batch/path/to/file2.txt',
             fileExt: 'txt',
           },
         ];
@@ -123,6 +123,7 @@ describe('KbFileService', () => {
         // 最后一个元素
         const last = mockData[mockData.length - 1];
         expect(result[0].id).toBeGreaterThan(last.id);
+        expect(result[1].filePath).toEqual('/tmp_batch/path/to/file2.txt');
       });
     });
 
