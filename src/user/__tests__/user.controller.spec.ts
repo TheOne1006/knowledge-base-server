@@ -35,6 +35,10 @@ describe('UserController', () => {
           username: 'mock create',
         },
       ]),
+      findByPk: jest.fn().mockImplementation(() => ({
+        id: 1,
+        username: 'mock find',
+      })),
     };
 
     module = await Test.createTestingModule({
@@ -77,6 +81,15 @@ describe('UserController', () => {
       };
       const actual = await controller.getUserCurrent(reqUser);
       expect(actual).toEqual(reqUser);
+    });
+
+    it('users findByPk', async () => {
+      const actual = await controller.findByPk(1);
+      const expected = {
+        id: 1,
+        username: 'mock find',
+      };
+      expect(actual).toEqual(expected);
     });
   });
 

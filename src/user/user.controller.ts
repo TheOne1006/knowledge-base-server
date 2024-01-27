@@ -7,6 +7,8 @@ import {
   UseGuards,
   ValidationPipe,
   Header,
+  ParseIntPipe,
+  Param,
   // Res,
 } from '@nestjs/common';
 import {
@@ -14,6 +16,7 @@ import {
   ApiTags,
   ApiSecurity,
   ApiResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 
 import type { Response } from 'express';
@@ -71,6 +74,27 @@ export class UserController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async getUserCurrent(@User() user: RequestUser): Promise<RequestUser> {
     return user;
+  }
+
+  /**
+   * 根据 id 查找
+   */
+  @Get(':id')
+  @Roles(ROLE_SUPER_ADMIN)
+  @ApiOperation({
+    summary: ' 根据 id 查找用户',
+  })
+  @ApiParam({
+    name: 'id',
+    example: '1',
+    description: '用户 id',
+    type: Number,
+  })
+  @SerializerClass(UserDto)
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async findByPk(@Param('id', ParseIntPipe) pk: number): Promise<UserDto> {
+    const ins = await this.userService.findByPk(pk);
+    return ins;
   }
 
   /**
