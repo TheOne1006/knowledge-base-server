@@ -284,7 +284,7 @@ export class KbController extends BaseController {
   ): Promise<KbDto> {
     const kbInfo = await this.service.create(newKbInfo, owner.id);
 
-    const kbRoot = this.service.getKbRoot(kbInfo);
+    const kbRoot = this.service.getKbRoot(kbInfo.ownerId, kbInfo.id);
     await this.service.checkDir(kbRoot);
 
     return kbInfo;

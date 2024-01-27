@@ -281,5 +281,53 @@ describe('BaseDBService', () => {
         expect(result).toBeTruthy();
       });
     });
+
+    describe('safeJoinPath', () => {
+      const table = [
+        {
+          _title: 'should return true path with safeJoinPath',
+          _input: ['mock_dir', 'mock_dir2'],
+          expected: path.join('mock_dir', 'mock_dir2'),
+        },
+        {
+          _title: 'ignore ../../',
+          _input: ['mock_dir', '../../mock_dir2'],
+          expected: path.join('mock_dir', 'mock_dir2'),
+        },
+        {
+          _title: 'ignore .../',
+          _input: ['mock_dir', '.../../mock_dir2'],
+          expected: path.join('mock_dir', 'mock_dir2'),
+        },
+        {
+          _title: 'ignore .../ keep children',
+          _input: ['mock_dir', '.../../mock_dir2/dir3/dir5'],
+          expected: path.join('mock_dir', 'mock_dir2/dir3/dir5'),
+        },
+      ];
+
+      describe.each(table)(
+        'safeJoinPath tables',
+        ({ _title, _input, expected }) => {
+          it(_title, () => {
+            const result = service.safeJoinPath.apply(null, _input);
+            expect(result).toEqual(expected);
+          });
+        },
+      );
+    });
+
+    describe('getKbRoot', () => {
+      it('should return kb root path', () => {
+        const actual = service.getKbRoot(1, 1);
+        const expected = path.join(
+          service['getResourceRoot'](),
+          `user-1`,
+          `kb-1`,
+        );
+
+        expect(actual).toEqual(expected);
+      });
+    });
   });
 });

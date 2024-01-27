@@ -20,6 +20,8 @@ export class KbSiteDto {
 
   ignorePatterns: string[];
 
+  evaluate: string;
+
   ownerId: number;
 
   kbId: number;

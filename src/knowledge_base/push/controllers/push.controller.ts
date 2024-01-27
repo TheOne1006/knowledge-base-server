@@ -218,7 +218,7 @@ export class PushController extends BaseController {
     const isExists = !!pushMapIns;
     const originRemoteId = pushMapIns?.remoteId || '';
 
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
 
     const absFilePath = this.kbService.safeJoinPath(
       kbResRoot,
@@ -312,7 +312,7 @@ export class PushController extends BaseController {
       this.pushMapService.findAll(pushMapWhere),
     ]);
 
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
 
     // 过滤 files 以及 pushMaps
 

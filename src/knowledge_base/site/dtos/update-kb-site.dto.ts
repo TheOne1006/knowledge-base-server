@@ -63,7 +63,13 @@ export class UpdateKbSiteDto {
     message: i18nValidationMessage('validation.STRING'),
   })
   @IsArray()
-  ignorePatterns: string[];
+  ignorePatterns?: string[] = [];
+
+  @ApiProperty({
+    example: '',
+    description: '执行脚本 返回 html',
+  })
+  evaluate?: string;
 
   @ApiProperty({
     example: ['nav', 'sidebar', 'footer', 'div.header'],

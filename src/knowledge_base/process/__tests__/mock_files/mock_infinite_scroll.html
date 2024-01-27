@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mock1</title>
+</head>
+
+<body>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <h1>title</h1>
+  <footer>footer</footer>
+</body>
+<script>
+    function getScrollTop() {
+      var scrollTop = 0;
+      if (document.documentElement && document.documentElement.scrollTop) {
+        scrollTop = document.documentElement.scrollTop;
+      } else if (document.body) {
+        scrollTop = document.body.scrollTop;
+      }
+      return scrollTop;
+    }
+    function getClientHeight() {
+      var clientHeight = 0;
+      if (document.body.clientHeight && document.documentElement.clientHeight) {
+        clientHeight = Math.min(document.body.clientHeight, document.documentElement.clientHeight);
+      } else {
+        clientHeight = Math.max(document.body.clientHeight, document.documentElement.clientHeight);
+      }
+      return clientHeight;
+    }
+
+    function getScrollHeight() {
+      return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    }
+
+</script>
+<script>
+  var index = 0;
+  var max = 200;
+  // 检测滚动到底部 则添加 20 个 h1 标签
+  window.onscroll = function () {
+    if (getScrollTop() + getClientHeight() >= getScrollHeight()) {
+      for (let i = 0; i < 20; i++) {
+        index += 1;
+        if (index > max) {
+          return;
+        }
+        const h1 = document.createElement('h1')
+        h1.innerText = 'title' + index;
+        document.body.appendChild(h1)
+      }
+    }
+  }
+</script>
+
+</html>

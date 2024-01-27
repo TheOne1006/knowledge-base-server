@@ -197,11 +197,7 @@ describe('KbResourceController', () => {
       );
 
       expect(KbServiceMock.findByPk).toHaveBeenCalledWith(kbId);
-      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith({
-        id: kbId,
-        title: 'title',
-        ownerId: mockUser.id,
-      });
+      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith(1, 1);
       expect(actual).toEqual(expected);
     });
 
@@ -257,11 +253,7 @@ describe('KbResourceController', () => {
       );
 
       expect(KbServiceMock.findByPk).toHaveBeenCalledWith(kbId);
-      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith({
-        id: kbId,
-        title: 'title',
-        ownerId: mockUser.id,
-      });
+      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith(1, 1);
       expect(actual).toEqual(expected);
     });
 
@@ -392,11 +384,7 @@ describe('KbResourceController', () => {
       );
 
       expect(KbServiceMock.findByPk).toHaveBeenCalledWith(kbId);
-      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith({
-        id: kbId,
-        title: 'title',
-        ownerId: mockUser.id,
-      });
+      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith(1, 1);
       expect(KbResourceServiceMock.checkDir).toHaveBeenCalledWith('/kbRoot');
       expect(KbServiceMock.getAllFiles).toHaveBeenCalledWith(
         {

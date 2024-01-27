@@ -10,8 +10,6 @@ export class KbDto {
 
   desc: string;
 
-  fileCount: number;
-
   ownerId: number;
 
   updatedAt: Date;

@@ -116,7 +116,7 @@ export class CrawlerController extends BaseController {
     const logger = this.logger;
 
     // 获取站点的目录
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
     const kbSiteResRoot = this.kbSiteService.getKbSiteRoot(
       kbResRoot,
       kbSiteIns,
@@ -174,6 +174,7 @@ export class CrawlerController extends BaseController {
               url,
               crawlerOption.linkSelector,
               kbSiteIns.removeSelectors,
+              kbSiteIns.evaluate,
             );
 
             logger.info(`crawlLinksAndHtml finish at ${url}`);
@@ -207,8 +208,12 @@ export class CrawlerController extends BaseController {
             retry = urlManager.getUrlRetryUrlTimes(url);
             urlManager.addRetryUrl(url);
           }
+          const curIndex = urlManager.getUrlIndex(url);
+          const total = urlManager.getTotal();
 
-          logger.info(`crawler finish at ${url}, completed: ${completed}`);
+          logger.info(
+            `crawler finish at ${url}, completed: ${completed}, ${curIndex} / ${total}`,
+          );
 
           subscriber.next({
             data: {
@@ -216,8 +221,8 @@ export class CrawlerController extends BaseController {
               completed, // 是否完成
               retry, // 重试次数
               finish: false, // 是否结束
-              total: urlManager.getTotal(),
-              index: urlManager.getUrlIndex(url),
+              total: total,
+              index: curIndex,
             },
           });
         });
@@ -297,7 +302,7 @@ export class CrawlerController extends BaseController {
     this.check_owner(kbFile, user.id);
 
     // 获取站点的目录
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
     const sourceUrl = kbFile.sourceUrl;
 
     this.logger.info(`start at ${sourceUrl}`);

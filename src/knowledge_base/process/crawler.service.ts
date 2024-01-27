@@ -61,7 +61,19 @@ export class CrawlerService {
     url: string,
     linkSelector: string = 'a[href]',
     removeSelectors: string[] = [],
+    evaluateFuncString: string = '',
   ): Promise<{ links: string[]; html: string }> {
+    // 传入的 evaluateFuncString 会被转换成一个函数
+    let evaluate: any;
+    if (evaluateFuncString) {
+      evaluate = new Function(
+        'page',
+        'browser',
+        'response',
+        'return (async () => {' + evaluateFuncString + '})();',
+      );
+    }
+
     const urlObj = new URL(url);
     const hostname = `${urlObj.protocol}//${urlObj.hostname}`;
 
@@ -81,6 +93,7 @@ export class CrawlerService {
            */
           waitUntil: 'domcontentloaded',
         },
+        evaluate,
       });
     } catch (error) {
       this.logger.error('PlaywrightWebBaseLoader error with', url);

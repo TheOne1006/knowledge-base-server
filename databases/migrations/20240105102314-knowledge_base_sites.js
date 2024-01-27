@@ -5,7 +5,7 @@ const tableName = 'knowledge_base_sites';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const { STRING, BOOLEAN, INTEGER, DATE, JSON } = Sequelize;
+    const { STRING, BOOLEAN, INTEGER, DATE, JSON, TEXT } = Sequelize;
 
     await queryInterface.createTable(tableName, {
       id: {
@@ -48,6 +48,11 @@ module.exports = {
         type: Sequelize.JSON,
         defaultValue: [],
         comment: '需要移除的选择器',
+      },
+      evaluate: {
+        type: TEXT,
+        defaultValue: '',
+        comment: '需要执行的js代码',
       },
       // todo
       // inject_jquery: {

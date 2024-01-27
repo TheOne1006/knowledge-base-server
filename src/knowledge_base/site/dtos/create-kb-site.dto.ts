@@ -28,7 +28,7 @@ export class CreateKbSiteDto {
   @Length(2, 50, {
     message: i18nValidationMessage('validation.LENGTH'),
   })
-  @Matches(/^[a-zA-Z0-9_]+$/i, {
+  @Matches(/^[a-zA-Z0-9_\-]+$/i, {
     message: i18nValidationMessage('validation.MATCHES'),
   })
   title: string;
@@ -84,7 +84,13 @@ export class CreateKbSiteDto {
     message: i18nValidationMessage('validation.STRING'),
   })
   @IsArray()
-  ignorePatterns: string[];
+  ignorePatterns?: string[] = [];
+
+  @ApiProperty({
+    example: '',
+    description: '执行脚本 返回 html',
+  })
+  evaluate?: string;
 
   @ApiProperty({
     example: ['nav', 'aside', 'footer', 'div.row > div.col.col--3'],

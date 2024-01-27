@@ -345,7 +345,7 @@ export class KbFileController extends BaseController {
     const deleteIns = await this.service.removeByPk(pk);
 
     const kb = await this.kbService.findByPk(ins.kbId);
-    const kbRoot = this.kbService.getKbRoot(kb);
+    const kbRoot = this.kbService.getKbRoot(kb.ownerId, kb.id);
 
     // 文件的绝对路径
     const fileAbsPath = this.service.getFilePath(kbRoot, ins.filePath);

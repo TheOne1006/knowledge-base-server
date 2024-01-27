@@ -36,8 +36,11 @@ export class KnowledgeBaseSite extends Model<KnowledgeBaseSite> {
   @Column({ type: DataType.JSON, allowNull: false, field: 'match_patterns' })
   matchPatterns: string[];
 
-  @Column({ type: DataType.JSON, allowNull: false, field: 'ignore_patterns' })
+  @Column({ type: DataType.JSON, defaultValue: [], field: 'ignore_patterns' })
   ignorePatterns: string[];
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  evaluate: string;
 
   @Column({ type: DataType.JSON, allowNull: false, field: 'remove_selectors' })
   removeSelectors: string[];

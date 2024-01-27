@@ -341,7 +341,7 @@ export class KbSiteController extends BaseController {
     this.check_owner(kb, owner.id);
     const newSite = await this.service.create(newKbSite, kbId, owner.id);
 
-    const kbRoot = this.kbService.getKbRoot(kb);
+    const kbRoot = this.kbService.getKbRoot(kb.ownerId, kb.id);
     const kbSiteRoot = this.service.getKbSiteRoot(kbRoot, newSite);
 
     await this.service.checkDir(kbSiteRoot);
@@ -403,7 +403,7 @@ export class KbSiteController extends BaseController {
     const deleteIns = await this.service.removeByPk(pk);
 
     const kb = await this.kbService.findByPk(ins.kbId);
-    const kbRoot = this.kbService.getKbRoot(kb);
+    const kbRoot = this.kbService.getKbRoot(kb.ownerId, kb.id);
     const kbSiteRoot = this.service.getKbSiteRoot(kbRoot, ins);
     await this.service.removeDir(kbSiteRoot);
     return deleteIns;

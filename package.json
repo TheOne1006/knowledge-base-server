@@ -26,6 +26,8 @@
     "migrate:down": "npx sequelize db:migrate:undo",
     "migrate:down:all": "npx sequelize db:migrate:undo:all",
     "migrate:rest": "npx sequelize db:migrate:undo:all && npx sequelize db:migrate",
+    "seed:all": "npx sequelize-cli db:seed:all",
+    "seed:rest": "npx sequelize-cli db:seed:undo:all && npx sequelize-cli db:seed:all",
     "doc": "npx compodoc -p tsconfig.compodoc.json --language zh-CN -n 'example documentation'",
     "doc:serve": "npm run doc && npx compodoc -s --port 9000",
     "doc:serve:watch": "npx compodoc -p tsconfig.compodoc.json --language zh-CN -w -n 'example documentation' -s --port 9000",

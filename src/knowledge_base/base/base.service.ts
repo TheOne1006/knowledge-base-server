@@ -16,7 +16,7 @@ import {
   removeDir,
   doesFileExist,
   removeFile,
-} from '../utils/check-dir';
+} from '../utils/file-tools';
 import { config } from '../../../config';
 
 const RESOURCES_ROOT = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
@@ -227,9 +227,19 @@ export abstract class BaseService<
    * @returns
    */
   safeJoinPath(prev: string, ...paths: string[]): string {
-    const reg = /^[\.]+/;
+    const reg = /^(\.\.\/)*/;
     // filePath 删除 最左边的 ..., 避免越界
     const safePaths = paths.map((item) => item.replace(reg, ''));
     return join(prev, ...safePaths).toString();
+  }
+
+  /**
+   * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
+   * @param {number} ownerId
+   * @param {number} kbId
+   * @returns {string}
+   */
+  getKbRoot(ownerId: number, kbId: number): string {
+    return join(this.getResourceRoot(), `user-${ownerId}`, `kb-${kbId}`);
   }
 }

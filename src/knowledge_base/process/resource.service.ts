@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
 import { urlAppendSuffix } from '../utils/link-format';
-import { checkDir } from '../utils/check-dir';
+import { checkDir } from '../utils/file-tools';
 
 @Injectable()
 export class KbResourceService {

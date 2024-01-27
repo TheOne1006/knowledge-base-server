@@ -41,6 +41,10 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     if (!filePath.startsWith('/')) {
       filePath = `/${filePath}`;
     }
+
+    // 校验 filePath
+    // todo: check
+
     const data = new this.mainModel({
       ...pyload,
       filePath,

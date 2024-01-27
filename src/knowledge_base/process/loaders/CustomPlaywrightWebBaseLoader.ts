@@ -8,6 +8,7 @@ import { chromium } from 'playwright';
 
 // PlaywrightWebBaseLoader.imports = async () => ({ chromium });
 
+const ALL_PROCESS_TIMEOUT = 10 * 60 * 1000; // 最高 5min
 // timeout
 const LOADER_TIMEOUT = 30 * 1000;
 
@@ -20,6 +21,12 @@ export class CustomPlaywrightWebBaseLoader extends PlaywrightWebBaseLoader {
       headless: true,
       ...options?.launchOptions,
     });
+
+    // 避免无限超时
+    const timer = setTimeout(() => {
+      browser && browser.close();
+      throw new Error('is timeout!!!!!');
+    }, ALL_PROCESS_TIMEOUT);
 
     try {
       const page = await browser.newPage();
@@ -43,6 +50,8 @@ export class CustomPlaywrightWebBaseLoader extends PlaywrightWebBaseLoader {
       // page && page.close();
       browser && browser.close();
       throw error;
+    } finally {
+      clearTimeout(timer);
     }
   }
 

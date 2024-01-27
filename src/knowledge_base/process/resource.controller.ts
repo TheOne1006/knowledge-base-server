@@ -177,7 +177,7 @@ export class KbResourceController extends BaseController {
     this.check_owner(kbIns, user.id);
 
     const originFiles = pyload.filePaths;
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
 
     const target: KbFileDto[] = [];
 
@@ -267,7 +267,7 @@ export class KbResourceController extends BaseController {
     const kbIns = await this.kbService.findByPk(pk);
     this.check_owner(kbIns, user.id);
 
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
     await this.kbResService.checkDir(kbResRoot);
 
     const files = await this.kbService.getAllFiles(
@@ -302,7 +302,7 @@ export class KbResourceController extends BaseController {
     const kbIns = await this.kbService.findByPk(pk);
     this.check_owner(kbIns, user.id);
 
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
 
     const targetFilePath = this.kbFileService.getFilePath(kbResRoot, filePath);
 
@@ -362,7 +362,7 @@ export class KbResourceController extends BaseController {
       ownerId: user.id,
     });
 
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
 
     // 遍历 allSiteIns 找到所有文件的数据
     for (let i = 0; i < allSiteIns.length; i++) {

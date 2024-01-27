@@ -3,9 +3,10 @@ services:
   kb-server:
       build: './'
       ports:
-        - '3000:3000'
+        - '3001:3000'
       volumes:
         - '/etc/localtime:/etc/localtime:ro'
         - './databases/db:/home/myuser/databases/db:rw'
         - './resources:/home/myuser/resources'
+        - '../knowledge-base-admin/dist:/home/myuser/client'
 
