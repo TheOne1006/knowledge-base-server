@@ -18,6 +18,8 @@ export class KbFileDto {
 
   summary: string;
 
+  checksum: string;
+
   kbId: number;
 
   siteId?: number;

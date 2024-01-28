@@ -13,6 +13,7 @@ const defaultAttr = {
   pushVersion: 'init',
   ownerId: 1,
   kbId: 1,
+  pushChecksum: 'sha256',
 };
 
 const mockBaseData = [

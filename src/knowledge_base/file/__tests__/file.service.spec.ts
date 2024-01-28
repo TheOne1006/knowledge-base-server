@@ -16,6 +16,7 @@ const defaultAttr = {
   ownerId: 1,
   kbId: 1,
   sourceType: FILE_SOURCE_TYPE_UPLOAD,
+  checksum: 'hash',
 };
 
 const mockData = [
@@ -82,7 +83,48 @@ describe('KbFileService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('Private Methods', () => {
+    describe('completeFilePathPrefix', () => {
+      it('should return the correct file path when the filePath starts with dots', () => {
+        const filePath = '/relative/path/to/file.html';
+
+        const result = service['completeFilePathPrefix'](filePath);
+
+        expect(result).toEqual('/relative/path/to/file.html');
+      });
+
+      it('should return the correct file path when the filePath does not start with dots', () => {
+        const filePath = 'relative/path/to/file.html';
+
+        const result = service['completeFilePathPrefix'](filePath);
+
+        expect(result).toEqual('/relative/path/to/file.html');
+      });
+    });
+
+    describe('generateFileHash', () => {
+      it('should return the correct file hash', async () => {
+        const absFilePath = service.safeJoinPath(
+          __dirname,
+          'mocks',
+          'tmp2.txt',
+        );
+
+        const result = await service['generateFileHash'](absFilePath);
+
+        expect(result).toEqual(
+          '74b4147957813b62cc8987f2b711ddb31f8cb46dcbf71502033da66053c8780a',
+        );
+      });
+    });
+  });
+
   describe('DB operation', () => {
+    beforeAll(() => {
+      jest
+        .spyOn(service as any, 'generateFileHash')
+        .mockResolvedValue('sha256');
+    });
     describe('CREATE', () => {
       it('should create a new instance', async () => {
         const dto = {
@@ -100,7 +142,7 @@ describe('KbFileService', () => {
     });
 
     describe('BATCH CREATE', () => {
-      it('should create a new instance', async () => {
+      it('should create more instances', async () => {
         const dtos = [
           {
             filePath: '/tmp_batch/path/to/file.txt',
@@ -240,7 +282,7 @@ describe('KbFileService', () => {
     });
   });
 
-  describe('File operation', () => {
+  describe('Fle operation', () => {
     describe('getFilePath', () => {
       it('should return the correct file path when the instance filePath starts with dots', () => {
         const kbResRoot = '/root/path';

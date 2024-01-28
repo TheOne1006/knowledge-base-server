@@ -34,6 +34,8 @@ describe('PushController', () => {
       create: jest.fn().mockResolvedValue({}),
     } as any as PushLogService;
     mockPushMapService = {
+      updateByPk: jest.fn().mockResolvedValue({}),
+      create: jest.fn().mockResolvedValue({}),
       findAll: jest.fn().mockResolvedValue([
         {
           id: 1,
@@ -76,6 +78,7 @@ describe('PushController', () => {
         id: 2,
         fielPath: '/tmp/xxx/1.md',
         ownerId: 1,
+        checksum: 'sha256',
       }),
     } as any as KbFileService;
     mockKbService = {
@@ -198,23 +201,27 @@ describe('PushController', () => {
     it('should call pushByFile and create if remoteId not exists', async () => {
       const pushVersion = 'v1';
       const absFilePath = '/tmp/xxx/1.md';
-      const pushConfig = { id: 1, type: 'type1', kbId: 1 };
+      const pushConfig = { id: 1, type: 'type1', kbId: 1 } as any;
       const pushMapDict = {};
-      const owner = { id: 1 };
+      const owner = { id: 1 } as any;
       const kbFileId = 1;
+      const kbFileIns = {
+        checksum: 'sha256',
+        id: kbFileId,
+      } as any;
 
       mockPushProcessService.pushByFile = jest
         .fn()
         .mockResolvedValue('remote1');
       mockPushMapService.create = jest.fn().mockResolvedValue({});
 
-      await (controller as any)._pushFileAndUpsertPushMap(
+      await controller['_pushFileAndUpsertPushMap'](
         pushVersion,
         absFilePath,
         pushConfig,
         pushMapDict,
         owner,
-        kbFileId,
+        kbFileIns,
       );
 
       expect(mockPushProcessService.pushByFile).toHaveBeenCalledWith(
@@ -228,6 +235,7 @@ describe('PushController', () => {
         fileId: kbFileId,
         remoteId: 'remote1',
         pushVersion: pushVersion,
+        pushChecksum: kbFileIns.checksum,
       };
 
       expect(mockPushMapService.create).toHaveBeenCalledWith(
@@ -240,23 +248,27 @@ describe('PushController', () => {
     it('should call pushByFile and updateByPk if remoteId exists', async () => {
       const pushVersion = 'v1';
       const absFilePath = '/tmp/xxx/1.md';
-      const pushConfig = { id: 1, type: 'type1', kbId: 1 };
-      const pushMapDict = { 1: { id: 1, remoteId: 'remote1' } };
-      const owner = { id: 1 };
+      const pushConfig = { id: 1, type: 'type1', kbId: 1 } as any;
+      const pushMapDict = { 1: { id: 1, remoteId: 'remote1' } } as any;
+      const owner = { id: 1 } as any;
       const kbFileId = 1;
+      const kbFileIns = {
+        id: kbFileId,
+        checksum: 'sha256',
+      } as any;
 
       mockPushProcessService.pushByFile = jest
         .fn()
         .mockResolvedValue('remote1');
       mockPushMapService.updateByPk = jest.fn().mockResolvedValue({});
 
-      await (controller as any)._pushFileAndUpsertPushMap(
+      await controller['_pushFileAndUpsertPushMap'](
         pushVersion,
         absFilePath,
         pushConfig,
         pushMapDict,
         owner,
-        kbFileId,
+        kbFileIns,
       );
 
       expect(mockPushProcessService.pushByFile).toHaveBeenCalledWith(
@@ -265,7 +277,9 @@ describe('PushController', () => {
         'remote1',
       );
       expect(mockPushMapService.updateByPk).toHaveBeenCalledWith(1, {
+        pushChecksum: 'sha256',
         pushVersion: pushVersion,
+        remoteId: 'remote1',
       });
     });
   });
@@ -406,6 +420,8 @@ describe('PushController', () => {
 
       expect(mockPushMapService.updateByPk).toHaveBeenCalledWith(1, {
         pushVersion: 'init2',
+        pushChecksum: 'sha256',
+        remoteId: '012138',
       });
     });
 

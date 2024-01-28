@@ -7,7 +7,7 @@ import {
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
-  // Query,c
+  // Query,
   Put,
   // Delete,
   Param,
@@ -323,6 +323,11 @@ export class CrawlerController extends BaseController {
         sourceUrl,
         html,
       );
+      // 数据库操作
+      await this.kbFileService.updateByPk(kbFile.id, {
+        summary: kbFile.summary,
+        sourceUrl: kbFile.sourceUrl,
+      });
       completed = true;
     } catch (error) {
       this.logger.warn('crawl failed');

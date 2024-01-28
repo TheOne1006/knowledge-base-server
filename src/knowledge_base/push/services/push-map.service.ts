@@ -4,7 +4,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PushMap } from '../entites/push-map.entity';
-import { PushMapDto } from '../dtos';
+import { PushMapDto, CreatePushMapDto, UpdatePushMapDto } from '../dtos';
 
 import { BaseService } from '../../base/base.service';
 
@@ -21,13 +21,13 @@ class PushMapDBService extends BaseService<typeof PushMap, PushMapDto> {
 
   /**
    * 创建
-   * @param  {Partial<PushMapDto>} pyload
+   * @param  {CreatePushMapDto} pyload
    * @param  {number} kbId
    * @param  {number} ownerId
    * @returns {Promise<PushMapDto>}
    */
   async create(
-    pyload: Partial<PushMapDto>,
+    pyload: CreatePushMapDto,
     kbId: number,
     ownerId: number,
   ): Promise<PushMapDto> {
@@ -86,20 +86,21 @@ class PushMapDBService extends BaseService<typeof PushMap, PushMapDto> {
   /**
    * 根据pk, 更新 pyload
    * @param {number} pk
-   * @param {Partial<PushMapDto>} pyload
+   * @param {UpdatePushMapDto} pyload
    * @returns {Promise<PushMapDto>}
    */
-  async updateByPk(
-    pk: number,
-    pyload: Partial<PushMapDto>,
-  ): Promise<PushMapDto> {
+  async updateByPk(pk: number, pyload: UpdatePushMapDto): Promise<PushMapDto> {
     const instance = await this.mainModel.findByPk(pk);
 
     if (!instance) {
       throw new Error('instance not found');
     }
 
-    const updatePayload = pick(pyload, ['pushVersion']);
+    const updatePayload = pick(pyload, [
+      'pushVersion',
+      'pushChecksum',
+      'remoteId',
+    ]);
 
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);

@@ -5,8 +5,8 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { KnowledgeBaseFile } from './file.entity';
 import { KbFileDto, CreateKbFileDto, UpdateKbFileDto } from './dtos';
-
 import { BaseService } from '../base/base.service';
+import { generateFileHash } from '../utils/file-tools';
 
 @Injectable()
 class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
@@ -17,6 +17,16 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     protected readonly mainModel: typeof KnowledgeBaseFile,
   ) {
     super(sequelize, mainModel);
+  }
+
+  private completeFilePathPrefix(filePath: string) {
+    return filePath.startsWith('/') ? filePath : `/${filePath}`;
+  }
+
+  private async generateFileHash(absFilePath: string) {
+    const checksum = await generateFileHash(absFilePath);
+
+    return checksum;
   }
 
   /**
@@ -32,22 +42,23 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     ownerId: number,
   ): Promise<KbFileDto> {
     let filePath = pyload?.filePath || '';
-
     // 1.md
     if (filePath.length <= 4) {
       throw new Error('error filePath');
     }
 
-    if (!filePath.startsWith('/')) {
-      filePath = `/${filePath}`;
-    }
-
+    filePath = this.completeFilePathPrefix(filePath);
     // 校验 filePath
-    // todo: check
+    const absFilePath = this.safeJoinPath(
+      this.getKbRoot(ownerId, kbId),
+      filePath,
+    );
+    const checksum = await this.generateFileHash(absFilePath);
 
     const data = new this.mainModel({
       ...pyload,
       filePath,
+      checksum,
       kbId,
       ownerId,
     });
@@ -59,27 +70,41 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
 
   /**
    * 批量创建
-   * @param  {CreateKbFileDto[]} pyloads
+   * @param  {CreateKbFileDto[]}     payloads: CreateKbFileDto[],
+
    * @param  {number} ownerId
    * @param  {number} kbId
    * @param  {string} sourceType
    * @returns {Promise<KbFileDto>}
    */
   async batchCreate(
-    pyloads: CreateKbFileDto[],
+    payloads: CreateKbFileDto[],
     ownerId: number,
     kbId: number,
     sourceType: string,
   ): Promise<KbFileDto[]> {
-    const data = pyloads.map((payload) => ({
-      ...payload,
-      sourceType,
-      ownerId,
-      kbId,
-      filePath: payload.filePath.startsWith('/')
-        ? payload.filePath
-        : `/${payload.filePath}`,
-    }));
+    const data: Partial<KbFileDto>[] = [];
+
+    for (let i = 0; i < payloads.length; i++) {
+      const payload = payloads[i];
+
+      // 校验 filePath
+      const absFilePath = this.safeJoinPath(
+        this.getKbRoot(ownerId, kbId),
+        payload.filePath,
+      );
+
+      const checksum = await this.generateFileHash(absFilePath);
+
+      data.push({
+        ...payload,
+        checksum,
+        sourceType,
+        ownerId,
+        kbId,
+        filePath: this.completeFilePathPrefix(payload.filePath),
+      });
+    }
 
     const instances = await this.mainModel.bulkCreate(data);
 
@@ -139,7 +164,18 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       throw new Error('instance not found');
     }
 
-    const updatePayload = pick(pyload, ['sourceUrl', 'summary']);
+    // 校验 filePath
+    const absFilePath = this.safeJoinPath(
+      this.getKbRoot(instance.ownerId, instance.kbId),
+      instance.filePath,
+    );
+
+    const checksum = await this.generateFileHash(absFilePath);
+
+    const updatePayload = {
+      ...pick(pyload, ['sourceUrl', 'summary']),
+      checksum,
+    };
 
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);
@@ -187,7 +223,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
   /**
    * 查找或者创建
    * @param {Partial<KbFileDto>} pyload
-   * @param {string} filePath
+   * @param {string} queryFilePath
    * @param {number} kbId
    * @param {number} ownerId
    * @param {number} siteId
@@ -195,11 +231,13 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    */
   async findOrCreate(
     pyload: Partial<KbFileDto>,
-    filePath: string,
+    queryFilePath: string,
     kbId: number,
     ownerId: number,
     siteId?: number,
   ): Promise<KbFileDto> {
+    const filePath = this.completeFilePathPrefix(queryFilePath);
+
     const where: WhereOptions = {
       kbId,
       filePath,

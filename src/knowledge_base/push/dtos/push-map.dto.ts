@@ -14,6 +14,8 @@ export class PushMapDto {
 
   pushVersion: string;
 
+  pushChecksum: string;
+
   remoteId: string;
 
   ownerId: number;

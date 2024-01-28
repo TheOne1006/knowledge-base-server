@@ -36,6 +36,8 @@ import {
   ClearPushResDto,
 } from '../dtos';
 
+import { KbFileDto } from '../../file/dtos';
+
 import { config } from '../../../../config';
 import { PushConfigService } from '../services/push-config.service';
 import { PushMapService } from '../services/push-map.service';
@@ -111,7 +113,7 @@ export class PushController extends BaseController {
             pushConfig,
             pushMapDict,
             owner,
-            kbFile.id,
+            kbFile,
           );
 
           subscriber.next({
@@ -235,6 +237,8 @@ export class PushController extends BaseController {
     if (isExists) {
       newPushMapIns = await this.pushMapService.updateByPk(pushMapIns.id, {
         pushVersion: lastPushLog.pushVersion,
+        pushChecksum: kbFileIns.checksum,
+        remoteId,
       });
     } else {
       // 新建
@@ -244,6 +248,7 @@ export class PushController extends BaseController {
         fileId: fileId,
         remoteId,
         pushVersion: lastPushLog.pushVersion,
+        pushChecksum: kbFileIns.checksum,
       };
       newPushMapIns = await this.pushMapService.create(
         newMap,
@@ -367,12 +372,12 @@ export class PushController extends BaseController {
 
   /**
    * 推送文件以及增、更 pushMap
-   * @param pushVersion
-   * @param absFilePath
-   * @param pushConfig
-   * @param pushMapDict
-   * @param owner
-   * @param kbFileId
+   * @param {string} pushVersion
+   * @param {string} absFilePath
+   * @param {PushConfigDto} pushConfig
+   * @param {{ [fileId: number]: PushMapDto }}pushMapDict
+   * @param {RequestUser} owner
+   * @param {KbFileDto} kbFileIns
    * @returns
    */
   private async _pushFileAndUpsertPushMap(
@@ -381,8 +386,9 @@ export class PushController extends BaseController {
     pushConfig: PushConfigDto,
     pushMapDict: { [fileId: number]: PushMapDto },
     owner: RequestUser,
-    kbFileId: number,
+    kbFileIns: KbFileDto,
   ): Promise<string> {
+    const kbFileId = kbFileIns.id;
     const originRemoteId = pushMapDict[kbFileId]?.remoteId || '';
     const isExists = !!originRemoteId;
 
@@ -399,6 +405,8 @@ export class PushController extends BaseController {
       // 更新
       await this.pushMapService.updateByPk(originMap.id, {
         pushVersion: pushVersion,
+        pushChecksum: kbFileIns.checksum,
+        remoteId,
       });
     } else {
       // 新建
@@ -408,6 +416,7 @@ export class PushController extends BaseController {
         fileId: kbFileId,
         remoteId,
         pushVersion: pushVersion,
+        pushChecksum: kbFileIns.checksum,
       };
       await this.pushMapService.create(newMap, pushConfig.kbId, owner.id);
     }

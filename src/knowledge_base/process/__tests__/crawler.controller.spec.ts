@@ -42,6 +42,8 @@ describe('CrawlerController', () => {
     } as any as KbService;
 
     KbFileServiceMock = {
+      safeJoinPath: jest.fn().mockImplementation(() => '/path'),
+      generateFileHash: jest.fn().mockImplementation(() => 'hash'),
       findOrCreate: jest.fn().mockImplementation(() => ({
         id: 1,
         title: 'title',
@@ -269,7 +271,7 @@ describe('CrawlerController', () => {
       });
     });
 
-    it('should update single web page', async () => {
+    it('should update single web page success', async () => {
       CrawlerServiceMock.crawlLinksAndHtml = jest
         .fn()
         .mockImplementation(() => ({
@@ -277,10 +279,13 @@ describe('CrawlerController', () => {
           html: '<html><h1>title</h1></html>',
         }));
 
+      KbFileServiceMock.updateByPk = jest.fn().mockResolvedValue({});
+
       const actual = await controller.updateSigleWePage(1, 1, 1, {
         id: 1,
       } as any);
 
+      expect(KbFileServiceMock.updateByPk).toHaveBeenCalledTimes(1);
       expect(actual).toEqual({
         url: 'http://example.com/demo',
         completed: true,
