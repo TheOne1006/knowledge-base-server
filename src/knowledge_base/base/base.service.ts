@@ -1,5 +1,11 @@
 import { Sequelize } from 'sequelize-typescript';
-import { Transactionable, WhereOptions, Transaction } from 'sequelize';
+import { join } from 'path';
+import {
+  Transactionable,
+  WhereOptions,
+  Transaction,
+  OrderItem,
+} from 'sequelize';
 import { FileStatDto } from '../utils/dtos';
 import {
   getAllFilesAndDirectoriesRecursively,
@@ -10,7 +16,7 @@ import {
   removeDir,
   doesFileExist,
   removeFile,
-} from '../utils/check-dir';
+} from '../utils/file-tools';
 import { config } from '../../../config';
 
 const RESOURCES_ROOT = config.APP_CONFIG.KOWNLEDGE_BASE_RESOURCES_ROOT;
@@ -87,12 +93,14 @@ abstract class BaseDBService<T extends BaseModelT, U> {
    * @param {WhereOptions} where
    * @param {number} offset
    * @param {number} limit
+   * @param {OrderItem} order
    * @returns {Promise<U[]>}
    */
   abstract findAll(
     where?: WhereOptions,
     offset?: number,
     limit?: number,
+    order?: OrderItem,
   ): Promise<U[]>;
 
   /**
@@ -158,6 +166,11 @@ export abstract class BaseService<
     isRecursion: boolean = true,
     ignorePathPrefix: string = '',
   ): Promise<FileStatDto[]> {
+    const pathExist = await this.checkPathExist(root);
+    if (!pathExist) {
+      return [];
+    }
+
     const files = await getAllFilesAndDirectoriesRecursively(
       root,
       ignorePathPrefix,
@@ -205,5 +218,28 @@ export abstract class BaseService<
    */
   async removeFile(filePath: string): Promise<boolean> {
     return removeFile(filePath);
+  }
+
+  /**
+   * 安全版版的 join
+   * @param prev
+   * @param paths
+   * @returns
+   */
+  safeJoinPath(prev: string, ...paths: string[]): string {
+    const reg = /^(\.\.\/)*/;
+    // filePath 删除 最左边的 ..., 避免越界
+    const safePaths = paths.map((item) => item.replace(reg, ''));
+    return join(prev, ...safePaths).toString();
+  }
+
+  /**
+   * 获取资源库的目录 = RESOURCES_ROOT + userId + kbId
+   * @param {number} ownerId
+   * @param {number} kbId
+   * @returns {string}
+   */
+  getKbRoot(ownerId: number, kbId: number): string {
+    return join(this.getResourceRoot(), `user-${ownerId}`, `kb-${kbId}`);
   }
 }

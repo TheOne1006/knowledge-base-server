@@ -31,8 +31,11 @@ export class KnowledgeBaseFile extends Model<KnowledgeBaseFile> {
   @Column({ type: DataType.STRING, field: 'source_url' })
   sourceUrl: string;
 
-  @Column({ type: DataType.STRING, field: 'summary' })
+  @Column({ type: DataType.STRING })
   summary: string;
+
+  @Column({ type: DataType.STRING })
+  checksum: string;
 
   @Column({
     type: DataType.INTEGER,

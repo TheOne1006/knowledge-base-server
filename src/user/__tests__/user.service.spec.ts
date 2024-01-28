@@ -1,7 +1,6 @@
 import { SequelizeModule } from '@nestjs/sequelize';
-import { Sequelize } from 'sequelize-typescript';
+// import { Sequelize } from 'sequelize-typescript';
 import { Test, TestingModule } from '@nestjs/testing';
-// import { Sequelize } from 'sequelize';
 import { User } from '../user.entity';
 import { UserService } from '../user.service';
 import { ROLE_USER } from '../../common/constants';
@@ -10,7 +9,7 @@ import { CoreModule } from '../../core/core.module';
 describe('UserService', () => {
   let service: UserService;
   let moduleRef: TestingModule;
-  let sequelize: Sequelize;
+  // let sequelize: Sequelize;
 
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({
@@ -18,7 +17,7 @@ describe('UserService', () => {
       providers: [UserService],
     }).compile();
 
-    sequelize = moduleRef.get(Sequelize);
+    // sequelize = moduleRef.get(Sequelize);
 
     service = moduleRef.get<UserService>(UserService);
   });
@@ -71,10 +70,8 @@ describe('UserService', () => {
         expect(user).toMatchObject(expectedUsers);
       });
 
-      it('should update password transaction', async () => {
-        const transaction = await sequelize.transaction();
-        const user = await service.updatePasswordByPk(1, '123456', transaction);
-        await transaction.commit();
+      it('should update password', async () => {
+        const user = await service.updatePasswordByPk(1, '123456');
         const expectedUsers = {
           id: 1,
           username: 'John',
@@ -117,10 +114,8 @@ describe('UserService', () => {
         expect(actual).toBeNull();
       });
 
-      it('should remove with transaction', async () => {
-        const transaction = await sequelize.transaction();
-        const user = await service.removeByPk(5, transaction);
-        await transaction.commit();
+      it('should remove', async () => {
+        const user = await service.removeByPk(5);
 
         const expectedUsers = {
           id: 5,

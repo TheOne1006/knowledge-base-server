@@ -5,7 +5,7 @@ const tableName = 'knowledge_base_sites';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const { STRING, BOOLEAN, INTEGER, DATE, JSON } = Sequelize;
+    const { STRING, BOOLEAN, INTEGER, DATE, JSON, TEXT } = Sequelize;
 
     await queryInterface.createTable(tableName, {
       id: {
@@ -34,14 +34,25 @@ module.exports = {
         defaultValue: [],
         comment: '起始网站的地址',
       },
-      pattern: {
-        type: Sequelize.STRING(255),
-        comment: '正则',
+      match_patterns: {
+        type: JSON,
+        defaultValue: [],
+        comment: '命中的正则',
+      },
+      ignore_patterns: {
+        type: JSON,
+        defaultValue: [],
+        comment: '忽略的正则',
       },
       remove_selectors: {
         type: Sequelize.JSON,
         defaultValue: [],
         comment: '需要移除的选择器',
+      },
+      evaluate: {
+        type: TEXT,
+        defaultValue: '',
+        comment: '需要执行的js代码',
       },
       // todo
       // inject_jquery: {

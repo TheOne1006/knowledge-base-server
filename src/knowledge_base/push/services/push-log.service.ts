@@ -1,8 +1,5 @@
 // import { pick, map } from 'lodash';
-import {
-  // Transaction,
-  WhereOptions,
-} from 'sequelize';
+import { OrderItem, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -39,9 +36,7 @@ class PushLogDBService extends BaseService<typeof PushLog, PushLogDto> {
       ownerId,
     });
 
-    const options = await this.genOptions();
-    const instance = await data.save(options);
-    await this.autoCommit(options);
+    const instance = await data.save();
 
     return instance;
   }
@@ -57,11 +52,13 @@ class PushLogDBService extends BaseService<typeof PushLog, PushLogDto> {
     where?: WhereOptions,
     offset?: number,
     limit?: number,
+    order?: OrderItem,
   ): Promise<PushLogDto[]> {
     return this.mainModel.findAll({
       where,
       offset: Math.max(0, offset) || undefined,
       limit: Math.max(0, limit) || undefined,
+      order: order && [order],
     });
   }
 

@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises';
+import { createHash } from 'crypto';
 
 /**
  * 检查文件、目录是否存在
@@ -68,4 +69,20 @@ export async function removeFile(filePath: string): Promise<boolean> {
   }
 
   return true;
+}
+
+/**
+ * 生成文件的 hash 值
+ * @param  {string} filePath
+ * @returns {Promise<string>}
+ */
+export async function generateFileHash(filePath: string): Promise<string> {
+  // 读取文件内容
+  const fileData = await fs.readFile(filePath);
+
+  // 使用SHA-256哈希函数生成唯一值
+  const hash = createHash('sha256');
+  hash.update(fileData);
+
+  return hash.digest('hex');
 }

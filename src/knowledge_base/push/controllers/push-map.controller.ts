@@ -7,6 +7,8 @@ import {
   Query,
   Param,
   ParseIntPipe,
+  Header,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -18,6 +20,8 @@ import {
 } from '@nestjs/swagger';
 import { WhereOptions } from 'sequelize';
 import { I18nService } from 'nestjs-i18n';
+import type { Response } from 'express';
+import { ExpressResponse } from '../../../common/decorators/express-res.decorator';
 
 import { SerializerInterceptor } from '../../../common/interceptors/serializer.interceptor';
 import { Roles, SerializerClass, User } from '../../../common/decorators';
@@ -145,6 +149,7 @@ export class PushMapController extends BaseController {
    * 获取owner文件列表
    */
   @Get()
+  @Header('Access-Control-Expose-Headers', 'X-Total-Count')
   @ApiOperation({
     summary: '所有者的推送配置列表',
   })
@@ -163,60 +168,126 @@ export class PushMapController extends BaseController {
     required: false,
   })
   @ApiQuery({
-    name: 'offset',
-    description: 'offset',
-    example: 1,
+    name: 'fileId',
+    example: '1',
+    description: '文件 id',
     type: Number,
     required: false,
   })
   @ApiQuery({
-    name: 'limit',
-    description: 'limit',
-    example: 10,
-    type: Number,
+    name: 'remoteId',
+    description: 'remoteId',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'type',
+    description: 'type',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'pushVersion',
+    description: 'pushVersion',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'ids',
+    description: '逗号分隔',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
+    name: '_sort',
+    description: '排序字段',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_order',
+    description: '排序方式',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_end',
+    description: '结束索引',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_start',
+    description: '开始索引',
     required: false,
   })
   @SerializerClass(PushMapDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async ownerlist(
+    @ExpressResponse() res: Response,
+    @User() owner: RequestUser,
     @Query(
       'kbId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    kbId: number,
+    kbId?: number,
     @Query(
       'configId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    configId: number,
+    configId?: number,
     @Query(
-      'offset',
+      'fileId',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    offset: number,
+    fileId?: number,
+    @Query('remoteId') remoteId?: string,
+    @Query('type') type?: string,
+    @Query('pushVersion') pushVersion?: string,
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
+    @Query('ids', new ParseArrayPipe({ optional: true }))
+    ids?: number[],
     @Query(
-      'limit',
+      '_start',
       new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
     )
-    limit: number,
-    @User() owner: RequestUser,
+    start?: number,
+    @Query(
+      '_end',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    end?: number,
+    @Query('_sort') sort?: string,
+    @Query('_order') order?: string,
   ): Promise<PushMapDto[]> {
-    const where: WhereOptions = {
+    const originWhere: WhereOptions = {
       ownerId: owner.id,
     };
 
-    const preWhere = {
-      configId,
-      kbId,
+    const exactSearch = { kbId, configId, fileId, type, id };
+    const fuzzyMatch = {
+      remoteId,
+      pushVersion,
+    };
+    const whereIn = {
+      id: ids,
     };
 
-    Object.keys(preWhere).forEach((key) => {
-      if (preWhere[key]) {
-        where[key] = preWhere[key];
-      }
-    });
+    const where = this.buildSearchWhere(
+      originWhere,
+      exactSearch,
+      fuzzyMatch,
+      whereIn,
+    );
+    const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
+    const searchOrder = this.buildSearchOrder(sort, order);
 
-    const list = await this.service.findAll(where, offset, limit);
+    const list = await this.service.findAll(where, offset, limit, searchOrder);
+
+    const count = await this.service.count(where);
+
+    res.set('X-Total-Count', `messages ${start}-${end}/${count}`);
+
     return list;
   }
 

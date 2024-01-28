@@ -21,10 +21,8 @@ export class UserDto {
   @Exclude()
   ip?: string;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

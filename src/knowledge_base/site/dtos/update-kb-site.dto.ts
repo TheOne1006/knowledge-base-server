@@ -1,9 +1,10 @@
+// istanbul ignore file
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsUrl,
-  MinLength,
-  MaxLength,
+  // MinLength,
+  // MaxLength,
   IsArray,
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
@@ -44,19 +45,32 @@ export class UpdateKbSiteDto {
   startUrls: string[];
 
   @ApiProperty({
-    example: '^https:\\/\\/nestjs\\.bootcss\\.com\\/.*',
-    description: '正则表示',
+    example: ['^https:\\/\\/marmelab.com\\/*'],
+    description: '正则表示,',
   })
   @IsString({
+    each: true,
     message: i18nValidationMessage('validation.STRING'),
   })
-  @MinLength(5, {
-    message: i18nValidationMessage('validation.MIN_LENGTH'),
+  @IsArray()
+  matchPatterns: string[];
+
+  @ApiProperty({
+    example: ['^https:\\/\\/marmelab.com\\/react-admin\\/doc\\/*'],
+    description: '剔除规则，由于 matchPatterns',
   })
-  @MaxLength(100, {
-    message: i18nValidationMessage('validation.MAX_LENGTH'),
+  @IsString({
+    each: true,
+    message: i18nValidationMessage('validation.STRING'),
   })
-  pattern: string;
+  @IsArray()
+  ignorePatterns?: string[] = [];
+
+  @ApiProperty({
+    example: '',
+    description: '执行脚本 返回 html',
+  })
+  evaluate?: string;
 
   @ApiProperty({
     example: ['nav', 'sidebar', 'footer', 'div.header'],

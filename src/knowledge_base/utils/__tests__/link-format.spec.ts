@@ -1,4 +1,9 @@
-import { urlAppendSuffix, urlRemoveHash, toAbsoluteURL } from '../link-format';
+import {
+  urlAppendSuffix,
+  urlRemoveHash,
+  toAbsoluteURL,
+  isValidUrl,
+} from '../link-format';
 
 describe('link-format', () => {
   describe('urlAppendSuffix', () => {
@@ -34,6 +39,53 @@ describe('link-format', () => {
     );
   });
 
+  describe('isValidUrl', () => {
+    it('should return true for valid urls', () => {
+      const validUrls = [
+        'http://example.com',
+        'https://example.com',
+        'http://www.example.com',
+        'https://www.example.com',
+        'http://example.com/path',
+        'https://example.com/path',
+        'http://example.com/path?query=param',
+        'https://example.com/path?query=param',
+        'http://example.com/path?query=param#hash',
+        'https://example.com/path?query=param#hash',
+      ];
+
+      validUrls.forEach((url) => {
+        const result = isValidUrl(url);
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('should return false for invalid urls', () => {
+      const invalidUrls = [
+        'example',
+        'http//example.com',
+        'https//example.com',
+        'http://',
+        'https://',
+        'http:///',
+        'https:///',
+        'http://#hash',
+        'https://#hash',
+      ];
+
+      describe.each(invalidUrls)(
+        'should return false for invalid urls',
+        (url) => {
+          it(`${url} is invalid urls`, () => {
+            const result = isValidUrl(url);
+
+            expect(result).toBe(false);
+          });
+        },
+      );
+    });
+  });
+
   describe('urlRemoveHash', () => {
     it('should remove hash from the url', () => {
       const url = 'http://example.com#hash';
@@ -61,6 +113,21 @@ describe('link-format', () => {
       const relative = '/path?p=1#123';
       const result = toAbsoluteURL(base, relative);
       expect(result).toEqual('http://example.com/path?p=1#123');
+    });
+
+    it('should absolute url to throw error', () => {
+      const base = 'xxxssd\\example.com';
+      const relative = '/path?p=1#123';
+
+      // let err: any;
+      let hasError = false;
+      try {
+        toAbsoluteURL(base, relative);
+      } catch (error) {
+        hasError = true;
+        // err = error;
+      }
+      expect(hasError).toBeTruthy();
     });
   });
 });

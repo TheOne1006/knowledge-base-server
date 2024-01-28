@@ -6,7 +6,7 @@ import * as cheerio from 'cheerio';
 import { CrawlerService } from '../crawler.service';
 
 describe('Test CrawlerService', () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(60000);
   let service: CrawlerService;
   let mockLogger: Logger;
 
@@ -112,6 +112,81 @@ describe('Test CrawlerService', () => {
       const actualHtml = html.replace(/\n/g, '').replace(/\s/g, '');
       expect(links).toEqual(expectedLinks);
       expect(actualHtml).toEqual(expectedHtml);
+    });
+
+    it('should fetch and process HTML from the provided URL with default evalua∫teFuncString with infinite scroll', async () => {
+      const url = path.join(
+        __dirname,
+        'mock_files',
+        'mock_infinite_scroll.html',
+      );
+      // console.log(url);
+
+      const evaluateFuncString = `
+          await page.evaluate(async () => {
+                await new Promise((resolve) => {
+                    var totalHeight = 0;
+                    var distance = 100;
+                    var timer = setInterval(() => {
+                        var scrollHeight = document.body.scrollHeight;
+                        window.scrollBy(0, distance);
+                        totalHeight += distance;
+
+                        if(totalHeight >= scrollHeight){
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            });
+          return page.content();
+      `;
+
+      const { html } = await service.crawlLinksAndHtml(
+        `file://${url}`,
+        '',
+        [],
+        evaluateFuncString,
+      );
+      expect(html).toContain('title200');
+    });
+
+    it.skip('feishu dooc infinite scroll', async () => {
+      const url =
+        'https://pwnbqysk33g.feishu.cn/docx/JoV5dnUaMoCmPjx8K9xc76zSnXd?from=from_copylink';
+      // console.log(url);
+
+      const containerSelector = '.bear-web-x-container';
+      const matchSelector = '.render-unit-wrapper';
+
+      const evaluateFuncString = `
+          await page.evaluate(async () => {
+                await new Promise((resolve) => {
+                    var totalHeight = 0;
+                    var distance = 100;
+                    var timer = setInterval(() => {
+                        var scrollHeight = document.querySelector('${containerSelector}').scrollHeight;
+                        document.querySelector('${containerSelector}').scrollBy(0, distance);
+                        totalHeight += distance;
+
+                        if(totalHeight >= scrollHeight){
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            });
+          const elementHandle = await page.$('${matchSelector}');
+          return elementHandle.innerHTML();
+      `;
+
+      const { html } = await service.crawlLinksAndHtml(
+        url,
+        '',
+        [],
+        evaluateFuncString,
+      );
+      expect(html).toContain('title200');
     });
   });
 });

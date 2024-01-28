@@ -101,7 +101,11 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(1, 1, 1, user);
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+
+      const actual = await controller.ownerlist(mockRes, user, 1, 'title');
 
       expect(actual.length).toBeGreaterThan(1);
     });
@@ -113,7 +117,11 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(undefined, 1, 1, user);
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+
+      const actual = await controller.ownerlist(mockRes, user, 1, 'title');
 
       expect(actual.length).toBeGreaterThan(1);
     });
@@ -169,7 +177,8 @@ describe('KbController', () => {
           desc: 'title',
           hostname: 'http://xxx.com/',
           startUrls: ['/start'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
         };
         const kbId = 1;
@@ -205,7 +214,8 @@ describe('KbController', () => {
           desc: 'title',
           hostname: 'http://xxx.com/',
           startUrls: ['/start'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
         };
 

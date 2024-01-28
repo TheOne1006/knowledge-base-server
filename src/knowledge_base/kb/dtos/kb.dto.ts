@@ -10,14 +10,10 @@ export class KbDto {
 
   desc: string;
 
-  fileCount: number;
-
   ownerId: number;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

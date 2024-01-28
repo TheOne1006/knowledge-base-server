@@ -15,9 +15,15 @@ import {
 export class CrawlerUrlsManager {
   protected readonly logger = new Logger('CrawlerUrlsManager');
   /**
-   * 爬虫的 pattern
+   * 爬虫的 匹配 patterns
    */
-  private pattern: RegExp;
+  private matchPatterns: RegExp[];
+
+  /**
+   * 爬虫的 忽略的 patterns
+   */
+  private ignorePatterns: RegExp[];
+
   /**
    * 需要爬取的urls
    */
@@ -56,20 +62,30 @@ export class CrawlerUrlsManager {
   } = {};
 
   /**
-   * @description 爬虫url管理器
+   * 爬虫 url 管理器
+   * @param {string[]} matchPatterns
+   * @param {string[]} ignorePatterns
    * @param {string[]} initUrls
-   * @param {number} maxRetryTimes 重试次数
-   * @param {number} maxConnections 最大连接数
+   * @param {number} maxRetryTimes
+   * @param {number} maxConnections
+   * @param {CRAWLER_TYPES} type
+   * @param {string[]} localUrls
    */
   constructor(
-    pattern: string,
+    matchPatterns: string[],
+    ignorePatterns: string[] = [],
     initUrls: string[] = [],
     maxRetryTimes: number = 3,
     maxConnections: number = 5,
     type: CRAWLER_TYPES = CRAWLER_TYPE_INCREMENTAL,
     localUrls: string[] = [],
   ) {
-    this.pattern = new RegExp(pattern);
+    this.matchPatterns = matchPatterns
+      .filter((item) => item)
+      .map((item) => new RegExp(item));
+    this.ignorePatterns = ignorePatterns
+      .filter((item) => item)
+      .map((item) => new RegExp(item));
     this.urls = uniq(initUrls);
     this.maxRetryTimes = maxRetryTimes;
     this.maxConnections = maxConnections;
@@ -151,7 +167,21 @@ export class CrawlerUrlsManager {
    * @returns
    */
   filterUrlsWithPattern(urls: string[]): string[] {
-    return urls.filter((url) => this.pattern.test(url));
+    const matchPatterns = this.matchPatterns;
+    const ignorePatterns = this.ignorePatterns;
+
+    const filterUrls = urls.filter((url) => {
+      // 如果 命中 ignorePatterns, 则跳过
+      const ignore = ignorePatterns.some((pattern) => pattern.test(url));
+      if (ignore) {
+        return false;
+      }
+
+      const match = matchPatterns.some((pattern) => pattern.test(url));
+      return match;
+    });
+
+    return filterUrls;
   }
 
   /**

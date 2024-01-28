@@ -41,3 +41,8 @@ databases/db
 
 # resources
 resources/dev/
+resources/test/
+resources/prod/
+
+client_prod
+

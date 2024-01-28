@@ -22,6 +22,11 @@ module.exports = {
         type: STRING(20),
         comment: '文件扩展名',
       },
+      checksum: {
+        type: STRING(50),
+        allowNull: false,
+        comment: '推送文件的唯一性',
+      },
       source_type: {
         type: STRING(20),
         comment: '来源方式',
@@ -84,6 +89,9 @@ module.exports = {
 
     await queryInterface.addIndex(tableName, ['kb_id'], {
       unique: false,
+    });
+    await queryInterface.addIndex(tableName, ['kb_id', 'file_path'], {
+      unique: true,
     });
   },
 

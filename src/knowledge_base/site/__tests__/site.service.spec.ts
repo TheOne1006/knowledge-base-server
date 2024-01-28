@@ -12,7 +12,8 @@ const defaultAttr = {
   hostname: 'http://www.example.com/',
   startUrls: ['/', '/start'],
   removeSelectors: [],
-  pattern: 'http',
+  matchPatterns: ['http'],
+  ignorePatterns: [],
   ownerId: 1,
   kbId: 1,
 };
@@ -84,7 +85,8 @@ describe('KbSiteService', () => {
           desc: 'desc',
           hostname: 'http://www.s.com',
           startUrls: ['/'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
         };
         const ownerId = 1;
@@ -104,10 +106,10 @@ describe('KbSiteService', () => {
         expect(result.length).toBeGreaterThan(2);
       });
 
-      it('should return all instance', async () => {
-        const result = await service.findAll(undefined, 1, 3);
+      it('should return instances with args', async () => {
+        const result = await service.findAll({}, 0, 10, ['id', 'desc']);
         expect(result).toBeDefined();
-        expect(result.length).toBeGreaterThan(1);
+        expect(result.length).toBeGreaterThan(2);
       });
     });
 

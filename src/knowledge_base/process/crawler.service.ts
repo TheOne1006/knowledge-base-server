@@ -1,20 +1,12 @@
-import { chromium } from 'playwright';
 // import * as fs from 'fs-extra';
 // import * as path from 'path';
 import * as cheerio from 'cheerio';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 
-import {
-  PlaywrightWebBaseLoader,
-  // Page,
-  // Browser,
-} from 'langchain/document_loaders/web/playwright';
+import { CustomPlaywrightWebBaseLoader } from './loaders/CustomPlaywrightWebBaseLoader';
 import { Injectable, Inject } from '@nestjs/common';
 import { urlRemoveHash, toAbsoluteURL, isValidUrl } from '../utils/link-format';
-
-PlaywrightWebBaseLoader.imports = async () => ({ chromium });
-
 @Injectable()
 export class CrawlerService {
   constructor(
@@ -37,9 +29,11 @@ export class CrawlerService {
       }
     });
 
-    $('img[src]').map((_, el) => {
+    $('*[src]').map((_, el) => {
       const item = $(el).attr('src');
-      if (item && !item.startsWith('http')) {
+
+      // 不包含 : 且并不以 http 开头
+      if (item && !/\:/.test(item) && !item.startsWith('http')) {
         $(el).attr('src', toAbsoluteURL(base, item));
       }
     });
@@ -67,27 +61,56 @@ export class CrawlerService {
     url: string,
     linkSelector: string = 'a[href]',
     removeSelectors: string[] = [],
+    evaluateFuncString: string = '',
   ): Promise<{ links: string[]; html: string }> {
+    // 传入的 evaluateFuncString 会被转换成一个函数
+    let evaluate: any;
+    if (evaluateFuncString) {
+      evaluate = new Function(
+        'page',
+        'browser',
+        'response',
+        'return (async () => {' + evaluateFuncString + '})();',
+      );
+    }
+
     const urlObj = new URL(url);
     const hostname = `${urlObj.protocol}//${urlObj.hostname}`;
 
-    let loader: PlaywrightWebBaseLoader;
+    let loader: CustomPlaywrightWebBaseLoader;
     try {
-      loader = new PlaywrightWebBaseLoader(url, {
+      loader = new CustomPlaywrightWebBaseLoader(url, {
         launchOptions: {
           headless: true,
         },
         gotoOptions: {
+          timeout: 30 * 1000, // 30s
+          /**
+           * "load"：这个选项表示页面已经完成加载，包括所有的依赖资源如样式表和图片。
+           * "domcontentloaded"：这个选项表示 HTML 文档已被完全加载和解析，不等待样式表、图像和子框架的完成加载。
+           * "networkidle"：这个选项表示网络连接已经空闲，没有更多的资源正在加载。
+           * "commit"：这个选项表示新的页面已经提交，即将开始加载。
+           */
           waitUntil: 'domcontentloaded',
         },
+        evaluate,
       });
     } catch (error) {
       this.logger.error('PlaywrightWebBaseLoader error with', url);
       throw error;
     }
+    this.logger.info('load start:', url);
 
     // 读取 loaderr 的 pageContent，放入 cheerio 中
-    const docs = await loader.load();
+    let docs: any[];
+
+    try {
+      docs = await loader.load();
+    } catch (error) {
+      // console.log(error);
+      throw error;
+    }
+    this.logger.info('load finish:', url);
     const html = docs[0].pageContent;
     const $ = cheerio.load(html);
 

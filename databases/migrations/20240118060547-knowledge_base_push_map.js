@@ -32,6 +32,11 @@ module.exports = {
         allowNull: false,
         comment: '文件id',
       },
+      push_checksum: {
+        type: STRING(50),
+        allowNull: false,
+        comment: '推送文件的唯一性',
+      },
       remote_id: {
         type: STRING,
         allowNull: false,

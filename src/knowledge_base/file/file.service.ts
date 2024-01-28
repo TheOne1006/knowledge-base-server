@@ -1,13 +1,12 @@
 import { pick, map } from 'lodash';
-import { Transaction, WhereOptions } from 'sequelize';
-import * as path from 'path';
+import { WhereOptions, OrderItem } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { KnowledgeBaseFile } from './file.entity';
 import { KbFileDto, CreateKbFileDto, UpdateKbFileDto } from './dtos';
-
 import { BaseService } from '../base/base.service';
+import { generateFileHash } from '../utils/file-tools';
 
 @Injectable()
 class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
@@ -18,6 +17,16 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     protected readonly mainModel: typeof KnowledgeBaseFile,
   ) {
     super(sequelize, mainModel);
+  }
+
+  private completeFilePathPrefix(filePath: string) {
+    return filePath.startsWith('/') ? filePath : `/${filePath}`;
+  }
+
+  private async generateFileHash(absFilePath: string) {
+    const checksum = await generateFileHash(absFilePath);
+
+    return checksum;
   }
 
   /**
@@ -32,44 +41,72 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     kbId: number,
     ownerId: number,
   ): Promise<KbFileDto> {
+    let filePath = pyload?.filePath || '';
+    // 1.md
+    if (filePath.length <= 4) {
+      throw new Error('error filePath');
+    }
+
+    filePath = this.completeFilePathPrefix(filePath);
+    // 校验 filePath
+    const absFilePath = this.safeJoinPath(
+      this.getKbRoot(ownerId, kbId),
+      filePath,
+    );
+    const checksum = await this.generateFileHash(absFilePath);
+
     const data = new this.mainModel({
       ...pyload,
+      filePath,
+      checksum,
       kbId,
       ownerId,
     });
 
-    const options = await this.genOptions();
-    const instance = await data.save(options);
-    await this.autoCommit(options);
+    const instance = await data.save();
 
     return instance;
   }
 
   /**
    * 批量创建
-   * @param  {CreateKbFileDto[]} pyloads
+   * @param  {CreateKbFileDto[]}     payloads: CreateKbFileDto[],
+
    * @param  {number} ownerId
    * @param  {number} kbId
    * @param  {string} sourceType
    * @returns {Promise<KbFileDto>}
    */
   async batchCreate(
-    pyloads: CreateKbFileDto[],
+    payloads: CreateKbFileDto[],
     ownerId: number,
     kbId: number,
     sourceType: string,
-    transaction?: Transaction,
   ): Promise<KbFileDto[]> {
-    const data = pyloads.map((payload) => ({
-      ...payload,
-      sourceType,
-      ownerId,
-      kbId,
-    }));
+    const data: Partial<KbFileDto>[] = [];
 
-    const options = await this.genOptions(transaction);
-    const instances = await this.mainModel.bulkCreate(data, options);
-    await this.autoCommit(options, transaction);
+    for (let i = 0; i < payloads.length; i++) {
+      const payload = payloads[i];
+
+      // 校验 filePath
+      const absFilePath = this.safeJoinPath(
+        this.getKbRoot(ownerId, kbId),
+        payload.filePath,
+      );
+
+      const checksum = await this.generateFileHash(absFilePath);
+
+      data.push({
+        ...payload,
+        checksum,
+        sourceType,
+        ownerId,
+        kbId,
+        filePath: this.completeFilePathPrefix(payload.filePath),
+      });
+    }
+
+    const instances = await this.mainModel.bulkCreate(data);
 
     return instances;
   }
@@ -85,11 +122,13 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
     where?: WhereOptions,
     offset?: number,
     limit?: number,
+    order?: OrderItem,
   ): Promise<KbFileDto[]> {
     return this.mainModel.findAll({
       where,
       offset: Math.max(0, offset) || undefined,
       limit: Math.max(0, limit) || undefined,
+      order: order && [order],
     });
   }
 
@@ -103,24 +142,40 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
   }
 
   /**
+   * @param {WhereOptions} where
+   * @returns {Promise<PushLogDto>}
+   */
+  async findOne(where?: WhereOptions): Promise<KbFileDto> {
+    return this.mainModel.findOne({
+      where,
+    });
+  }
+
+  /**
    * 根据pk, 更新 只接受 pyload
    * @param {number} pk
    * @param {UpdateKbFileDto} pyload
-   * @param {KbFileDto} transaction
    * @returns {Promise<KbFileDto>}
    */
-  async updateByPk(
-    pk: number,
-    pyload: UpdateKbFileDto,
-    transaction?: Transaction,
-  ): Promise<KbFileDto> {
+  async updateByPk(pk: number, pyload: UpdateKbFileDto): Promise<KbFileDto> {
     const instance = await this.mainModel.findByPk(pk);
 
     if (!instance) {
       throw new Error('instance not found');
     }
 
-    const updatePayload = pick(pyload, ['sourceUrl', 'summary']);
+    // 校验 filePath
+    const absFilePath = this.safeJoinPath(
+      this.getKbRoot(instance.ownerId, instance.kbId),
+      instance.filePath,
+    );
+
+    const checksum = await this.generateFileHash(absFilePath);
+
+    const updatePayload = {
+      ...pick(pyload, ['sourceUrl', 'summary']),
+      checksum,
+    };
 
     map(updatePayload, (value: any, key: string) => {
       const originalValue = instance.get(key);
@@ -129,9 +184,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       }
     });
 
-    const options = await this.genOptions(transaction);
-    await instance.save(options);
-    await this.autoCommit(options, transaction);
+    await instance.save();
 
     return instance;
   }
@@ -140,48 +193,37 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    *
    * 根据id, 删除
    * @param {number} id
-   * @param {Transaction} transaction
    * @returns {Promise<KbFileDto>}
    */
-  async removeByPk(id: number, transaction?: Transaction): Promise<KbFileDto> {
+  async removeByPk(id: number): Promise<KbFileDto> {
     const data = await this.mainModel.findByPk(id);
 
-    const options = await this.genOptions(transaction);
-    await data.destroy(options);
-    await this.autoCommit(options, transaction);
+    await data.destroy();
     return data;
   }
 
   /**
    * 批量删除
    * @param {number[]} ids
-   * @param {Transaction} transaction
    * @returns {Promise<number[]>}
    */
-  async batchDeleteByIds(
-    ids: number[],
-    transaction?: Transaction,
-  ): Promise<number[]> {
+  async batchDeleteByIds(ids: number[]): Promise<number[]> {
     if (!ids.length) {
       return [];
     }
 
-    const options = await this.genOptions(transaction);
     await this.mainModel.destroy({
       where: {
         id: ids,
       },
-      ...options,
     });
-    await this.autoCommit(options, transaction);
-
     return ids;
   }
 
   /**
    * 查找或者创建
    * @param {Partial<KbFileDto>} pyload
-   * @param {string} filePath
+   * @param {string} queryFilePath
    * @param {number} kbId
    * @param {number} ownerId
    * @param {number} siteId
@@ -189,11 +231,13 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    */
   async findOrCreate(
     pyload: Partial<KbFileDto>,
-    filePath: string,
+    queryFilePath: string,
     kbId: number,
     ownerId: number,
     siteId?: number,
   ): Promise<KbFileDto> {
+    const filePath = this.completeFilePathPrefix(queryFilePath);
+
     const where: WhereOptions = {
       kbId,
       filePath,
@@ -213,6 +257,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
         {
           ...pyload,
           ...where,
+          filePath,
         },
         kbId,
         ownerId,
@@ -227,12 +272,10 @@ export class KbFileService extends KbFileDBService {
   /**
    * 获取文件路径
    * @param {string} kbResRoot
-   * @param {KbFileDto} instance
+   * @param {string} filePath
    * @returns {string}
    */
-  getFilePath(kbResRoot: string, instance: KbFileDto): string {
-    // filePath 删除 最左边的 ..., 避免越界
-    const filePath = instance.filePath.replace(/^[\.]+/, '');
-    return path.join(kbResRoot, filePath).toString();
+  getFilePath(kbResRoot: string, filePath: string): string {
+    return this.safeJoinPath(kbResRoot, filePath);
   }
 }

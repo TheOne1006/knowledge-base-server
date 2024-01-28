@@ -23,11 +23,6 @@ module.exports = {
         type: STRING(200),
         comment: '知识库简介',
       },
-      file_count: {
-        type: INTEGER,
-        defaultValue: 0,
-        comment: '文件数量',
-      },
       owner_id: {
         type: INTEGER,
         allowNull: false,

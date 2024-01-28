@@ -5,3 +5,5 @@ export * from './push-map.dto';
 export * from './push-log.dto';
 export * from './push-run-option.dto';
 export * from './clear-push-res.dto';
+export * from './create-push-map.dto';
+export * from './update-push-map.dto';

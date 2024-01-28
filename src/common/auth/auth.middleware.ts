@@ -21,6 +21,7 @@ export class AuthMiddleware implements NestMiddleware {
   async use(req: Request, _res: Response, next: NextFunction) {
     let token = (req.headers.token ||
       req.headers.authorization ||
+      req.query?.token ||
       '') as string;
 
     // 解析 Bearer
