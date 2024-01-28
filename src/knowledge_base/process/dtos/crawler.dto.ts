@@ -15,9 +15,9 @@ import {
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import {
-  CRAWLER_TYPES,
-  CRAWLER_TYPE_ALL,
-  CRAWLER_TYPE_INCREMENTAL,
+  CRAWLER_DATA_TYPES,
+  CRAWLER_DATA_ALL,
+  CRAWLER_DATA_INCREMENTAL,
 } from '../constants';
 
 /**
@@ -76,11 +76,11 @@ export class CrawlerDto {
   linkSelector: string;
 
   @ApiProperty({
-    example: CRAWLER_TYPE_ALL,
+    example: CRAWLER_DATA_ALL,
     description: '爬取方式（全量、增量)',
   })
-  @IsEnum([CRAWLER_TYPE_ALL, CRAWLER_TYPE_INCREMENTAL], {
+  @IsEnum([CRAWLER_DATA_ALL, CRAWLER_DATA_INCREMENTAL], {
     message: i18nValidationMessage('validation.ENUM'),
   })
-  type: CRAWLER_TYPES;
+  type: CRAWLER_DATA_TYPES;
 }

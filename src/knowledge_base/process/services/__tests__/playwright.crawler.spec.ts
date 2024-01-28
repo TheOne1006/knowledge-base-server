@@ -3,11 +3,11 @@ import { Logger } from 'winston';
 import * as path from 'path';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as cheerio from 'cheerio';
-import { CrawlerService } from '../crawler.service';
+import { PlaywrightCrawlerService } from '../playwright.crawler';
 
-describe('Test CrawlerService', () => {
+describe('Test PlaywrightCrawlerService', () => {
   jest.setTimeout(60000);
-  let service: CrawlerService;
+  let service: PlaywrightCrawlerService;
   let mockLogger: Logger;
 
   beforeEach(async () => {
@@ -20,7 +20,7 @@ describe('Test CrawlerService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        CrawlerService,
+        PlaywrightCrawlerService,
         {
           provide: WINSTON_MODULE_PROVIDER,
           useValue: mockLogger,
@@ -28,7 +28,7 @@ describe('Test CrawlerService', () => {
       ],
     }).compile();
 
-    service = module.get<CrawlerService>(CrawlerService);
+    service = module.get<PlaywrightCrawlerService>(PlaywrightCrawlerService);
   });
 
   it('should be defined', () => {

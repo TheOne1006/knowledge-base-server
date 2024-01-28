@@ -6,6 +6,7 @@ import { KnowledgeBaseSite } from '../site.entity';
 
 import { DatabaseModule } from '../../../core/database/database.module';
 import { LoggerModule } from '../../../core/logger/logger.module';
+import { CRAWLER_ENGINE_PLAYWRIGHT } from '../constants';
 
 const defaultAttr = {
   desc: 'desc',
@@ -14,6 +15,8 @@ const defaultAttr = {
   removeSelectors: [],
   matchPatterns: ['http'],
   ignorePatterns: [],
+  engineType: CRAWLER_ENGINE_PLAYWRIGHT,
+  fileSuffix: 'html',
   ownerId: 1,
   kbId: 1,
 };
@@ -88,6 +91,8 @@ describe('KbSiteService', () => {
           matchPatterns: ['http'],
           ignorePatterns: [],
           removeSelectors: [],
+          engineType: CRAWLER_ENGINE_PLAYWRIGHT,
+          fileSuffix: 'html',
         };
         const ownerId = 1;
         const kId = 1;

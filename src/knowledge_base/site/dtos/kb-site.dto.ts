@@ -23,6 +23,10 @@ export class KbSiteDto {
 
   evaluate: string;
 
+  engineType: string;
+
+  fileSuffix: string;
+
   ownerId: number;
 
   kbId: number;
