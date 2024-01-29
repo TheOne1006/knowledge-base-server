@@ -42,6 +42,20 @@ export class KnowledgeBaseSite extends Model<KnowledgeBaseSite> {
   @Column({ type: DataType.TEXT, allowNull: true })
   evaluate: string;
 
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'engine_type',
+  })
+  engineType: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'file_suffix',
+  })
+  fileSuffix: string;
+
   @Column({ type: DataType.JSON, allowNull: false, field: 'remove_selectors' })
   removeSelectors: string[];
 

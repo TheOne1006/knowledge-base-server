@@ -82,7 +82,7 @@ describe('CrawlerController', () => {
     } as any as KbSiteService;
 
     CrawlerServiceMock = {
-      crawlLinksAndHtml: jest
+      crawlLinksAndContent: jest
         .fn()
         .mockRejectedValueOnce(new Error('error'))
         .mockImplementation(() => ({
@@ -92,7 +92,7 @@ describe('CrawlerController', () => {
     } as any as CrawlerService;
 
     KbResourceServiceMock = {
-      saveHtml: jest.fn().mockImplementation(() => true),
+      saveContent: jest.fn().mockImplementation(() => true),
     } as any as KbResourceService;
 
     I18nServiceMock = {} as any as I18nService;
@@ -243,6 +243,9 @@ describe('CrawlerController', () => {
         },
       ];
 
+      // console.log('actual>>>');
+      // console.log(actual);
+
       // 如何监测 obser 的 complete
       expect(actual.length).toBe(7);
       expect(actual).toEqual(expected);
@@ -253,7 +256,7 @@ describe('CrawlerController', () => {
 
   describe('updateSigleWePage', () => {
     it('should throw error when update single web page', async () => {
-      CrawlerServiceMock.crawlLinksAndHtml = jest
+      CrawlerServiceMock.crawlLinksAndContent = jest
         .fn()
         .mockRejectedValueOnce(new Error('error'));
 
@@ -272,7 +275,7 @@ describe('CrawlerController', () => {
     });
 
     it('should update single web page success', async () => {
-      CrawlerServiceMock.crawlLinksAndHtml = jest
+      CrawlerServiceMock.crawlLinksAndContent = jest
         .fn()
         .mockImplementation(() => ({
           links: ['http://example.com/link1', 'http://example.com/link2'],

@@ -54,12 +54,16 @@ module.exports = {
         defaultValue: '',
         comment: '需要执行的js代码',
       },
-      // todo
-      // inject_jquery: {
-      //   type: Sequelize.BOOLEAN,
-      //   defaultValue: false,
-      //   comment: '是否注入jQuery',
-      // },
+      engine_type: {
+        type: STRING(50),
+        allowNull: false,
+        comment: '爬取引擎',
+      },
+      file_suffix: {
+        type: STRING(15),
+        allowNull: false,
+        comment: '文件后缀',
+      },
       kb_id: {
         type: Sequelize.INTEGER,
         allowNull: false,

@@ -1922,6 +1922,18 @@
     zod "^3.22.3"
     zod-to-json-schema "3.20.3"
 
+"@larksuiteoapi/node-sdk@^1.23.0":
+  version "1.23.0"
+  resolved "https://registry.yarnpkg.com/@larksuiteoapi/node-sdk/-/node-sdk-1.23.0.tgz#8a7e0be6da33d5b4ff0ffecd79f60f547f80d80c"
+  integrity sha512-3JFewiMKQNIqm4R6HosfRpR6+amO5M4rpx3yGbuMmolzID3JRhQUJ/D8tUCfLIqlmRrKzTejvpeX3Y5gyotTGA==
+  dependencies:
+    axios ">=0.27.0 <1.0.0"
+    lodash.get "^4.4.2"
+    lodash.identity "^3.0.0"
+    lodash.merge "^4.6.2"
+    lodash.pick "^4.4.0"
+    lodash.pickby "^4.6.0"
+
 "@ljharb/through@^2.3.11":
   version "2.3.12"
   resolved "https://registry.yarnpkg.com/@ljharb/through/-/through-2.3.12.tgz#c418c43060eee193adce48b15c2206096a28e9ea"
@@ -3099,6 +3111,14 @@ at-least-node@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/at-least-node/-/at-least-node-1.0.0.tgz"
   integrity sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==
+
+"axios@>=0.27.0 <1.0.0":
+  version "0.27.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.27.2.tgz#207658cc8621606e586c85db4b41a750e756d972"
+  integrity sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==
+  dependencies:
+    follow-redirects "^1.14.9"
+    form-data "^4.0.0"
 
 axios@^1.6.5:
   version "1.6.5"
@@ -4391,6 +4411,11 @@ dotenv@16.3.1:
   resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.3.1.tgz"
   integrity sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==
 
+dotenv@^16.4.1:
+  version "16.4.1"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.1.tgz#1d9931f1d3e5d2959350d1250efab299561f7f11"
+  integrity sha512-CjA3y+Dr3FyFDOAMnxZEGtnW9KBR2M0JvvUtXNW+dYJL5ROWxP9DUHCwgFqpMk0OXCc0ljhaNTr2w/kutYIcHQ==
+
 dottie@^2.0.6:
   version "2.0.6"
   resolved "https://registry.npmjs.org/dottie/-/dottie-2.0.6.tgz"
@@ -5178,7 +5203,7 @@ fn.name@1.x.x:
   resolved "https://registry.npmjs.org/fn.name/-/fn.name-1.1.0.tgz"
   integrity sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==
 
-follow-redirects@^1.15.4:
+follow-redirects@^1.14.9, follow-redirects@^1.15.4:
   version "1.15.5"
   resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.5.tgz"
   integrity sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==
@@ -6898,6 +6923,16 @@ lodash.debounce@^4.0.8:
   resolved "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz"
   integrity sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==
 
+lodash.get@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
+  integrity sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==
+
+lodash.identity@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/lodash.identity/-/lodash.identity-3.0.0.tgz#ad7bc6a4e647d79c972e1b80feef7af156267876"
+  integrity sha512-AupTIzdLQxJS5wIYUQlgGyk2XRTfGXA+MCghDHqZk0pzUNYvd3EESS6dkChNauNYVIutcb0dfHw1ri9Q1yPV8Q==
+
 lodash.includes@^4.3.0:
   version "4.3.0"
   resolved "https://registry.npmjs.org/lodash.includes/-/lodash.includes-4.3.0.tgz"
@@ -6957,6 +6992,16 @@ lodash.once@^4.0.0:
   version "4.1.1"
   resolved "https://registry.npmjs.org/lodash.once/-/lodash.once-4.1.1.tgz"
   integrity sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==
+
+lodash.pick@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/lodash.pick/-/lodash.pick-4.4.0.tgz#52f05610fff9ded422611441ed1fc123a03001b3"
+  integrity sha512-hXt6Ul/5yWjfklSGvLQl8vM//l3FtyHZeuelpzK6mm99pNvN9yTDruNZPEJZD1oWrqo+izBmB7oUfWgcCX7s4Q==
+
+lodash.pickby@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/lodash.pickby/-/lodash.pickby-4.6.0.tgz#7dea21d8c18d7703a27c704c15d3b84a67e33aff"
+  integrity sha512-AZV+GsS/6ckvPOVQPXSiFFacKvKB4kOQu6ynt9wz0F3LO4R9Ij4K1ddYsIytDpSgLz88JHd9P+oaLeej5/Sl7Q==
 
 lodash.uniq@^4.5.0:
   version "4.5.0"
@@ -8038,7 +8083,7 @@ playwright-core@1.41.1:
   resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.41.1.tgz#9c152670010d9d6f970f34b68e3e935d3c487431"
   integrity sha512-/KPO5DzXSMlxSX77wy+HihKGOunh3hqndhqeo/nMxfigiKzogn8kfL0ZBDu0L1RKgan5XHCPmn6zXd2NUJgjhg==
 
-playwright@*:
+playwright@^1.40.1:
   version "1.41.1"
   resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.41.1.tgz#83325f34165840d019355c2a78a50f21ed9b9c85"
   integrity sha512-gdZAWG97oUnbBdRL3GuBvX3nDDmUOuqzV/D24dytqlKt+eI5KbwusluZRGljx1YoJKZ2NRPaeWiFTeGZO7SosQ==

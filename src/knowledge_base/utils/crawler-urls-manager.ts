@@ -2,7 +2,10 @@ import { uniq, difference } from 'lodash';
 // import { Logger } from 'winston';
 
 import { Logger, Injectable } from '@nestjs/common';
-import { CRAWLER_TYPES, CRAWLER_TYPE_INCREMENTAL } from '../process/constants';
+import {
+  CRAWLER_DATA_TYPES,
+  CRAWLER_DATA_INCREMENTAL,
+} from '../process/constants';
 import {
   urlAppendSuffix,
   // urlRemoveHash
@@ -32,7 +35,7 @@ export class CrawlerUrlsManager {
   /**
    * crawler 类型
    */
-  private type: CRAWLER_TYPES = CRAWLER_TYPE_INCREMENTAL;
+  private type: CRAWLER_DATA_TYPES = CRAWLER_DATA_INCREMENTAL;
 
   /**
    * 已下载到本地 urls 信息
@@ -55,6 +58,12 @@ export class CrawlerUrlsManager {
   private maxConnections: number = 5;
 
   /**
+   * url 后缀, 默认 .html
+   * 用于连接 转 文件名
+   */
+  private urlAppendSuffix: string = '.html';
+
+  /**
    * 重试的 url 信息
    */
   private retryUrlItems: {
@@ -68,7 +77,7 @@ export class CrawlerUrlsManager {
    * @param {string[]} initUrls
    * @param {number} maxRetryTimes
    * @param {number} maxConnections
-   * @param {CRAWLER_TYPES} type
+   * @param {CRAWLER_DATA_TYPES} type
    * @param {string[]} localUrls
    */
   constructor(
@@ -77,8 +86,9 @@ export class CrawlerUrlsManager {
     initUrls: string[] = [],
     maxRetryTimes: number = 3,
     maxConnections: number = 5,
-    type: CRAWLER_TYPES = CRAWLER_TYPE_INCREMENTAL,
+    type: CRAWLER_DATA_TYPES = CRAWLER_DATA_INCREMENTAL,
     localUrls: string[] = [],
+    urlAppendSuffix: string = '.html',
   ) {
     this.matchPatterns = matchPatterns
       .filter((item) => item)
@@ -91,6 +101,7 @@ export class CrawlerUrlsManager {
     this.maxConnections = maxConnections;
     this.type = type;
     this.localUrls = localUrls;
+    this.urlAppendSuffix = urlAppendSuffix;
   }
 
   /**
@@ -147,7 +158,7 @@ export class CrawlerUrlsManager {
     // urls => 以 .xxx 的结尾的urls
     const links = urls
       // .map((item) => urlRemoveHash(item)) # 提取的时候已经删除
-      .map((url) => urlAppendSuffix(url, '.html'))
+      .map((url) => urlAppendSuffix(url, this.urlAppendSuffix))
       .map((item) => item.toString());
 
     // 遍历 sufUrls 如果存在于 this.localUrls, 则排除，没有则保留 urls 的信息
@@ -191,7 +202,7 @@ export class CrawlerUrlsManager {
     let newUrls = urls;
     // this.logger.info(`type: ${this.type}`);
 
-    if (this.type === CRAWLER_TYPE_INCREMENTAL) {
+    if (this.type === CRAWLER_DATA_INCREMENTAL) {
       newUrls = this.excludeLocalUrls(urls);
     }
 

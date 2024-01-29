@@ -3,11 +3,19 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsUrl,
+  IsEnum,
   // MinLength,
   // MaxLength,
+  Length,
   IsArray,
+  Matches,
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
+import {
+  CRAWLER_ENGINE_PLAYWRIGHT,
+  CRAWLER_ENGINE_LARK_MD,
+  // CRAWLER_ENGINE_TYPES,
+} from '../constants';
 
 /**
  * UpdateKbSiteDto
@@ -78,4 +86,25 @@ export class UpdateKbSiteDto {
   })
   @IsArray()
   removeSelectors: string[];
+
+  @ApiProperty({
+    example: CRAWLER_ENGINE_PLAYWRIGHT,
+    description: '爬取引擎，目前支持 playwright, lark2md',
+  })
+  @IsEnum([CRAWLER_ENGINE_LARK_MD, CRAWLER_ENGINE_PLAYWRIGHT], {
+    message: i18nValidationMessage('validation.ENUM'),
+  })
+  engineType: string;
+
+  @ApiProperty({
+    example: 'html',
+    description: '下载后的文件后缀',
+  })
+  @Length(2, 5, {
+    message: i18nValidationMessage('validation.LENGTH'),
+  })
+  @Matches(/^[a-zA-Z0-9]+$/i, {
+    message: i18nValidationMessage('validation.MATCHES'),
+  })
+  fileSuffix: string;
 }

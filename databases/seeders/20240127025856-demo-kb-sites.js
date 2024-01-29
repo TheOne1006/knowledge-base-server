@@ -22,25 +22,9 @@ module.exports = {
             'div.navigation-bar-wrapper',
             'div.catalogue-container',
           ]),
-          evaluate: `
-           await page.evaluate(async () => {
-                await new Promise((resolve) => {
-                    var totalHeight = 0;
-                    var distance = 100;
-                    var timer = setInterval(() => {
-                        var scrollHeight = document.querySelector('.bear-web-x-container').scrollHeight;
-                        document.querySelector('.bear-web-x-container').scrollBy(0, distance);
-                        totalHeight += distance;
-
-                        if(totalHeight >= scrollHeight){
-                            clearInterval(timer);
-                            resolve();
-                        }
-                    }, 100);
-                });
-            });
-          return page.content();
-          `,
+          evaluate: '',
+          engine_type: 'lark2md',
+          file_suffix: 'md',
           kb_id: 1,
           owner_id: 1,
           created_at: new Date(),
@@ -57,6 +41,8 @@ module.exports = {
             '^https:\\/\\/marmelab.com\\/react-admin\\/doc\\/.*',
           ]),
           remove_selectors: JSON.stringify(['header']),
+          engine_type: 'playwright',
+          file_suffix: 'html',
           kb_id: 2,
           owner_id: 1,
           created_at: new Date(),
