@@ -69,10 +69,88 @@ describe('PushDifyService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('checkConfig', () => {
+    const table = [
+      {
+        _title: 'allow rules',
+        configIns: {
+          additional: {
+            proccess_rules: { foo: 1 },
+          },
+        },
+        success: true,
+      },
+      {
+        _title: 'bad rules with []',
+        configIns: {
+          additional: {
+            proccess_rules: [],
+          },
+        },
+        success: false,
+      },
+      {
+        _title: 'allow empty {}',
+        configIns: {
+          additional: {
+            proccess_rules: {},
+          },
+        },
+        success: true,
+      },
+      {
+        _title: 'allow proccess_rules empty',
+        configIns: {
+          additional: null,
+        },
+        success: true,
+      },
+      {
+        _title: 'allow proccess_rules other attr',
+        configIns: {
+          additional: {
+            other: '',
+          },
+        },
+        success: true,
+      },
+      {
+        _title: 'allow proccess_rules empty {}',
+        configIns: {
+          additional: {
+            proccess_rules: {},
+          },
+        },
+        success: true,
+      },
+      {
+        _title: 'bad rules with Date',
+        configIns: {
+          additional: {
+            proccess_rules: new Date(),
+          },
+        },
+        success: false,
+      },
+    ];
+    describe.each(table)('checkConfig', ({ _title, configIns, success }) => {
+      it(_title, () => {
+        let isSuccess = false;
+        try {
+          service.checkConfig(configIns as any);
+          isSuccess = true;
+        } catch (error) {
+          isSuccess = false;
+        }
+        expect(isSuccess).toEqual(success);
+      });
+    });
+  });
+
   describe('createOrUpdateByFile', () => {
     it('should create a document failed with not exists', async () => {
       await expect(
-        service.createByFile('url', '/tmp/path/to/not_found', 'key'),
+        service.createByFile('url', '/tmp/path/to/not_found', 'key', {}),
       ).rejects.toThrow('file not exists: /tmp/path/to/not_found');
     });
 
@@ -87,12 +165,12 @@ describe('PushDifyService', () => {
         })),
       );
       await expect(
-        service.createByFile('url', mockFilePath, 'key'),
+        service.createByFile('url', mockFilePath, 'key', {}),
       ).rejects.toThrow('failed');
     });
 
     it('should create a document', async () => {
-      const actual = await service.createByFile('url', mockFilePath, 'key');
+      const actual = await service.createByFile('url', mockFilePath, 'key', {});
       const expected = {
         id: 'id1',
         name: 'title1',
@@ -133,12 +211,18 @@ describe('PushDifyService', () => {
       })),
     );
     await expect(
-      service.updateByFile('url', 'id', mockFilePath, 'key'),
+      service.updateByFile('url', 'id', mockFilePath, 'key', {}),
     ).rejects.toThrow('failed');
   });
 
   it('should update a document', async () => {
-    const actual = await service.updateByFile('url', 'id', mockFilePath, 'key');
+    const actual = await service.updateByFile(
+      'url',
+      'id',
+      mockFilePath,
+      'key',
+      {},
+    );
     const expected = {
       id: 'id1',
       name: 'title1',

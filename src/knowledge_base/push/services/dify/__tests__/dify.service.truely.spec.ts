@@ -38,7 +38,7 @@ describe.skip('PushDifyService on truely remote server', () => {
     it('createByFile: should send a post request and return the document', async () => {
       const url = `${API_URL}/${DATATSET_ID}`;
       const filePath = path.join(__dirname, 'mocks', 'mock.txt');
-      const actual = await service.createByFile(url, filePath, API_KEY);
+      const actual = await service.createByFile(url, filePath, API_KEY, {});
 
       const expected = {
         data_source_type: 'upload_file',
@@ -64,6 +64,7 @@ describe.skip('PushDifyService on truely remote server', () => {
         currentId,
         filePath,
         API_KEY,
+        {},
       );
 
       const expected = {

@@ -45,6 +45,12 @@ export class PushConfig extends Model<PushConfig> {
   apiUrl: string;
 
   @Column({
+    type: DataType.JSON,
+    defaultValue: {},
+  })
+  additional: { [key: string]: any };
+
+  @Column({
     type: DataType.INTEGER,
     allowNull: false,
     field: 'kb_id',

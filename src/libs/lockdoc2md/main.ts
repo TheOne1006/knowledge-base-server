@@ -1,3 +1,4 @@
+// istanbul ignore file
 /**
  * 参考 https://github.com/ischanx/larkdocs2md/
  */

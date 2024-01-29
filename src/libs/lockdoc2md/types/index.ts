@@ -1,3 +1,4 @@
+// istanbul ignore file
 export * from './code';
 export * from './document';
 export * from './data-structure';

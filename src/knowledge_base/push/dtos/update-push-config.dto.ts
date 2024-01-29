@@ -49,4 +49,10 @@ export class UpdatePushConfigDto {
     message: i18nValidationMessage('validation.STRING'),
   })
   apiKey: string;
+
+  @ApiProperty({
+    example: { extend_config: { foo: 1 } },
+    description: '接口额外的配置项',
+  })
+  additional: { [key: string]: any };
 }

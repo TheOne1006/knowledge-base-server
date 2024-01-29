@@ -35,6 +35,11 @@ module.exports = {
         type: STRING(100),
         comment: 'api Key',
       },
+      additional: {
+        type: Sequelize.JSON,
+        defaultValue: {},
+        comment: '扩展配置',
+      },
       kb_id: {
         type: Sequelize.INTEGER,
         allowNull: false,

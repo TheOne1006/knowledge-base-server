@@ -66,4 +66,10 @@ export class CreatePushConfigDto {
     description: '知识库id',
   })
   kbId?: number;
+
+  @ApiProperty({
+    example: { extend_config: { foo: 1 } },
+    description: '接口额外的配置项',
+  })
+  additional: { [key: string]: any };
 }
