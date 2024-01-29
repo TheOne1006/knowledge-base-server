@@ -45,4 +45,5 @@ resources/test/
 resources/prod/
 
 client_prod
+.env
 
