@@ -1,21 +1,34 @@
-// 参考 https://github.com/ischanx/larkdocs2md/blob/main/libs/larkdocs2md/src/main.ts
-// import { Logger } from 'winston';
-// import { Logger } from '@nestjs/common';
-import { Client, LoggerLevel } from '@larksuiteoapi/node-sdk';
+import { Injectable, Inject } from '@nestjs/common';
+import { Logger } from 'winston';
+// import * as cheerio from 'cheerio';
+import {
+  Client,
+  // LoggerLevel
+} from '@larksuiteoapi/node-sdk';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
 import { config } from '../../../../config';
+import { LarkDocs2Md } from '../../../libs/lockdoc2md/main';
 
-export class BaseLarkService {
+@Injectable()
+export class LarkService {
   private client: Client;
-  private fileExtension: string;
+  private doc2mdService: LarkDocs2Md;
 
-  constructor(exportFileExtension: string, level: LoggerLevel = 3) {
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+  ) {
     this.client = new Client({
       appId: config.FEISHU.appId,
       appSecret: config.FEISHU.appSecret,
-      loggerLevel: level, // default 3 ; debug 4
+      disableTokenCache: false,
+      loggerLevel: 2, // info 3 ; debug 4
     });
-    this.fileExtension = exportFileExtension;
+    this.doc2mdService = new LarkDocs2Md(this.client);
+  }
+
+  async link2md(link: string): Promise<string> {
+    return this.doc2mdService.link2md(link);
   }
 
   /**
@@ -23,12 +36,15 @@ export class BaseLarkService {
    * @param {string} fileToken
    * @returns {Promise<string>}
    */
-  async createExportTasks(fileToken: string): Promise<string> {
+  async createExportTasks(
+    fileToken: string,
+    fileExtension: 'docx' | 'pdf' | 'xlsx' | 'csv' = 'docx',
+  ): Promise<string> {
     const result = await this.client.drive.exportTask.create({
       data: {
         type: 'docx',
         token: fileToken,
-        file_extension: this.fileExtension as any,
+        file_extension: fileExtension,
       },
     });
 

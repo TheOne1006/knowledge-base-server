@@ -3,11 +3,11 @@ import { Logger } from 'winston';
 import * as path from 'path';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as cheerio from 'cheerio';
-import { PlaywrightCrawlerService } from '../playwright.crawler';
+import { PlaywrightService } from '../playwright.service';
 
-describe('Test PlaywrightCrawlerService', () => {
-  jest.setTimeout(60000);
-  let service: PlaywrightCrawlerService;
+describe('Test PlaywrightService', () => {
+  jest.setTimeout(30000);
+  let service: PlaywrightService;
   let mockLogger: Logger;
 
   beforeEach(async () => {
@@ -20,7 +20,7 @@ describe('Test PlaywrightCrawlerService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PlaywrightCrawlerService,
+        PlaywrightService,
         {
           provide: WINSTON_MODULE_PROVIDER,
           useValue: mockLogger,
@@ -28,7 +28,7 @@ describe('Test PlaywrightCrawlerService', () => {
       ],
     }).compile();
 
-    service = module.get<PlaywrightCrawlerService>(PlaywrightCrawlerService);
+    service = module.get<PlaywrightService>(PlaywrightService);
   });
 
   it('should be defined', () => {
@@ -38,18 +38,18 @@ describe('Test PlaywrightCrawlerService', () => {
   describe('changeLinks', () => {
     const table = [
       {
-        _title: 'should change relative href/src to absolute',
-        html: '<div><a href="/relative/path">Link</a><img src="/relative/path.jpg"/></div>',
+        _title: 'should change relative href to absolute',
+        html: '<div><a href="/relative/path">Link</a></div>',
         base: 'http://example.com',
         expected:
-          '<html><head></head><body><div><a href="http://example.com/relative/path">Link</a><img src="http://example.com/relative/path.jpg"></div></body></html>',
+          '<html><head></head><body><div><a href="http://example.com/relative/path">Link</a></div></body></html>',
       },
       {
         _title: 'should change absolute href/src to absolute',
-        html: '<div><a href="http://example.com/relative/path">Link</a><img src="http://example.comrelative/path.jpg"/></div>',
+        html: '<div><a href="http://example.com/relative/path">Link</a></div>',
         base: 'http://example.com',
         expected:
-          '<html><head></head><body><div><a href="http://example.com/relative/path">Link</a><img src="http://example.comrelative/path.jpg"></div></body></html>',
+          '<html><head></head><body><div><a href="http://example.com/relative/path">Link</a></div></body></html>',
       },
     ];
 
@@ -60,6 +60,37 @@ describe('Test PlaywrightCrawlerService', () => {
           const $ = cheerio.load(html);
           // Use type assertion to call private method
           (service as any).changeLinks($, base);
+          expect($.html()).toBe(expected);
+        });
+      },
+    );
+  });
+
+  describe('changeSrc', () => {
+    const table = [
+      {
+        _title: 'should change relative src to absolute',
+        html: '<div><img src="/relative/path.jpg"/></div>',
+        base: 'http://example.com',
+        expected:
+          '<html><head></head><body><div><img src="http://example.com/relative/path.jpg"></div></body></html>',
+      },
+      {
+        _title: 'should no change absolute src',
+        html: '<div><img src="http://example.comrelative/path.jpg"/></div>',
+        base: 'http://example.com',
+        expected:
+          '<html><head></head><body><div><img src="http://example.comrelative/path.jpg"></div></body></html>',
+      },
+    ];
+
+    describe.each(table)(
+      'changeSrc each',
+      ({ _title, html, base, expected }) => {
+        it(_title, () => {
+          const $ = cheerio.load(html);
+          // Use type assertion to call private method
+          (service as any).changeSrc($, base);
           expect($.html()).toBe(expected);
         });
       },

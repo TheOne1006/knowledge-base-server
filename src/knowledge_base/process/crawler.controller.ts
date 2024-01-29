@@ -170,22 +170,25 @@ export class CrawlerController extends BaseController {
           try {
             // logger start
             logger.info(`start at ${url}`);
-            const { links, html } = await this.crawlerService.crawlLinksAndHtml(
-              url,
-              crawlerOption.linkSelector,
-              kbSiteIns.removeSelectors,
-              kbSiteIns.evaluate,
-            );
+            const { links, content } =
+              await this.crawlerService.crawlLinksAndContent(
+                kbSiteIns.engineType,
+                url,
+                crawlerOption.linkSelector,
+                kbSiteIns.removeSelectors,
+                kbSiteIns.evaluate,
+              );
 
-            logger.info(`crawlLinksAndHtml finish at ${url}`);
+            logger.info(`crawlLinksAndContent finish at ${url}`);
             // 加入 urls 队列中
             urlManager.addUrlsFromCrawler(links);
             // 保存 html
-            const filePath = await this.kbResService.saveHtml(
+            const filePath = await this.kbResService.saveContent(
               kbResRoot,
               kbSiteIns.title,
               url,
-              html,
+              content,
+              kbSiteIns.fileSuffix,
             );
 
             // 入库
@@ -310,18 +313,20 @@ export class CrawlerController extends BaseController {
     let completed = false;
 
     try {
-      const { html } = await this.crawlerService.crawlLinksAndHtml(
+      const { content } = await this.crawlerService.crawlLinksAndContent(
+        kbSiteIns.engineType,
         sourceUrl,
         undefined,
         kbSiteIns.removeSelectors,
       );
-      this.logger.info(`crawlLinksAndHtml finish at ${sourceUrl}`);
-      // 保存 html
-      await this.kbResService.saveHtml(
+      this.logger.info(`crawlLinksAndContent finish at ${sourceUrl}`);
+      // 保存 内容
+      await this.kbResService.saveContent(
         kbResRoot,
         kbSiteIns.title,
         sourceUrl,
-        html,
+        content,
+        kbSiteIns.fileSuffix,
       );
       // 数据库操作
       await this.kbFileService.updateByPk(kbFile.id, {

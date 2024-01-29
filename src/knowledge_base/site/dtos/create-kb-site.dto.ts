@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
@@ -13,7 +14,7 @@ import {
 import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   CRAWLER_ENGINE_PLAYWRIGHT,
-  CRAWLER_ENGINE_FEISHU2MD,
+  CRAWLER_ENGINE_LARK_MD,
   // CRAWLER_ENGINE_TYPES,
 } from '../constants';
 /**
@@ -106,9 +107,9 @@ export class CreateKbSiteDto {
 
   @ApiProperty({
     example: CRAWLER_ENGINE_PLAYWRIGHT,
-    description: '爬取引擎，目前支持 playwright, feishu2md',
+    description: '爬取引擎，目前支持 playwright, lark2md',
   })
-  @IsEnum([CRAWLER_ENGINE_FEISHU2MD, CRAWLER_ENGINE_PLAYWRIGHT], {
+  @IsEnum([CRAWLER_ENGINE_LARK_MD, CRAWLER_ENGINE_PLAYWRIGHT], {
     message: i18nValidationMessage('validation.ENUM'),
   })
   engineType: string;
