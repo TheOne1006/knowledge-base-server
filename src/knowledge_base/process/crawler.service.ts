@@ -42,11 +42,11 @@ export class CrawlerService {
         content: html,
       };
     } else if (engineType === CRAWLER_ENGINE_LARK_MD) {
-      const evaluateFuncString = `
-          await page.waitForSelector(".sidebar-container");
-          const elementHandle = await page.$('.sidebar-container');
-          return elementHandle.innerHTML();
-      `;
+      // const evaluateFuncString = `
+      //     await page.waitForSelector(".sidebar-container");
+      //     const elementHandle = await page.$('.sidebar-container');
+      //     return elementHandle.innerHTML();
+      // `;
       const links = await this.playwrightService.crawlLinks(
         url,
         'a[href]',

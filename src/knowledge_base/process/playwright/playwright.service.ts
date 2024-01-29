@@ -105,10 +105,10 @@ export class PlaywrightService {
         evaluate,
       });
     } catch (error) {
-      this.logger.error('BasePlaywrightCrawler: error with', url);
+      this.logger.error('crawlUrlAndEvaluate: error with', url);
       throw error;
     }
-    this.logger.info('BasePlaywrightCrawler start:', url);
+    this.logger.info('crawlUrlAndEvaluate start:', url);
 
     let docs: any[];
 
@@ -118,7 +118,7 @@ export class PlaywrightService {
       // console.log(error);
       throw error;
     }
-    this.logger.info('BasePlaywrightCrawler finish:', url);
+    this.logger.info('crawlUrlAndEvaluate finish:', url);
     const html = docs[0].pageContent;
     return html;
   }
