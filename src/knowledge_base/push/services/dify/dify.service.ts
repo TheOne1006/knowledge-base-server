@@ -77,6 +77,14 @@ export class PushDifyService {
       throw Error(`file not exists: ${filePath}`);
     }
 
+    this.logger.info(
+      `createOrUpdateByFile: ${url}, with ${JSON.stringify(
+        inputData,
+        null,
+        2,
+      )}`,
+    );
+
     // 根据 filePath 获取文件，然后发送 给 url
     const formData = new FormData();
     const file = fs.createReadStream(filePath);

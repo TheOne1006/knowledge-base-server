@@ -20,7 +20,7 @@ export class PushConfigDto {
 
   kbId: number;
 
-  additional: { [key: string]: any };
+  additional: any;
 
   updatedAt: Date;
 
