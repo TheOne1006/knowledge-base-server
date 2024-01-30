@@ -106,6 +106,7 @@ export class CrawlerController extends BaseController {
     @Body() crawlerOption: CrawlerDto,
     @User() user: RequestUser,
   ): Promise<Observable<MessageEvent>> {
+    this.logger.info(`==crawler start with site: ${pk}`);
     const [kbIns, kbSiteIns] = await Promise.all([
       this.kbService.findByPk(pk),
       this.kbSiteService.findByPk(siteId),
@@ -194,7 +195,7 @@ export class CrawlerController extends BaseController {
             // 入库
             await this.kbFileService.findOrCreate(
               {
-                fileExt: 'html',
+                fileExt: kbSiteIns.fileSuffix,
                 sourceType: FILE_SOURCE_TYPE_CRAWLER,
                 sourceUrl: url,
               },
@@ -231,6 +232,7 @@ export class CrawlerController extends BaseController {
         });
       }
 
+      this.logger.info(`==crawler all finish with site: ${pk}`);
       // 完成任务
       subscriber.next({
         data: {

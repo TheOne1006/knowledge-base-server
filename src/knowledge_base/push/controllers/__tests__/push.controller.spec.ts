@@ -457,9 +457,9 @@ describe('PushController', () => {
   describe('clearAll', () => {
     it('should clearAll correctly', async () => {
       const configId = 1;
-      const pushOption = { pushVersion: 'v1' };
+      const pushOption = { pushVersion: 'delete v1' };
       const owner = { id: 1 } as any;
-      const pushConfig = { id: 1, type: 'dify', kbId: 1 };
+      const pushConfig = { id: 1, type: 'dify', kbId: 1, title: 'v1' };
       const allMaps = [
         {
           id: 1,
@@ -494,11 +494,26 @@ describe('PushController', () => {
       );
     });
 
+    it('should clearAll failed with pushVersion', async () => {
+      const configId = 1;
+      const pushOption = { pushVersion: 'delete v1' };
+      const owner = { id: 1 } as any;
+      const pushConfig = { id: 1, type: 'dify', kbId: 1, title: 'v2' };
+
+      controller['check_owner'] = jest.fn();
+      mockPushConfigService.findByPk = jest.fn().mockResolvedValue(pushConfig);
+      // await controller.clearAll(configId, pushOption, owner);
+
+      await expect(() =>
+        controller.clearAll(configId, pushOption, owner),
+      ).rejects.toThrow('pushVersion: must include v2');
+    });
+
     it('should clearAll with deleteByFile failed', async () => {
       const configId = 1;
       const pushOption = { pushVersion: 'v1' };
       const owner = { id: 1 } as any;
-      const pushConfig = { id: 1, type: 'dify', kbId: 1 };
+      const pushConfig = { id: 1, type: 'dify', kbId: 1, title: 'v1' };
       const allMaps = [
         {
           id: 1,
@@ -542,7 +557,7 @@ describe('PushController', () => {
       const configId = 1;
       const pushOption = { pushVersion: 'v1' };
       const owner = { id: 1 } as any;
-      const pushConfig = { id: 1, type: 'dify', kbId: 1 };
+      const pushConfig = { id: 1, type: 'dify', kbId: 1, title: 'v1' };
 
       mockPushConfigService.findByPk = jest.fn().mockResolvedValue(pushConfig);
       mockPushMapService.findAll = jest.fn().mockResolvedValue([]);
