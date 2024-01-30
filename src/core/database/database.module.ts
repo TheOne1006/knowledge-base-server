@@ -6,7 +6,6 @@ import { config } from '../../../config';
  * 配置参数
  */
 const sequelizeConfig = config.sequelize;
-
 /**
  * 数据库模块
  */

@@ -53,7 +53,13 @@ describe('PushDifyService', () => {
           provide: HttpService,
           useValue: httpMockService,
         },
-        { provide: WINSTON_MODULE_PROVIDER, useValue: { error: jest.fn() } },
+        {
+          provide: WINSTON_MODULE_PROVIDER,
+          useValue: {
+            error: jest.fn(),
+            info: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

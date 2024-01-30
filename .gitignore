@@ -46,4 +46,5 @@ resources/prod/
 
 client_prod
 .env
+.secrets
 
