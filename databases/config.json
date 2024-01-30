@@ -1,11 +1,10 @@
 {
   "development": {
     "username": "root",
-    "password": null,
-    "database": "nestjs_example_dev",
+    "password": "root",
+    "database": "knowledge-base-server",
     "host": "localhost",
-    "storage": "./databases/db/database.dev.sqlite",
-    "dialect": "sqlite"
+    "dialect": "postgres"
   },
   "test": {
     "username": "root",
@@ -17,11 +16,10 @@
   },
   "production": {
     "username": "root",
-    "password": null,
-    "database": "nestjs_example",
-    "storage": "./databases/db/database.sqlite",
+    "password": "root",
+    "database": "knowledge-base-server-prod",
     "host": "localhost",
-    "dialect": "sqlite"
+    "dialect": "postgres"
   },
   "mysql_demo": {
     "username": "root",

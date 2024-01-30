@@ -2,15 +2,15 @@ import { Dialect } from 'sequelize/types';
 import { join } from 'path';
 
 /**
- * 开发环境配置
+ * 生产环境配置
  */
 export const config = {
   sequelize: {
-    username: 'root',
-    password: null,
-    storage: join(__dirname, '../..', './databases/db/database.sqlite'),
-    host: 'localhost',
-    dialect: 'sqlite' as Dialect,
+    username: process.env.PG_USERNAME,
+    password: process.env.PG_PASSWORD,
+    host: process.env.PG_HOST,
+    port: process.env.PG_PORT,
+    dialect: 'postgres' as Dialect,
     logging: false,
   },
   logger: {
@@ -21,7 +21,7 @@ export const config = {
   },
   API_V1: 'v1',
   APP_CONFIG: {
-    JWT_SECRET: 'xxxkkj123v',
+    JWT_SECRET: 'sksjdkjakjuuyqqwqxxzffqqwewewqqwe',
     JWT_SECRET_EXPIRESIN: '10d', // token 过期时间
     KOWNLEDGE_BASE_RESOURCES_ROOT: join(
       __dirname,

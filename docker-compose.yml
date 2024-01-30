@@ -7,7 +7,6 @@ services:
         - '3001:3000'
       volumes:
         - '/etc/localtime:/etc/localtime:ro'
-        - './databases/db:/home/myuser/databases/db:rw'
         - './.env:/home/myuser/.env:ro'
         - './resources/prod:/home/myuser/resources/prod:rw'
         - '../knowledge-base-admin/dist:/home/myuser/client'
