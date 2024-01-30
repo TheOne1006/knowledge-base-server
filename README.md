@@ -17,3 +17,9 @@ yarn
 yarn start:dev
 ```
 
+
+## ci 
+
+```bash
+act -s .secrets -j build
+```
