@@ -12,14 +12,23 @@ const TEST_IP = '10.200.0.45';
 
 /**
  * req.user 中间件
- * 将 bktoken 尝试解析成 reqUser
+ * 将 token 尝试解析成 reqUser
  *
  */
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly authService: AuthService) {}
   async use(req: Request, _res: Response, next: NextFunction) {
-    const bktoken = (req.headers.bktoken || req.headers.token || '') as string;
+    let token = (req.headers.token ||
+      req.headers.authorization ||
+      req.query?.token ||
+      '') as string;
+
+    // 解析 Bearer
+    if (token.startsWith('Bearer ')) {
+      token = token.replace('Bearer ', '');
+    }
+
     // 获取 ipv4 地址
     let ip = ((req.headers['x-real-ip'] || req.ip || '') as string).replace(
       '::ffff:',
@@ -34,13 +43,13 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     // support test
-    if (bktoken.startsWith('_mock')) {
-      req['user'] = AuthMiddleware.parseMockToken(bktoken, ip);
+    if (token.startsWith('_mock')) {
+      req['user'] = AuthMiddleware.parseMockToken(token, ip);
       next();
       return;
     }
 
-    req['user'] = await this.authService.check(bktoken, ip);
+    req['user'] = await this.authService.check(token, ip);
     next();
   }
 

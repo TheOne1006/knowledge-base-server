@@ -1,3 +1,4 @@
+// istanbul ignore file
 import { Exclude } from 'class-transformer';
 
 /**
@@ -16,16 +17,22 @@ export class KbSiteDto {
 
   removeSelectors: string[];
 
-  pattern: string;
+  matchPatterns: string[];
+
+  ignorePatterns: string[];
+
+  evaluate: string;
+
+  engineType: string;
+
+  fileSuffix: string;
 
   ownerId: number;
 
   kbId: number;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

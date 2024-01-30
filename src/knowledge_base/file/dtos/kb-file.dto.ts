@@ -18,14 +18,14 @@ export class KbFileDto {
 
   summary: string;
 
+  checksum: string;
+
   kbId: number;
 
   siteId?: number;
 
-  @Exclude()
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

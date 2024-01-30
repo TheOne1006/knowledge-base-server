@@ -3,6 +3,7 @@ import { KbSiteController } from '../site.controller';
 import { KbSiteService } from '../site.service';
 import { KbService } from '../../kb/kb.service';
 import { I18nService } from 'nestjs-i18n';
+import { CRAWLER_ENGINE_PLAYWRIGHT } from '../constants';
 
 describe('KbController', () => {
   let moduleRef: TestingModule;
@@ -101,7 +102,11 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(1, 1, 1, user);
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+
+      const actual = await controller.ownerlist(mockRes, user, 1, 'title');
 
       expect(actual.length).toBeGreaterThan(1);
     });
@@ -113,7 +118,11 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(undefined, 1, 1, user);
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+
+      const actual = await controller.ownerlist(mockRes, user, 1, 'title');
 
       expect(actual.length).toBeGreaterThan(1);
     });
@@ -169,8 +178,11 @@ describe('KbController', () => {
           desc: 'title',
           hostname: 'http://xxx.com/',
           startUrls: ['/start'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
+          engineType: CRAWLER_ENGINE_PLAYWRIGHT,
+          fileSuffix: 'html',
         };
         const kbId = 1;
 
@@ -201,17 +213,23 @@ describe('KbController', () => {
           roles: [],
         };
 
-        const updateKb = {
+        const updateKbSite = {
           desc: 'title',
           hostname: 'http://xxx.com/',
           startUrls: ['/start'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
+          engineType: CRAWLER_ENGINE_PLAYWRIGHT,
+          fileSuffix: 'html',
         };
 
-        const actual = await controller.updateByPk(1, updateKb, user);
+        const actual = await controller.updateByPk(1, updateKbSite, user);
 
-        expect(KbSiteServiceMock.updateByPk).toHaveBeenCalledWith(1, updateKb);
+        expect(KbSiteServiceMock.updateByPk).toHaveBeenCalledWith(
+          1,
+          updateKbSite,
+        );
         const expected = {
           id: 1,
           title: 'title',

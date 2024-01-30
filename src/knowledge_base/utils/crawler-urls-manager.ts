@@ -2,7 +2,10 @@ import { uniq, difference } from 'lodash';
 // import { Logger } from 'winston';
 
 import { Logger, Injectable } from '@nestjs/common';
-import { CRAWLER_TYPES, CRAWLER_TYPE_INCREMENTAL } from '../process/constants';
+import {
+  CRAWLER_DATA_TYPES,
+  CRAWLER_DATA_INCREMENTAL,
+} from '../process/constants';
 import {
   urlAppendSuffix,
   // urlRemoveHash
@@ -15,9 +18,15 @@ import {
 export class CrawlerUrlsManager {
   protected readonly logger = new Logger('CrawlerUrlsManager');
   /**
-   * 爬虫的 pattern
+   * 爬虫的 匹配 patterns
    */
-  private pattern: RegExp;
+  private matchPatterns: RegExp[];
+
+  /**
+   * 爬虫的 忽略的 patterns
+   */
+  private ignorePatterns: RegExp[];
+
   /**
    * 需要爬取的urls
    */
@@ -26,7 +35,7 @@ export class CrawlerUrlsManager {
   /**
    * crawler 类型
    */
-  private type: CRAWLER_TYPES = CRAWLER_TYPE_INCREMENTAL;
+  private type: CRAWLER_DATA_TYPES = CRAWLER_DATA_INCREMENTAL;
 
   /**
    * 已下载到本地 urls 信息
@@ -49,6 +58,12 @@ export class CrawlerUrlsManager {
   private maxConnections: number = 5;
 
   /**
+   * url 后缀, 默认 .html
+   * 用于连接 转 文件名
+   */
+  private urlAppendSuffix: string = '.html';
+
+  /**
    * 重试的 url 信息
    */
   private retryUrlItems: {
@@ -56,25 +71,37 @@ export class CrawlerUrlsManager {
   } = {};
 
   /**
-   * @description 爬虫url管理器
+   * 爬虫 url 管理器
+   * @param {string[]} matchPatterns
+   * @param {string[]} ignorePatterns
    * @param {string[]} initUrls
-   * @param {number} maxRetryTimes 重试次数
-   * @param {number} maxConnections 最大连接数
+   * @param {number} maxRetryTimes
+   * @param {number} maxConnections
+   * @param {CRAWLER_DATA_TYPES} type
+   * @param {string[]} localUrls
    */
   constructor(
-    pattern: string,
+    matchPatterns: string[],
+    ignorePatterns: string[] = [],
     initUrls: string[] = [],
     maxRetryTimes: number = 3,
     maxConnections: number = 5,
-    type: CRAWLER_TYPES = CRAWLER_TYPE_INCREMENTAL,
+    type: CRAWLER_DATA_TYPES = CRAWLER_DATA_INCREMENTAL,
     localUrls: string[] = [],
+    urlAppendSuffix: string = '.html',
   ) {
-    this.pattern = new RegExp(pattern);
+    this.matchPatterns = matchPatterns
+      .filter((item) => item)
+      .map((item) => new RegExp(item));
+    this.ignorePatterns = ignorePatterns
+      .filter((item) => item)
+      .map((item) => new RegExp(item));
     this.urls = uniq(initUrls);
     this.maxRetryTimes = maxRetryTimes;
     this.maxConnections = maxConnections;
     this.type = type;
     this.localUrls = localUrls;
+    this.urlAppendSuffix = urlAppendSuffix;
   }
 
   /**
@@ -131,7 +158,7 @@ export class CrawlerUrlsManager {
     // urls => 以 .xxx 的结尾的urls
     const links = urls
       // .map((item) => urlRemoveHash(item)) # 提取的时候已经删除
-      .map((url) => urlAppendSuffix(url, '.html'))
+      .map((url) => urlAppendSuffix(url, this.urlAppendSuffix))
       .map((item) => item.toString());
 
     // 遍历 sufUrls 如果存在于 this.localUrls, 则排除，没有则保留 urls 的信息
@@ -151,7 +178,21 @@ export class CrawlerUrlsManager {
    * @returns
    */
   filterUrlsWithPattern(urls: string[]): string[] {
-    return urls.filter((url) => this.pattern.test(url));
+    const matchPatterns = this.matchPatterns;
+    const ignorePatterns = this.ignorePatterns;
+
+    const filterUrls = urls.filter((url) => {
+      // 如果 命中 ignorePatterns, 则跳过
+      const ignore = ignorePatterns.some((pattern) => pattern.test(url));
+      if (ignore) {
+        return false;
+      }
+
+      const match = matchPatterns.some((pattern) => pattern.test(url));
+      return match;
+    });
+
+    return filterUrls;
   }
 
   /**
@@ -161,7 +202,7 @@ export class CrawlerUrlsManager {
     let newUrls = urls;
     // this.logger.info(`type: ${this.type}`);
 
-    if (this.type === CRAWLER_TYPE_INCREMENTAL) {
+    if (this.type === CRAWLER_DATA_INCREMENTAL) {
       newUrls = this.excludeLocalUrls(urls);
     }
 

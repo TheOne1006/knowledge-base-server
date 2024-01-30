@@ -72,7 +72,7 @@ describe('KbResourceService', () => {
     });
   });
 
-  it('should save html', async () => {
+  it('should save content with html', async () => {
     const kbRoot = '/root';
     const kbSiteTitle = 'test';
     const url = 'http://test.com';
@@ -82,7 +82,7 @@ describe('KbResourceService', () => {
 
     mockFs.writeFile.mockResolvedValueOnce(undefined);
 
-    await service.saveHtml(kbRoot, kbSiteTitle, url, html);
+    await service.saveContent(kbRoot, kbSiteTitle, url, html, 'html');
 
     expect(mockFs.writeFile).toHaveBeenCalledWith(filePath, html);
   });

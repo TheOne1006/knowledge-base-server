@@ -23,6 +23,10 @@ import { KbResourceService } from './process/resource.service';
 import { CrawlerService } from './process/crawler.service';
 import { CrawlerController } from './process/crawler.controller';
 
+// crawler detail
+import { LarkService } from './process/lark';
+import { PlaywrightService } from './process/playwright';
+
 // push
 import { PushModule } from './push/push.module';
 @Module({
@@ -47,6 +51,8 @@ import { PushModule } from './push/push.module';
     KbFileService,
     KbResourceService,
     CrawlerService,
+    PlaywrightService,
+    LarkService,
   ],
 })
 export class KnowledgeBaseModule {}

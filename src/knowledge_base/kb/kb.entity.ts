@@ -20,12 +20,6 @@ export class KnowledgeBase extends Model<KnowledgeBase> {
 
   @Column({
     type: DataType.INTEGER,
-    field: 'file_count',
-  })
-  fileCount: number;
-
-  @Column({
-    type: DataType.INTEGER,
     field: 'owner_id',
   })
   ownerId: number;

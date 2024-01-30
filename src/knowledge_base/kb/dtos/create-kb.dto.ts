@@ -19,7 +19,7 @@ export class CreateKbDto {
   @Length(2, 20, {
     message: i18nValidationMessage('validation.LENGTH'),
   })
-  @Matches(/^[a-zA-Z0-9_]+$/i, {
+  @Matches(/^[a-zA-Z0-9_\-]+$/i, {
     message: i18nValidationMessage('validation.MATCHES'),
   })
   title: string;

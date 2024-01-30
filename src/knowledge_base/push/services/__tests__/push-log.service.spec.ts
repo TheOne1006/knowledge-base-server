@@ -20,18 +20,22 @@ const mockBaseData = [
   {
     id: 1,
     ...defaultAttr,
+    pushVersion: 'init1',
   },
   {
     id: 2,
     ...defaultAttr,
+    pushVersion: 'init2',
   },
   {
     id: 3,
     ...defaultAttr,
+    pushVersion: 'init3',
   },
   {
     id: 5,
     ...defaultAttr,
+    pushVersion: 'init4',
   },
 ];
 
@@ -75,6 +79,7 @@ describe('PushLogService', () => {
     it('should create a new instance', async () => {
       const dto: any = {
         ...defaultAttr,
+        pushVersion: 'create',
       };
       const kbId = 1;
       const ownerId = 1;
@@ -89,6 +94,12 @@ describe('PushLogService', () => {
   describe('findAll', () => {
     it('should return all instances', async () => {
       const result = await service.findAll();
+      expect(result).toBeDefined();
+      expect(result.length).toBeGreaterThan(2);
+    });
+
+    it('should return instances with args', async () => {
+      const result = await service.findAll({}, 0, 10, ['id', 'desc']);
       expect(result).toBeDefined();
       expect(result.length).toBeGreaterThan(2);
     });

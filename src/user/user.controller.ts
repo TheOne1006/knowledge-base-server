@@ -6,13 +6,21 @@ import {
   UseInterceptors,
   UseGuards,
   ValidationPipe,
+  Header,
+  ParseIntPipe,
+  Param,
+  // Res,
 } from '@nestjs/common';
 import {
   ApiOperation,
   ApiTags,
   ApiSecurity,
   ApiResponse,
+  ApiParam,
 } from '@nestjs/swagger';
+
+import type { Response } from 'express';
+import { ExpressResponse } from '../common/decorators/express-res.decorator';
 
 import { SerializerInterceptor } from '../common/interceptors/serializer.interceptor';
 import { Roles, SerializerClass, User } from '../common/decorators';
@@ -39,16 +47,17 @@ export class UserController {
    * 获取所有用户信息
    *
    */
-  @Get('/')
+  @Get()
+  @Header('Access-Control-Expose-Headers', 'X-Total-Count')
   @ApiOperation({
     summary: '用户信息',
   })
   @Roles(ROLE_SUPER_ADMIN)
   @SerializerClass(UserDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async list(): Promise<UserDto[]> {
+  async list(@ExpressResponse() res: Response): Promise<UserDto[]> {
     const users = await this.userService.findAll();
-
+    res.set('X-Total-Count', `${users.length}`);
     return users;
   }
 
@@ -65,6 +74,27 @@ export class UserController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async getUserCurrent(@User() user: RequestUser): Promise<RequestUser> {
     return user;
+  }
+
+  /**
+   * 根据 id 查找
+   */
+  @Get(':id')
+  @Roles(ROLE_SUPER_ADMIN)
+  @ApiOperation({
+    summary: ' 根据 id 查找用户',
+  })
+  @ApiParam({
+    name: 'id',
+    example: '1',
+    description: '用户 id',
+    type: Number,
+  })
+  @SerializerClass(UserDto)
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async findByPk(@Param('id', ParseIntPipe) pk: number): Promise<UserDto> {
+    const ins = await this.userService.findByPk(pk);
+    return ins;
   }
 
   /**

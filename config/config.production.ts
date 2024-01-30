@@ -19,4 +19,16 @@ export const config = {
     timestamp: true,
     // filename: 'log/all.log',
   },
+  API_V1: 'v1',
+  APP_CONFIG: {
+    JWT_SECRET: 'xxxkkj123v',
+    JWT_SECRET_EXPIRESIN: '10d', // token 过期时间
+    KOWNLEDGE_BASE_RESOURCES_ROOT: join(
+      __dirname,
+      '..',
+      '..',
+      'resources',
+      'prod',
+    ),
+  },
 };

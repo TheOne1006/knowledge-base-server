@@ -47,6 +47,13 @@ export class PushMap extends Model<PushMap> {
   pushVersion: string;
 
   @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'push_checksum',
+  })
+  pushChecksum: string;
+
+  @Column({
     type: DataType.INTEGER,
     field: 'kb_id',
   })

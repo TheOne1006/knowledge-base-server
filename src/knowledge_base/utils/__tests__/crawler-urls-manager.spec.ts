@@ -1,13 +1,16 @@
 import {
-  CRAWLER_TYPE_ALL,
-  CRAWLER_TYPE_INCREMENTAL,
+  CRAWLER_DATA_ALL,
+  CRAWLER_DATA_INCREMENTAL,
 } from '../../process/constants';
 import { CrawlerUrlsManager } from '../crawler-urls-manager';
 
 describe('CrawlerUrlsManager', () => {
   let crawlerUrlsManager: any; // CrawlerUrlsManager
   beforeEach(() => {
-    crawlerUrlsManager = new CrawlerUrlsManager('^http://example.com/') as any;
+    crawlerUrlsManager = new CrawlerUrlsManager(
+      ['^http://example.com/'],
+      ['djksaakskaskdsajfkds'],
+    ) as any;
   });
 
   describe('appendUrls 添加 urls', () => {
@@ -129,11 +132,52 @@ describe('CrawlerUrlsManager', () => {
     });
   });
 
+  describe('filterUrlsWithPattern', () => {
+    const table = [
+      {
+        _title: 'ignorePatterns is empty',
+        matchPatterns: [new RegExp('^http://example.com/')],
+        ignorePatterns: [],
+        urls: ['http://example1.com/path1', 'http://example.com/path2'],
+        expected: ['http://example.com/path2'],
+      },
+      {
+        _title: 'ignorePatterns match',
+        matchPatterns: [new RegExp('^http://example.com/')],
+        ignorePatterns: [new RegExp('^http://example.com/path1')],
+        urls: ['http://example.com/path1', 'http://example.com/path2'],
+        expected: ['http://example.com/path2'],
+      },
+      {
+        _title: 'more matchPatterns',
+        matchPatterns: [
+          new RegExp('^http://example2.com/'),
+          new RegExp('^http://example.com/'),
+        ],
+        ignorePatterns: [new RegExp('^http://example.com/path1')],
+        urls: ['http://example1.com/path1', 'http://example.com/path2'],
+        expected: ['http://example.com/path2'],
+      },
+    ];
+
+    describe.each(table)(
+      'get patterns urls',
+      ({ _title, matchPatterns, ignorePatterns, urls, expected }) => {
+        it(_title, () => {
+          crawlerUrlsManager.matchPatterns = matchPatterns;
+          crawlerUrlsManager.ignorePatterns = ignorePatterns;
+          const result = crawlerUrlsManager.filterUrlsWithPattern(urls);
+          expect(result).toEqual(expected);
+        });
+      },
+    );
+  });
+
   describe('addUrlsFromCrawler', () => {
-    it(`with type: ${CRAWLER_TYPE_ALL}`, () => {
+    it(`with type: ${CRAWLER_DATA_ALL}`, () => {
       const urls = ['http://example.com/path1', 'http://example.com/path2'];
       crawlerUrlsManager.localUrls = ['http://example.com/path1.html'];
-      crawlerUrlsManager.type = CRAWLER_TYPE_ALL;
+      crawlerUrlsManager.type = CRAWLER_DATA_ALL;
       crawlerUrlsManager.addUrlsFromCrawler(urls);
 
       crawlerUrlsManager.addUrlsFromCrawler(urls);
@@ -142,10 +186,10 @@ describe('CrawlerUrlsManager', () => {
       expect(result).toEqual(urls);
     });
 
-    it(`with type: ${CRAWLER_TYPE_INCREMENTAL}`, () => {
+    it(`with type: ${CRAWLER_DATA_INCREMENTAL}`, () => {
       const urls = ['http://example.com/path1', 'http://example.com/path2'];
       crawlerUrlsManager.localUrls = ['http://example.com/path1.html'];
-      crawlerUrlsManager.type = CRAWLER_TYPE_INCREMENTAL;
+      crawlerUrlsManager.type = CRAWLER_DATA_INCREMENTAL;
       crawlerUrlsManager.addUrlsFromCrawler(urls);
       const result = crawlerUrlsManager.urls;
       const expected = ['http://example.com/path2'];
@@ -310,7 +354,8 @@ describe('CrawlerUrlsManager', () => {
   describe('getProcessedUrls', () => {
     const table = [
       {
-        _title: 'should return all urls if currentPointer is greater than the length of urls',
+        _title:
+          'should return all urls if currentPointer is greater than the length of urls',
         urls: ['http://example.com/path1', 'http://example.com/path2'],
         currentPointer: 3,
         expected: ['http://example.com/path1', 'http://example.com/path2'],

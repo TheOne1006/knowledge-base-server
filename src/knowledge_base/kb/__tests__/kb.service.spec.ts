@@ -97,6 +97,12 @@ describe('KbService', () => {
       expect(result).toBeDefined();
       expect(result.length).toBeGreaterThan(2);
     });
+
+    it('should return all instance with order', async () => {
+      const result = await service.findAll(undefined, 1, 10, ['id', 'DESC']);
+      expect(result).toBeDefined();
+      expect(result.length).toBeGreaterThan(1);
+    });
   });
 
   describe('findByPk', () => {
@@ -140,18 +146,18 @@ describe('KbService', () => {
 
   describe('getKbRoot', () => {
     it('should get the root of a knowledge base', () => {
-      const kb = { title: 'title', ownerId: 1 } as KbDto;
-      const result = service.getKbRoot(kb);
-      const expected = `${RESOURCES_ROOT}/1/title`;
+      const kb = { title: 'title', ownerId: 1, id: 1 } as KbDto;
+      const result = service.getKbRoot(kb.ownerId, kb.id);
+      const expected = `${RESOURCES_ROOT}/user-1/kb-1`;
       expect(result).toEqual(expected);
     });
   });
 
   describe('getKbUploadRoot', () => {
     it('should get the root uploads of a knowledge base', () => {
-      const kb = { title: 'title', ownerId: 1 } as KbDto;
+      const kb = { title: 'title', ownerId: 1, id: 1 } as KbDto;
       const result = service.getKbUploadRoot(kb);
-      const expected = `${RESOURCES_ROOT}/1/title/_uploads`;
+      const expected = `${RESOURCES_ROOT}/user-1/kb-1/_uploads`;
       expect(result).toEqual(expected);
     });
   });
@@ -160,7 +166,7 @@ describe('KbService', () => {
     it('should get upload files of a knowledge base', async () => {
       const expected = [];
 
-      const kb = { title: 'title', ownerId: 1 } as KbDto;
+      const kb = { title: 'title', ownerId: 1, id: 1 } as KbDto;
       const actual = await service.getUploadFiles(kb);
       expect(actual).toEqual(expected);
     });

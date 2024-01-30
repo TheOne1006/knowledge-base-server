@@ -30,14 +30,31 @@ export class KnowledgeBaseSite extends Model<KnowledgeBaseSite> {
   })
   hostname: string;
 
+  @Column({ type: DataType.JSON, allowNull: false, field: 'start_urls' })
+  startUrls: string[];
+
+  @Column({ type: DataType.JSON, allowNull: false, field: 'match_patterns' })
+  matchPatterns: string[];
+
+  @Column({ type: DataType.JSON, defaultValue: [], field: 'ignore_patterns' })
+  ignorePatterns: string[];
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  evaluate: string;
+
   @Column({
     type: DataType.STRING,
     allowNull: false,
+    field: 'engine_type',
   })
-  pattern: string;
+  engineType: string;
 
-  @Column({ type: DataType.JSON, allowNull: false, field: 'start_urls' })
-  startUrls: string[];
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'file_suffix',
+  })
+  fileSuffix: string;
 
   @Column({ type: DataType.JSON, allowNull: false, field: 'remove_selectors' })
   removeSelectors: string[];

@@ -6,13 +6,17 @@ import { KnowledgeBaseSite } from '../site.entity';
 
 import { DatabaseModule } from '../../../core/database/database.module';
 import { LoggerModule } from '../../../core/logger/logger.module';
+import { CRAWLER_ENGINE_PLAYWRIGHT } from '../constants';
 
 const defaultAttr = {
   desc: 'desc',
   hostname: 'http://www.example.com/',
   startUrls: ['/', '/start'],
   removeSelectors: [],
-  pattern: 'http',
+  matchPatterns: ['http'],
+  ignorePatterns: [],
+  engineType: CRAWLER_ENGINE_PLAYWRIGHT,
+  fileSuffix: 'html',
   ownerId: 1,
   kbId: 1,
 };
@@ -84,8 +88,11 @@ describe('KbSiteService', () => {
           desc: 'desc',
           hostname: 'http://www.s.com',
           startUrls: ['/'],
-          pattern: 'http',
+          matchPatterns: ['http'],
+          ignorePatterns: [],
           removeSelectors: [],
+          engineType: CRAWLER_ENGINE_PLAYWRIGHT,
+          fileSuffix: 'html',
         };
         const ownerId = 1;
         const kId = 1;
@@ -104,10 +111,10 @@ describe('KbSiteService', () => {
         expect(result.length).toBeGreaterThan(2);
       });
 
-      it('should return all instance', async () => {
-        const result = await service.findAll(undefined, 1, 3);
+      it('should return instances with args', async () => {
+        const result = await service.findAll({}, 0, 10, ['id', 'desc']);
         expect(result).toBeDefined();
-        expect(result.length).toBeGreaterThan(1);
+        expect(result.length).toBeGreaterThan(2);
       });
     });
 

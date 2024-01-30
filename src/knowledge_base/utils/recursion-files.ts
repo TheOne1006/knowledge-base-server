@@ -12,8 +12,8 @@ export async function getAllFilesAndDirectoriesRecursively(
   dir: string,
   ignorePathPrefix = '',
 ): Promise<FileStatDto[]> {
-  const children = await fs.readdir(dir);
   const files: FileStatDto[] = [];
+  const children = await fs.readdir(dir);
 
   for (const item of children) {
     const fullPath = path.join(dir, item);

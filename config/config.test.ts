@@ -23,11 +23,6 @@ export const config = {
   APP_CONFIG: {
     JWT_SECRET: '123',
     JWT_SECRET_EXPIRESIN: '10d', // token 过期时间
-    KOWNLEDGE_BASE_RESOURCES_ROOT: join(
-      __dirname,
-      '../..',
-      'resources',
-      'test',
-    ),
+    KOWNLEDGE_BASE_RESOURCES_ROOT: join(__dirname, '..', 'resources', 'test'),
   },
 };

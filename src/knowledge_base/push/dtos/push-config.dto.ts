@@ -20,10 +20,10 @@ export class PushConfigDto {
 
   kbId: number;
 
-  @Exclude()
+  additional: Record<string, any> = {};
+
   updatedAt: Date;
 
-  @Exclude()
   createdAt: Date;
 
   @Exclude()

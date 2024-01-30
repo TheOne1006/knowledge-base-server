@@ -11,6 +11,8 @@ import {
   Delete,
   Param,
   ParseIntPipe,
+  Header,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -22,6 +24,10 @@ import {
 } from '@nestjs/swagger';
 import { I18nService } from 'nestjs-i18n';
 import { WhereOptions } from 'sequelize';
+
+import type { Response } from 'express';
+import { ExpressResponse } from '../../common/decorators/express-res.decorator';
+
 import { SerializerInterceptor } from '../../common/interceptors/serializer.interceptor';
 import { Roles, SerializerClass, User } from '../../common/decorators';
 import { RolesGuard } from '../../common/auth';
@@ -38,11 +44,11 @@ const prefix = config.API_V1;
 
 @UseGuards(RolesGuard)
 @Roles(ROLE_AUTHENTICATED)
-@Controller(`${prefix}/kb`)
+@Controller(`${prefix}/kbs`)
 @ApiSecurity('api_key')
-@ApiTags('kb')
+@ApiTags('kbs')
 @UseInterceptors(SerializerInterceptor)
-@Controller('kb')
+@Controller('kbs')
 export class KbController extends BaseController {
   constructor(
     private readonly service: KbService,
@@ -110,43 +116,106 @@ export class KbController extends BaseController {
   }
 
   @Get()
+  @Header('Access-Control-Expose-Headers', 'X-Total-Count')
   @ApiOperation({
     summary: '所有者的知识库列表',
   })
   @ApiQuery({
-    name: 'offset',
-    description: 'offset',
-    example: 1,
-    type: Number,
+    name: 'title',
+    description: 'title',
     required: false,
   })
   @ApiQuery({
-    name: 'limit',
-    description: 'limit',
-    example: 10,
-    type: Number,
+    name: 'desc',
+    description: 'desc',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'id',
+    description: 'id',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'ids',
+    description: '逗号分隔',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
+    name: '_sort',
+    description: '排序字段',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_order',
+    description: '排序方式',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_end',
+    description: '结束索引',
+    required: false,
+  })
+  @ApiQuery({
+    name: '_start',
+    description: '开始索引',
     required: false,
   })
   @SerializerClass(KbDto)
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async ownerlist(
-    @Query(
-      'offset',
-      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
-    )
-    offset: number,
-    @Query(
-      'limit',
-      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
-    )
-    limit: number,
+    @ExpressResponse() res: Response,
     @User() owner: RequestUser,
+    @Query('title') title?: string,
+    @Query('desc') desc?: string,
+    @Query('id', new ParseIntPipe({ optional: true }))
+    id?: number,
+    @Query('ids', new ParseArrayPipe({ optional: true }))
+    ids?: number[],
+    @Query(
+      '_start',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    start?: number,
+    @Query(
+      '_end',
+      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
+    )
+    end?: number,
+    @Query('_sort') sort?: string,
+    @Query('_order') order?: string,
   ): Promise<KbDto[]> {
-    const where: WhereOptions = {
+    const originWhere: WhereOptions = {
       ownerId: owner.id,
     };
 
-    const list = await this.service.findAll(where, offset, limit);
+    const exactSearch = {
+      id,
+    };
+    const fuzzyMatch = {
+      title,
+      desc,
+    };
+
+    const whereIn = {
+      id: ids,
+    };
+
+    const where = this.buildSearchWhere(
+      originWhere,
+      exactSearch,
+      fuzzyMatch,
+      whereIn,
+    );
+    const [offset, limit] = this.buildSearchOffsetAndLimit(start, end);
+    const searchOrder = this.buildSearchOrder(sort, order);
+
+    const list = await this.service.findAll(where, offset, limit, searchOrder);
+
+    const count = await this.service.count(where);
+
+    res.set('X-Total-Count', `messages ${start}-${end}/${count}`);
+
     return list;
   }
 
@@ -155,20 +224,6 @@ export class KbController extends BaseController {
     name: 'ownerId',
     description: 'ownerId',
     example: 1,
-    type: Number,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'offset',
-    description: 'offset',
-    example: 1,
-    type: Number,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'limit',
-    description: 'limit',
-    example: 10,
     type: Number,
     required: false,
   })
@@ -229,7 +284,7 @@ export class KbController extends BaseController {
   ): Promise<KbDto> {
     const kbInfo = await this.service.create(newKbInfo, owner.id);
 
-    const kbRoot = this.service.getKbRoot(kbInfo);
+    const kbRoot = this.service.getKbRoot(kbInfo.ownerId, kbInfo.id);
     await this.service.checkDir(kbRoot);
 
     return kbInfo;

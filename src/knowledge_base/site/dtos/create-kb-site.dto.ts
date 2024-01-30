@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
@@ -6,11 +7,16 @@ import {
   Length,
   Matches,
   IsArray,
-  MinLength,
-  MaxLength,
+  IsEnum,
+  // MinLength,
+  // MaxLength,
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
-
+import {
+  CRAWLER_ENGINE_PLAYWRIGHT,
+  CRAWLER_ENGINE_LARK_MD,
+  // CRAWLER_ENGINE_TYPES,
+} from '../constants';
 /**
  * CreateKbSiteDto
  */
@@ -28,7 +34,7 @@ export class CreateKbSiteDto {
   @Length(2, 50, {
     message: i18nValidationMessage('validation.LENGTH'),
   })
-  @Matches(/^[a-zA-Z0-9_]+$/i, {
+  @Matches(/^[a-zA-Z0-9_\-]+$/i, {
     message: i18nValidationMessage('validation.MATCHES'),
   })
   title: string;
@@ -65,19 +71,32 @@ export class CreateKbSiteDto {
   startUrls: string[];
 
   @ApiProperty({
-    example: '^https:\\/\\/nestjs\\.bootcss\\.com\\/.*',
-    description: '正则表示',
+    example: ['^https:\\/\\/marmelab.com\\/*'],
+    description: '正则表示,',
   })
   @IsString({
+    each: true,
     message: i18nValidationMessage('validation.STRING'),
   })
-  @MinLength(5, {
-    message: i18nValidationMessage('validation.MIN_LENGTH'),
+  @IsArray()
+  matchPatterns: string[];
+
+  @ApiProperty({
+    example: ['^https:\\/\\/marmelab.com\\/react-admin\\/doc\\/*'],
+    description: '剔除规则，由于 matchPatterns',
   })
-  @MaxLength(100, {
-    message: i18nValidationMessage('validation.MAX_LENGTH'),
+  @IsString({
+    each: true,
+    message: i18nValidationMessage('validation.STRING'),
   })
-  pattern: string;
+  @IsArray()
+  ignorePatterns?: string[] = [];
+
+  @ApiProperty({
+    example: '',
+    description: '执行脚本 返回 html',
+  })
+  evaluate?: string;
 
   @ApiProperty({
     example: ['nav', 'aside', 'footer', 'div.row > div.col.col--3'],
@@ -85,4 +104,31 @@ export class CreateKbSiteDto {
   })
   @IsArray()
   removeSelectors: string[];
+
+  @ApiProperty({
+    example: CRAWLER_ENGINE_PLAYWRIGHT,
+    description: '爬取引擎，目前支持 playwright, lark2md',
+  })
+  @IsEnum([CRAWLER_ENGINE_LARK_MD, CRAWLER_ENGINE_PLAYWRIGHT], {
+    message: i18nValidationMessage('validation.ENUM'),
+  })
+  engineType: string;
+
+  @ApiProperty({
+    example: 'html',
+    description: '下载后的文件后缀',
+  })
+  @Length(2, 5, {
+    message: i18nValidationMessage('validation.LENGTH'),
+  })
+  @Matches(/^[a-zA-Z0-9]+$/i, {
+    message: i18nValidationMessage('validation.MATCHES'),
+  })
+  fileSuffix: string;
+
+  @ApiProperty({
+    example: '1',
+    description: 'kbId',
+  })
+  kbId?: number;
 }

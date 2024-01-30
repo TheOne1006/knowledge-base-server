@@ -61,10 +61,7 @@ class MockBaseService extends BaseService<typeof MockBaseModel, MockBaseDto> {
       ...pyload,
     });
 
-    const options = await this.genOptions();
-    const instance = await data.save(options);
-    await this.autoCommit(options);
-
+    const instance = await data.save();
     return instance;
   }
 
@@ -74,9 +71,7 @@ class MockBaseService extends BaseService<typeof MockBaseModel, MockBaseDto> {
 
   async updateByPk(id: number, pyload: any): Promise<MockBaseDto> {
     const data = await this.mainModel.findByPk(id);
-    const options = await this.genOptions();
-    const instance = await data.update(pyload, options);
-    await this.autoCommit(options);
+    const instance = await data.update(pyload);
 
     return instance;
   }
@@ -202,6 +197,60 @@ describe('BaseDBService', () => {
       expect(result).toBeTruthy();
     });
 
+    describe('getFiles', () => {
+      let mock_dir: string;
+      beforeEach(async () => {
+        mock_dir = path.join(__dirname, 'mock_dir2');
+      });
+
+      it('should return files with default params', async () => {
+        const result = await service['getFiles'](mock_dir);
+        const expected = [
+          {
+            isDir: true,
+            name: 'mock_dir3',
+            path: path.join(__dirname, 'mock_dir2', 'mock_dir3'),
+            children: [
+              {
+                isDir: false,
+                name: 'mock_1.txt',
+                path: path.join(
+                  __dirname,
+                  'mock_dir2',
+                  'mock_dir3',
+                  'mock_1.txt',
+                ),
+              },
+            ],
+          },
+        ];
+
+        expect(result).toEqual(expected);
+      });
+
+      it('should return files with default params', async () => {
+        const result = await service['getFiles'](
+          mock_dir,
+          false,
+          mock_dir + '/',
+        );
+        const expected = [
+          {
+            isDir: false,
+            name: 'mock_1.txt',
+            path: path.join('mock_dir3', 'mock_1.txt'),
+          },
+        ];
+        expect(result).toEqual(expected);
+      });
+
+      it('should return files with error root', async () => {
+        const result = await service['getFiles'](mock_dir + 'no_found_dir');
+        const expected = [];
+        expect(result).toEqual(expected);
+      });
+    });
+
     describe('removeDir', () => {
       let mock_dir: string;
       beforeEach(async () => {
@@ -230,6 +279,54 @@ describe('BaseDBService', () => {
       it('should return true if the directory was successfully removed', async () => {
         const result = await service.removeFile(mock_file);
         expect(result).toBeTruthy();
+      });
+    });
+
+    describe('safeJoinPath', () => {
+      const table = [
+        {
+          _title: 'should return true path with safeJoinPath',
+          _input: ['mock_dir', 'mock_dir2'],
+          expected: path.join('mock_dir', 'mock_dir2'),
+        },
+        {
+          _title: 'ignore ../../',
+          _input: ['mock_dir', '../../mock_dir2'],
+          expected: path.join('mock_dir', 'mock_dir2'),
+        },
+        {
+          _title: 'ignore .../',
+          _input: ['mock_dir', '.../../mock_dir2'],
+          expected: path.join('mock_dir', 'mock_dir2'),
+        },
+        {
+          _title: 'ignore .../ keep children',
+          _input: ['mock_dir', '.../../mock_dir2/dir3/dir5'],
+          expected: path.join('mock_dir', 'mock_dir2/dir3/dir5'),
+        },
+      ];
+
+      describe.each(table)(
+        'safeJoinPath tables',
+        ({ _title, _input, expected }) => {
+          it(_title, () => {
+            const result = service.safeJoinPath.apply(null, _input);
+            expect(result).toEqual(expected);
+          });
+        },
+      );
+    });
+
+    describe('getKbRoot', () => {
+      it('should return kb root path', () => {
+        const actual = service.getKbRoot(1, 1);
+        const expected = path.join(
+          service['getResourceRoot'](),
+          `user-1`,
+          `kb-1`,
+        );
+
+        expect(actual).toEqual(expected);
       });
     });
   });

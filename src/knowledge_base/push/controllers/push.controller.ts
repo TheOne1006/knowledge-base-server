@@ -1,12 +1,13 @@
-import * as path from 'path';
+// import * as path from 'path';
 import {
   Controller,
   Sse,
-  Post,
+  Delete,
   Body,
   UseInterceptors,
   UseGuards,
   // ValidationPipe,
+  Post,
   Param,
   ParseIntPipe,
   SetMetadata,
@@ -34,6 +35,8 @@ import {
   PushConfigDto,
   ClearPushResDto,
 } from '../dtos';
+
+import { KbFileDto } from '../../file/dtos';
 
 import { config } from '../../../../config';
 import { PushConfigService } from '../services/push-config.service';
@@ -81,11 +84,7 @@ export class PushController extends BaseController {
   })
   @SerializerClass(PushMapDto)
   async run(
-    @Param(
-      'configId',
-      new ParseIntPipe({ errorHttpStatusCode: 400, optional: true }),
-    )
-    configId: number,
+    @Param('configId', ParseIntPipe) configId: number,
     @Body() pushOption: PushRunOptionDto,
     @User() owner: RequestUser,
   ): Promise<Observable<MessageEvent>> {
@@ -102,28 +101,44 @@ export class PushController extends BaseController {
 
     const pushFlow = async (subscriber: Subscriber<MessageEvent>) => {
       const fileLen = files.length;
+
       for (let i = 0; i < fileLen; i++) {
         const kbFile = files[i];
 
-        // 推送文件以及增、更 pushMap
-        const remoteId = await this._pushFileAndUpsertPushMap(
-          pushOption.pushVersion,
-          path.join(kbResRoot, kbFile.filePath),
-          pushConfig,
-          pushMapDict,
-          owner,
-          kbFile.id,
-        );
+        try {
+          // 推送文件以及增、更 pushMap
+          const remoteId = await this._pushFileAndUpsertPushMap(
+            pushOption.pushVersion,
+            this.kbService.safeJoinPath(kbResRoot, kbFile.filePath),
+            pushConfig,
+            pushMapDict,
+            owner,
+            kbFile,
+          );
 
-        subscriber.next({
-          data: {
-            remoteId, // 抓取处理连接
-            fileId: kbFile.id, // 当前处理的文件id
-            finish: false, // 是否结束
-            total: files.length,
-            index: i,
-          },
-        });
+          subscriber.next({
+            data: {
+              remoteId, // 抓取处理连接
+              success: true,
+              fileId: kbFile.id, // 当前处理的文件id
+              finish: false, // 是否结束
+              total: files.length,
+              index: i,
+            },
+          });
+        } catch (error) {
+          this.logger.error(error);
+          subscriber.next({
+            data: {
+              remoteId: '', // 抓取处理连接
+              success: false,
+              fileId: kbFile.id, // 当前处理的文件id
+              finish: false, // 是否结束
+              total: files.length,
+              index: i,
+            },
+          });
+        }
       }
       // 删除 残留在 pushMap 中的数据
       await this._removeResidualDataFromPushMap(pushMapDict, pushConfig);
@@ -131,6 +146,7 @@ export class PushController extends BaseController {
       subscriber.next({
         data: {
           remoteId: '', // 抓取处理连接
+          success: true,
           fileId: 0, // 当前处理的文件id
           finish: true, // 是否结束
           total: files.length,
@@ -145,6 +161,7 @@ export class PushController extends BaseController {
       subscriber.next({
         data: {
           remoteId: '', // 抓取处理连接
+          success: true,
           fileId: 0, // 当前处理的文件id
           finish: false, // 是否结束
           total: files.length,
@@ -155,6 +172,92 @@ export class PushController extends BaseController {
       pushFlow(subscriber);
     });
     return observable;
+  }
+
+  @Post(':configId/run/:fileId')
+  @ApiParam({
+    name: 'configId',
+    example: '1',
+    description: '配置id',
+    type: Number,
+    required: true,
+  })
+  @ApiParam({
+    name: 'fileId',
+    example: '1',
+    description: '文件id',
+    type: Number,
+    required: true,
+  })
+  @SerializerClass(PushMapDto)
+  async runSigleToLast(
+    @Param('configId', ParseIntPipe) configId: number,
+    @Param('fileId', ParseIntPipe) fileId: number,
+    @User() owner: RequestUser,
+  ) {
+    const [pushConfig, kbFileIns, lastPushLog, pushMapIns] = await Promise.all([
+      this.service.findByPk(configId),
+      this.kbFileService.findByPk(fileId),
+      this.pushLogService.findLastOne({
+        configId,
+      }),
+      this.pushMapService.findOne({
+        configId,
+        fileId,
+      }),
+    ]);
+
+    this.check_owner(pushConfig, owner.id);
+    this.check_owner(kbFileIns, owner.id);
+    if (!lastPushLog) {
+      throw new Error('unfound last push log');
+    }
+    this.check_owner(lastPushLog, owner.id);
+    pushMapIns && this.check_owner(pushMapIns, owner.id);
+
+    const kbIns = await this.kbService.findByPk(pushConfig.kbId);
+
+    const isExists = !!pushMapIns;
+    const originRemoteId = pushMapIns?.remoteId || '';
+
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
+
+    const absFilePath = this.kbService.safeJoinPath(
+      kbResRoot,
+      kbFileIns.filePath,
+    );
+
+    const remoteId = await this.pushProcessService.pushByFile(
+      absFilePath,
+      pushConfig,
+      originRemoteId,
+    );
+
+    let newPushMapIns: PushMapDto;
+    if (isExists) {
+      newPushMapIns = await this.pushMapService.updateByPk(pushMapIns.id, {
+        pushVersion: lastPushLog.pushVersion,
+        pushChecksum: kbFileIns.checksum,
+        remoteId,
+      });
+    } else {
+      // 新建
+      const newMap = {
+        configId: pushConfig.id,
+        type: pushConfig.type,
+        fileId: fileId,
+        remoteId,
+        pushVersion: lastPushLog.pushVersion,
+        pushChecksum: kbFileIns.checksum,
+      };
+      newPushMapIns = await this.pushMapService.create(
+        newMap,
+        pushConfig.kbId,
+        owner.id,
+      );
+    }
+
+    return newPushMapIns;
   }
 
   /**
@@ -214,7 +317,7 @@ export class PushController extends BaseController {
       this.pushMapService.findAll(pushMapWhere),
     ]);
 
-    const kbResRoot = this.kbService.getKbRoot(kbIns);
+    const kbResRoot = this.kbService.getKbRoot(kbIns.ownerId, kbIns.id);
 
     // 过滤 files 以及 pushMaps
 
@@ -269,12 +372,12 @@ export class PushController extends BaseController {
 
   /**
    * 推送文件以及增、更 pushMap
-   * @param pushVersion
-   * @param absFilePath
-   * @param pushConfig
-   * @param pushMapDict
-   * @param owner
-   * @param kbFileId
+   * @param {string} pushVersion
+   * @param {string} absFilePath
+   * @param {PushConfigDto} pushConfig
+   * @param {{ [fileId: number]: PushMapDto }}pushMapDict
+   * @param {RequestUser} owner
+   * @param {KbFileDto} kbFileIns
    * @returns
    */
   private async _pushFileAndUpsertPushMap(
@@ -283,8 +386,9 @@ export class PushController extends BaseController {
     pushConfig: PushConfigDto,
     pushMapDict: { [fileId: number]: PushMapDto },
     owner: RequestUser,
-    kbFileId: number,
+    kbFileIns: KbFileDto,
   ): Promise<string> {
+    const kbFileId = kbFileIns.id;
     const originRemoteId = pushMapDict[kbFileId]?.remoteId || '';
     const isExists = !!originRemoteId;
 
@@ -301,6 +405,8 @@ export class PushController extends BaseController {
       // 更新
       await this.pushMapService.updateByPk(originMap.id, {
         pushVersion: pushVersion,
+        pushChecksum: kbFileIns.checksum,
+        remoteId,
       });
     } else {
       // 新建
@@ -310,6 +416,7 @@ export class PushController extends BaseController {
         fileId: kbFileId,
         remoteId,
         pushVersion: pushVersion,
+        pushChecksum: kbFileIns.checksum,
       };
       await this.pushMapService.create(newMap, pushConfig.kbId, owner.id);
     }
@@ -318,7 +425,7 @@ export class PushController extends BaseController {
   }
 
   // 清空推送
-  @Post(':configId/clearAll')
+  @Delete(':configId/clearAll')
   @ApiParam({
     name: 'configId',
     example: '1',
@@ -338,6 +445,11 @@ export class PushController extends BaseController {
   ): Promise<ClearPushResDto> {
     const pushConfig = await this.service.findByPk(configId);
     this.check_owner(pushConfig, owner.id);
+
+    // pushOption.pushVersion 必须包含 pushConfig.title 中的文字
+    if (!pushOption.pushVersion.includes(pushConfig.title)) {
+      throw new Error(`pushVersion: must include ${pushConfig.title}`);
+    }
 
     // 清理 maps
     const allMaps = await this.pushMapService.findAll({
@@ -391,5 +503,45 @@ export class PushController extends BaseController {
       deleteRemoteIds,
       deleteFailedRemoteIds,
     };
+  }
+
+  @Delete(':configId/clear/:fileId')
+  @ApiParam({
+    name: 'configId',
+    example: '1',
+    description: '清空推送',
+    type: Number,
+    required: true,
+  })
+  @ApiParam({
+    name: 'fileId',
+    example: '1',
+    description: '文件id',
+    type: Number,
+    required: true,
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @SerializerClass(PushMapDto)
+  async clearSigle(
+    @Param('configId', ParseIntPipe) configId: number,
+    @Param('fileId', ParseIntPipe) fileId: number,
+    @User() owner: RequestUser,
+  ): Promise<PushMapDto> {
+    const [pushConfig, pushMapIns] = await Promise.all([
+      this.service.findByPk(configId),
+      this.pushMapService.findOne({
+        configId,
+        fileId,
+      }),
+    ]);
+
+    this.check_owner(pushConfig, owner.id);
+    this.check_owner(pushMapIns, owner.id);
+
+    await this.pushProcessService.deleteByFile(pushMapIns.remoteId, pushConfig);
+
+    await this.pushMapService.removeByPk(pushMapIns.id);
+
+    return pushMapIns;
   }
 }

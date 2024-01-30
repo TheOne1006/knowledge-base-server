@@ -86,7 +86,11 @@ describe('KbController', () => {
         email: '',
         roles: [],
       };
-      const actual = await controller.ownerlist(1, 1, user);
+      const mockRes = {
+        set: jest.fn(),
+      } as any;
+
+      const actual = await controller.ownerlist(mockRes, user, 'title', 'desc');
       expect(actual.length).toBeGreaterThan(1);
     });
 

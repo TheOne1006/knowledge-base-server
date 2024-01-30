@@ -13,6 +13,7 @@ const defaultAttr = {
   pushVersion: 'init',
   ownerId: 1,
   kbId: 1,
+  pushChecksum: 'sha256',
 };
 
 const mockBaseData = [
@@ -95,7 +96,8 @@ describe('PushMapService', () => {
       const dto: any = {
         ...defaultAttr,
         remoteId: 'idNext',
-        fileId: 2,
+        configId: 2,
+        fileId: 8,
       };
       const kbId = 1;
       const ownerId = 1;
@@ -113,12 +115,27 @@ describe('PushMapService', () => {
       expect(result).toBeDefined();
       expect(result.length).toBeGreaterThan(2);
     });
+
+    it('should return instances with args', async () => {
+      const result = await service.findAll({}, 0, 10, ['id', 'desc']);
+      expect(result).toBeDefined();
+      expect(result.length).toBeGreaterThan(2);
+    });
   });
 
   describe('findByPk', () => {
     it('should return a instances by its primary key', async () => {
       const id = 1;
       const result = await service.findByPk(id);
+      expect(result).toBeDefined();
+      expect(result.id).toEqual(1);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return a instances by its id', async () => {
+      const id = 1;
+      const result = await service.findOne({ id });
       expect(result).toBeDefined();
       expect(result.id).toEqual(1);
     });

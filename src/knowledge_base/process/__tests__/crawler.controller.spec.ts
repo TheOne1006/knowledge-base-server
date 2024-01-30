@@ -28,110 +28,117 @@ describe('CrawlerController', () => {
   let I18nServiceMock: I18nService;
   let crawlerOption: CrawlerDto;
 
+  beforeEach(async () => {
+    KbServiceMock = {
+      findByPk: jest.fn().mockImplementation(() => ({
+        id: 1,
+        title: 'title',
+        ownerId: 1,
+      })),
+      getKbRoot: jest.fn().mockImplementation(() => '/path'),
+      getAllFiles: jest
+        .fn()
+        .mockImplementation(() => ['/path', '/path1', '/path2']),
+    } as any as KbService;
+
+    KbFileServiceMock = {
+      safeJoinPath: jest.fn().mockImplementation(() => '/path'),
+      generateFileHash: jest.fn().mockImplementation(() => 'hash'),
+      findOrCreate: jest.fn().mockImplementation(() => ({
+        id: 1,
+        title: 'title',
+        ownerId: 1,
+      })),
+      findByPk: jest.fn().mockImplementation(() => ({
+        id: 1,
+        sourceUrl: 'http://example.com/demo',
+        ownerId: 1,
+      })),
+    } as any as KbFileService;
+
+    KbSiteServiceMock = {
+      findByPk: jest.fn().mockImplementation(() => ({
+        id: 1,
+        title: 'title',
+        matchPatterns: ['http'],
+        ownerId: 1,
+      })),
+      getKbSiteRoot: jest.fn().mockImplementation(() => '/path/site'),
+      getAllFiles: jest
+        .fn()
+        .mockImplementation(() => ['/path/file1', '/path/file2']),
+      convertPathsToUrls: jest
+        .fn()
+        .mockImplementation(() => [
+          'http://example.com/path/file1',
+          'http://example.com/path/file2',
+        ]),
+      getFullStartUrls: jest
+        .fn()
+        .mockImplementation(() => [
+          'http://example.com/path1',
+          'http://example.com/path2',
+        ]),
+    } as any as KbSiteService;
+
+    CrawlerServiceMock = {
+      crawlLinksAndContent: jest
+        .fn()
+        .mockRejectedValueOnce(new Error('error'))
+        .mockImplementation(() => ({
+          links: ['http://example.com/link1', 'http://example.com/link2'],
+          html: '<html><h1>title</h1></html>',
+        })),
+    } as any as CrawlerService;
+
+    KbResourceServiceMock = {
+      saveContent: jest.fn().mockImplementation(() => true),
+    } as any as KbResourceService;
+
+    I18nServiceMock = {} as any as I18nService;
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [CrawlerController],
+      providers: [
+        {
+          provide: CrawlerService,
+          useValue: CrawlerServiceMock,
+        },
+        {
+          provide: KbResourceService,
+          useValue: KbResourceServiceMock,
+        },
+        {
+          provide: KbFileService,
+          useValue: KbFileServiceMock,
+        },
+        {
+          provide: I18nService,
+          useValue: I18nServiceMock,
+        },
+        {
+          provide: KbService,
+          useValue: KbServiceMock,
+        },
+        {
+          provide: KbSiteService,
+          useValue: KbSiteServiceMock,
+        },
+        {
+          provide: WINSTON_MODULE_PROVIDER,
+          useValue: mockLogger,
+        },
+      ],
+    }).compile();
+
+    controller = module.get<CrawlerController>(CrawlerController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
   describe('crawler success', () => {
-    beforeEach(async () => {
-      KbServiceMock = {
-        findByPk: jest.fn().mockImplementation(() => ({
-          id: 1,
-          title: 'title',
-          ownerId: 1,
-        })),
-        getKbRoot: jest.fn().mockImplementation(() => '/path'),
-        getAllFiles: jest
-          .fn()
-          .mockImplementation(() => ['/path', '/path1', '/path2']),
-      } as any as KbService;
-
-      KbFileServiceMock = {
-        findOrCreate: jest.fn().mockImplementation(() => ({
-          id: 1,
-          title: 'title',
-          ownerId: 1,
-        })),
-      } as any as KbFileService;
-
-      KbSiteServiceMock = {
-        findByPk: jest.fn().mockImplementation(() => ({
-          id: 1,
-          title: 'title',
-          pattern: 'http',
-          ownerId: 1,
-        })),
-        getKbSiteRoot: jest.fn().mockImplementation(() => '/path/site'),
-        getAllFiles: jest
-          .fn()
-          .mockImplementation(() => ['/path/file1', '/path/file2']),
-        convertPathsToUrls: jest
-          .fn()
-          .mockImplementation(() => [
-            'http://example.com/path/file1',
-            'http://example.com/path/file2',
-          ]),
-        getFullStartUrls: jest
-          .fn()
-          .mockImplementation(() => [
-            'http://example.com/path1',
-            'http://example.com/path2',
-          ]),
-      } as any as KbSiteService;
-
-      CrawlerServiceMock = {
-        crawlLinksAndHtml: jest
-          .fn()
-          .mockRejectedValueOnce(new Error('error'))
-          .mockImplementation(() => ({
-            links: ['http://example.com/link1', 'http://example.com/link2'],
-            html: '<html><h1>title</h1></html>',
-          })),
-      } as any as CrawlerService;
-
-      KbResourceServiceMock = {
-        saveHtml: jest.fn().mockImplementation(() => true),
-      } as any as KbResourceService;
-
-      I18nServiceMock = {} as any as I18nService;
-
-      const module: TestingModule = await Test.createTestingModule({
-        controllers: [CrawlerController],
-        providers: [
-          {
-            provide: CrawlerService,
-            useValue: CrawlerServiceMock,
-          },
-          {
-            provide: KbResourceService,
-            useValue: KbResourceServiceMock,
-          },
-          {
-            provide: KbFileService,
-            useValue: KbFileServiceMock,
-          },
-          {
-            provide: I18nService,
-            useValue: I18nServiceMock,
-          },
-          {
-            provide: KbService,
-            useValue: KbServiceMock,
-          },
-          {
-            provide: KbSiteService,
-            useValue: KbSiteServiceMock,
-          },
-          {
-            provide: WINSTON_MODULE_PROVIDER,
-            useValue: mockLogger,
-          },
-        ],
-      }).compile();
-
-      controller = module.get<CrawlerController>(CrawlerController);
-    });
-
-    it('should be defined', () => {
-      expect(controller).toBeDefined();
-    });
-
     crawlerOption = {
       maxConnections: 10,
       concurrency: 1,
@@ -236,11 +243,60 @@ describe('CrawlerController', () => {
         },
       ];
 
+      // console.log('actual>>>');
+      // console.log(actual);
+
       // 如何监测 obser 的 complete
       expect(actual.length).toBe(7);
       expect(actual).toEqual(expected);
     });
 
     // Add more tests here for different scenarios and edge cases
+  });
+
+  describe('updateSigleWePage', () => {
+    it('should throw error when update single web page', async () => {
+      CrawlerServiceMock.crawlLinksAndContent = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('error'));
+
+      const actual = await controller.updateSigleWePage(1, 1, 1, {
+        id: 1,
+      } as any);
+
+      expect(actual).toEqual({
+        url: 'http://example.com/demo',
+        completed: false,
+        retry: 0,
+        finish: true,
+        total: 1,
+        index: 1,
+      });
+    });
+
+    it('should update single web page success', async () => {
+      CrawlerServiceMock.crawlLinksAndContent = jest
+        .fn()
+        .mockImplementation(() => ({
+          links: ['http://example.com/link1', 'http://example.com/link2'],
+          html: '<html><h1>title</h1></html>',
+        }));
+
+      KbFileServiceMock.updateByPk = jest.fn().mockResolvedValue({});
+
+      const actual = await controller.updateSigleWePage(1, 1, 1, {
+        id: 1,
+      } as any);
+
+      expect(KbFileServiceMock.updateByPk).toHaveBeenCalledTimes(1);
+      expect(actual).toEqual({
+        url: 'http://example.com/demo',
+        completed: true,
+        retry: 0,
+        finish: true,
+        total: 1,
+        index: 1,
+      });
+    });
   });
 });

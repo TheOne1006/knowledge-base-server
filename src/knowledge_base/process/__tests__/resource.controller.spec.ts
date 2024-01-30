@@ -49,10 +49,13 @@ describe('KbResourceController', () => {
           ownerId: 1,
         },
       ]),
+
       batchDeleteByIds: jest.fn().mockImplementation(() => true),
     } as any as KbFileService;
 
     KbServiceMock = {
+      uploadDirName: 'tmp',
+      checkPathExist: jest.fn().mockImplementation(() => true),
       getUploadFiles: jest.fn().mockImplementation(() => []),
       getKbUploadRoot: jest.fn().mockImplementation(() => '/tmp'),
       findByPk: jest.fn().mockImplementation(() => ({
@@ -121,9 +124,341 @@ describe('KbResourceController', () => {
         email: 'test@example.com',
         roles: [],
       };
-      const result = await controller.uploadFiles(1, mockFiles, mockUser);
-      const expected = mockFiles.map((file) => file.originalname);
-      expect(result).toEqual(expected);
+
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation((_res, originalname) => `/tmp/${originalname}`);
+
+      KbFileServiceMock.findOrCreate = jest
+        .fn()
+        .mockImplementation((_, filePath) => ({
+          filePath,
+        }));
+
+      const actual = await controller.uploadFiles(1, mockFiles, mockUser);
+      const expected = mockFiles.map((file) => ({
+        filePath: `/${KbServiceMock.uploadDirName}/${file.originalname}`,
+      }));
+      expect(actual).toEqual(expected);
+    });
+  });
+
+  describe('removeDiskFiles', () => {
+    it('should remove disk files successfully', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const mockPayload = {
+        filePaths: ['file1.txt', 'file2.txt'],
+      };
+
+      const expected = [
+        {
+          id: 1,
+          filePath: 'file1.txt',
+          fileExt: 'txt',
+        },
+        {
+          id: 2,
+          filePath: 'file2.txt',
+          fileExt: 'txt',
+        },
+      ];
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation((kbRoot, filePath) => `${kbRoot}/${filePath}`);
+
+      KbFileServiceMock.removeFile = jest.fn().mockResolvedValue(true);
+
+      KbFileServiceMock.findOne = jest
+        .fn()
+        .mockImplementation(({ kbId, filePath }) => ({
+          id: kbId,
+          filePath,
+          fileExt: 'txt',
+        }));
+
+      KbFileServiceMock.removeByPk = jest
+        .fn()
+        .mockResolvedValueOnce(expected[0])
+        .mockResolvedValueOnce(expected[1]);
+
+      const actual = await controller.removeDiskFiles(
+        kbId,
+        mockUser,
+        mockPayload,
+      );
+
+      expect(KbServiceMock.findByPk).toHaveBeenCalledWith(kbId);
+      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith(1, 1);
+      expect(actual).toEqual(expected);
+    });
+
+    it('should remove disk files skip file2.txt', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const mockPayload = {
+        filePaths: ['file1.txt', 'file2.txt'],
+      };
+
+      const expected = [
+        {
+          id: 1,
+          filePath: 'file1.txt',
+          fileExt: 'txt',
+        },
+      ];
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation((kbRoot, filePath) => `${kbRoot}/${filePath}`);
+
+      KbServiceMock.checkPathExist = jest
+        .fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+      KbFileServiceMock.removeFile = jest.fn().mockResolvedValue(true);
+
+      KbFileServiceMock.findOne = jest
+        .fn()
+        .mockImplementationOnce(({ kbId, filePath }) => ({
+          id: kbId,
+          filePath,
+          fileExt: 'txt',
+        }))
+        .mockImplementationOnce(() => undefined);
+
+      KbFileServiceMock.removeByPk = jest
+        .fn()
+        .mockResolvedValueOnce(expected[0]);
+
+      const actual = await controller.removeDiskFiles(
+        kbId,
+        mockUser,
+        mockPayload,
+      );
+
+      expect(KbServiceMock.findByPk).toHaveBeenCalledWith(kbId);
+      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith(1, 1);
+      expect(actual).toEqual(expected);
+    });
+
+    it('should remove disk files with dirs', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const mockPayload = {
+        filePaths: ['file1.txt', 'file2.txt', '/tmp/tmp1', '/tmp/tmpnofound'],
+      };
+
+      const expected = [
+        {
+          id: 1,
+          filePath: 'file1.txt',
+          fileExt: 'txt',
+        },
+        {
+          id: 3,
+          filePath: '/tmp/tmp1/file1.txt',
+          fileExt: 'txt',
+        },
+      ];
+
+      KbServiceMock.safeJoinPath = jest
+        .fn()
+        .mockImplementation((kbRoot: string, filePath: string) => {
+          if (filePath.startsWith('/')) {
+            return `${kbRoot}${filePath}`;
+          }
+          return `${kbRoot}/${filePath}`;
+        });
+      KbServiceMock.removeDir = jest.fn();
+
+      KbServiceMock.getAllFiles = jest
+        .fn()
+        .mockReturnValueOnce([
+          {
+            path: '/tmp/tmp1/file1.txt',
+          },
+        ])
+        .mockReturnValueOnce([]);
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation((kbRoot, filePath) => `${kbRoot}/${filePath}`);
+
+      KbServiceMock.checkPathExist = jest
+        .fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+      KbFileServiceMock.removeFile = jest.fn().mockResolvedValue(true);
+
+      KbFileServiceMock.findOne = jest
+        .fn()
+        .mockImplementationOnce(({ kbId, filePath }) => ({
+          id: kbId,
+          filePath,
+          fileExt: 'txt',
+        }))
+        .mockImplementationOnce(({ kbId, filePath }) => ({
+          id: kbId,
+          filePath,
+          fileExt: 'txt',
+        }));
+
+      KbFileServiceMock.removeByPk = jest
+        .fn()
+        .mockResolvedValueOnce(expected[0])
+        .mockResolvedValueOnce(expected[1]);
+
+      const actual = await controller.removeDiskFiles(
+        kbId,
+        mockUser,
+        mockPayload,
+      );
+
+      expect(KbServiceMock.removeDir).toHaveBeenCalledTimes(2);
+      expect(KbServiceMock.removeDir).toHaveBeenNthCalledWith(
+        1,
+        '/kbRoot/tmp/tmp1',
+      );
+      expect(KbServiceMock.removeDir).toHaveBeenNthCalledWith(
+        2,
+        '/kbRoot/tmp/tmpnofound',
+      );
+      expect(actual).toEqual(expected);
+    });
+  });
+
+  describe('diskFiles', () => {
+    it('should return files successfully', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const subDir = 'subDir';
+      const isRecursion = true;
+
+      KbServiceMock.findByPk = jest.fn().mockResolvedValue({
+        id: kbId,
+        title: 'title',
+        ownerId: mockUser.id,
+      });
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbResourceServiceMock.checkDir = jest.fn().mockResolvedValue(true);
+
+      KbServiceMock.getAllFiles = jest
+        .fn()
+        .mockResolvedValue([{ path: '/path1.txt' }, { path: '/path2.txt' }]);
+
+      const result = await controller.diskFiles(
+        kbId,
+        mockUser,
+        subDir,
+        isRecursion,
+      );
+
+      expect(KbServiceMock.findByPk).toHaveBeenCalledWith(kbId);
+      expect(KbServiceMock.getKbRoot).toHaveBeenCalledWith(1, 1);
+      expect(KbResourceServiceMock.checkDir).toHaveBeenCalledWith('/kbRoot');
+      expect(KbServiceMock.getAllFiles).toHaveBeenCalledWith(
+        {
+          id: kbId,
+          title: 'title',
+          ownerId: mockUser.id,
+        },
+        subDir,
+        isRecursion,
+        '/kbRoot',
+      );
+      expect(result).toEqual([{ path: '/path1.txt' }, { path: '/path2.txt' }]);
+    });
+  });
+
+  describe('privewFile', () => {
+    it('should throw an error if the file does not exist', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const filePath = 'nonexistent.txt';
+
+      KbServiceMock.findByPk = jest.fn().mockResolvedValue({
+        id: kbId,
+        title: 'title',
+        ownerId: mockUser.id,
+      });
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbServiceMock.checkPathExist = jest.fn().mockResolvedValue(false);
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockResolvedValue('/kbRoot/nonexistent.txt');
+
+      await expect(
+        controller.privewFile(kbId, mockUser, {} as any, filePath),
+      ).rejects.toThrow('not exist file');
+    });
+
+    it('should send the file if it exists', async () => {
+      const mockUser = {
+        id: 1,
+        username: 'test',
+        email: 'test@example.com',
+        roles: [],
+      };
+      const kbId = 1;
+      const filePath = 'existent.txt';
+
+      KbServiceMock.findByPk = jest.fn().mockResolvedValue({
+        id: kbId,
+        title: 'title',
+        ownerId: mockUser.id,
+      });
+
+      KbServiceMock.getKbRoot = jest.fn().mockReturnValue('/kbRoot');
+
+      KbServiceMock.checkPathExist = jest.fn().mockResolvedValue(true);
+      KbFileServiceMock.getFilePath = jest
+        .fn()
+        .mockImplementation(() => '/kbRoot/existent.txt');
+
+      const res = {
+        sendFile: jest.fn(),
+      };
+
+      await controller.privewFile(kbId, mockUser, res as any, filePath);
+
+      expect(res.sendFile).toHaveBeenCalledWith('/kbRoot/existent.txt');
     });
   });
 

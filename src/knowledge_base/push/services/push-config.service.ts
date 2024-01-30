@@ -1,5 +1,5 @@
 import { omit, map } from 'lodash';
-import { Transaction, WhereOptions } from 'sequelize';
+import { WhereOptions, OrderItem } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -44,9 +44,7 @@ class PushConfigDBService extends BaseService<
       ownerId,
     });
 
-    const options = await this.genOptions();
-    const instance = await data.save(options);
-    await this.autoCommit(options);
+    const instance = await data.save();
 
     return instance;
   }
@@ -62,11 +60,13 @@ class PushConfigDBService extends BaseService<
     where?: WhereOptions,
     offset?: number,
     limit?: number,
+    order?: OrderItem,
   ): Promise<PushConfigDto[]> {
     return this.mainModel.findAll({
       where,
       offset: Math.max(0, offset) || undefined,
       limit: Math.max(0, limit) || undefined,
+      order: order && [order],
     });
   }
 
@@ -83,13 +83,11 @@ class PushConfigDBService extends BaseService<
    * 根据pk, 更新 pyload
    * @param {number} pk
    * @param {UpdatePushConfigDto} pyload
-   * @param {Transaction} transaction
    * @returns {Promise<PushConfigDto>}
    */
   async updateByPk(
     pk: number,
     pyload: UpdatePushConfigDto,
-    transaction?: Transaction,
   ): Promise<PushConfigDto> {
     const instance = await this.mainModel.findByPk(pk);
 
@@ -106,9 +104,7 @@ class PushConfigDBService extends BaseService<
       }
     });
 
-    const options = await this.genOptions(transaction);
-    await instance.save(options);
-    await this.autoCommit(options, transaction);
+    await instance.save();
 
     return instance;
   }
@@ -117,18 +113,11 @@ class PushConfigDBService extends BaseService<
    *
    * 根据id, 删除
    * @param {number} id
-   * @param {Transaction} transaction
    * @returns {Promise<PushConfigDto>}
    */
-  async removeByPk(
-    id: number,
-    transaction?: Transaction,
-  ): Promise<PushConfigDto> {
+  async removeByPk(id: number): Promise<PushConfigDto> {
     const data = await this.mainModel.findByPk(id);
-
-    const options = await this.genOptions(transaction);
-    await data.destroy(options);
-    await this.autoCommit(options, transaction);
+    await data.destroy();
     return data;
   }
 }
