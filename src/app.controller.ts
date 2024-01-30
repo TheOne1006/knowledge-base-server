@@ -56,4 +56,23 @@ export class AppController {
 
     return observable;
   }
+
+  @SetMetadata(METHOD_METADATA, RequestMethod.POST)
+  @Sse('/steam')
+  getSteamWithDisConnect(@Body() _something): Observable<MessageEvent> {
+    console.log(_something);
+    const observable = new Observable<MessageEvent>(function (observer) {
+      observer.next({ data: { hello: 'hello', finish: false } });
+      observer.next({ data: { hello: 'hello2', finish: false } });
+      observer.next({ data: { hello: 'hello3', finish: false } });
+
+      setTimeout(() => {
+        observer.next({ data: { hello: 'hello finish', finish: true } });
+        observer.complete();
+        // 结束流程
+      }, 600);
+    });
+
+    return observable;
+  }
 }

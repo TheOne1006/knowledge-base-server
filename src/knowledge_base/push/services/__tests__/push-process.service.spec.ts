@@ -18,6 +18,7 @@ describe('PushProcessService', () => {
       updateByFile: jest.fn().mockResolvedValue({
         id: 'remoteId',
       }),
+      checkConfig: jest.fn().mockResolvedValue(true),
       deleteByFile: jest.fn().mockResolvedValue('success'),
       queryAllDocuments: jest
         .fn()
@@ -54,7 +55,7 @@ describe('PushProcessService', () => {
         apiKey: 'apiKey',
       } as PushConfigDto;
 
-      expect(() => (service as any).checkConfig(configIns)).toThrow(
+      expect(() => service['checkConfig'](configIns)).toThrow(
         'type is not allow',
       );
     });
@@ -101,6 +102,7 @@ describe('PushProcessService', () => {
         apiUrl: 'apiUrl',
         type: PUSH_TYPE_DIFY,
         apiKey: 'apiKey',
+        additional: {},
       } as any;
       const remoteId = 'remoteId';
 
@@ -112,6 +114,7 @@ describe('PushProcessService', () => {
         remoteId,
         filePath,
         configIns.apiKey,
+        {},
       );
     });
 
@@ -130,6 +133,7 @@ describe('PushProcessService', () => {
         configIns.apiUrl,
         filePath,
         configIns.apiKey,
+        undefined,
       );
     });
 
@@ -139,6 +143,7 @@ describe('PushProcessService', () => {
         apiUrl: 'apiUrl',
         type: 'other',
         apiKey: 'apiKey',
+        additional: {},
       } as PushConfigDto;
       const remoteId = 'remoteId';
 
@@ -155,6 +160,7 @@ describe('PushProcessService', () => {
         apiUrl: 'apiUrl',
         type: PUSH_TYPE_DIFY,
         apiKey: 'apiKey',
+        additional: {},
       } as PushConfigDto;
 
       await (service as any).createByFile(filePath, configIns);
@@ -163,6 +169,7 @@ describe('PushProcessService', () => {
         configIns.apiUrl,
         filePath,
         configIns.apiKey,
+        {},
       );
     });
   });
@@ -174,6 +181,7 @@ describe('PushProcessService', () => {
         apiUrl: 'apiUrl',
         type: PUSH_TYPE_DIFY,
         apiKey: 'apiKey',
+        additional: {},
       } as PushConfigDto;
       const remoteId = 'remoteId';
 
@@ -184,6 +192,7 @@ describe('PushProcessService', () => {
         remoteId,
         filePath,
         configIns.apiKey,
+        {},
       );
     });
   });

@@ -1,3 +1,4 @@
+// istanbul ignore file
 /** 代码块语言 */
 export enum CodeLanguage {
   PlainText = 1,

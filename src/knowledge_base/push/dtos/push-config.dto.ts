@@ -20,6 +20,8 @@ export class PushConfigDto {
 
   kbId: number;
 
+  additional: Record<string, any> = {};
+
   updatedAt: Date;
 
   createdAt: Date;

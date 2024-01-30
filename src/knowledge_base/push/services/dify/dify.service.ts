@@ -7,6 +7,7 @@ import { AxiosError } from 'axios';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { DifyDocumentDto, DifyDocumentPageDto } from './dify-document.dto';
+import { PushConfigDto } from '../../dtos';
 
 @Injectable()
 export class PushDifyService {
@@ -19,24 +20,70 @@ export class PushDifyService {
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
   ) {}
 
+  /**
+   * 校验 config 数据
+   * @param {PushConfigDto} configIns
+   */
+  checkConfig(configIns: PushConfigDto) {
+    // 校验额外规则
+    if (configIns.additional?.proccess_rules) {
+      const proccess_rules = configIns.additional.proccess_rules;
+      // 判断 为字典类型configIns.additional?.proccess_rules
+      if (
+        typeof proccess_rules === 'object' &&
+        !(proccess_rules instanceof Array) &&
+        !(proccess_rules instanceof Date)
+      ) {
+        // is true
+      } else {
+        throw new Error('additional.proccess_rules is not allow');
+      }
+    }
+  }
+
+  getProccessRules(data: PushConfigDto['additional']) {
+    if (data?.proccess_rules) {
+      return data.proccess_rules;
+    }
+    return {};
+  }
+
+  /**
+   * 创建或更新文档
+   * @param {string} url
+   * @param {string} filePath
+   * @param {string} apiKey
+   * @param {any} process_rule
+   * @returns {Promise<DifyDocumentDto>}
+   */
   private async createOrUpdateByFile(
     url: string,
     filePath: string,
     apiKey: string,
+    process_rule: { [key: string]: any } = {},
   ): Promise<DifyDocumentDto> {
     // filePath 重命名 移除掉 / 使用
     const inputData = {
-      name: filePath,
-      indexing_technique: 'high_quality',
       process_rule: {
         mode: 'automatic',
+        ...process_rule,
       },
+      name: filePath,
+      indexing_technique: 'high_quality',
     };
 
     // 校验 filePath
     if (!fs.existsSync(filePath)) {
       throw Error(`file not exists: ${filePath}`);
     }
+
+    this.logger.info(
+      `createOrUpdateByFile: ${url}, with ${JSON.stringify(
+        inputData,
+        null,
+        2,
+      )}`,
+    );
 
     // 根据 filePath 获取文件，然后发送 给 url
     const formData = new FormData();
@@ -75,15 +122,18 @@ export class PushDifyService {
    * @param {string} apiUrl
    * @param {string} filePath
    * @param {string} apiKey
+   * @param {any} additional
    * @returns
    */
   async createByFile(
     apiUrl: string,
     filePath: string,
     apiKey: string,
+    additional: { [key: string]: any },
   ): Promise<DifyDocumentDto> {
     const url = `${apiUrl}/document/create_by_file`;
-    return this.createOrUpdateByFile(url, filePath, apiKey);
+    const process_rule = this.getProccessRules(additional);
+    return this.createOrUpdateByFile(url, filePath, apiKey, process_rule);
   }
 
   /**
@@ -131,9 +181,11 @@ export class PushDifyService {
     documentId: string,
     filePath: string,
     apiKey: string,
+    additional: { [key: string]: any },
   ): Promise<DifyDocumentDto> {
     const url = `${apiUrl}/documents/${documentId}/update_by_file`;
-    return this.createOrUpdateByFile(url, filePath, apiKey);
+    const process_rule = this.getProccessRules(additional);
+    return this.createOrUpdateByFile(url, filePath, apiKey, process_rule);
   }
 
   /**

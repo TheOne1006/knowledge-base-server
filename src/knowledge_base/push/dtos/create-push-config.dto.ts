@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUrl, Length } from 'class-validator';
+import { IsString, IsNotEmpty, IsUrl, Length, IsObject } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { PUSH_TYPE_DIFY } from '../constants';
 
@@ -66,4 +66,11 @@ export class CreatePushConfigDto {
     description: '知识库id',
   })
   kbId?: number;
+
+  @ApiProperty({
+    example: { extend_config: { foo: 1 } },
+    description: '接口额外的配置项',
+  })
+  @IsObject()
+  additional: Record<string, any> = {};
 }

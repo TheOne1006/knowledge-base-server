@@ -1,3 +1,4 @@
+// istanbul ignore file
 import { Client } from '@larksuiteoapi/node-sdk';
 
 type PromiseType<T extends Promise<any>> = T extends Promise<infer U>

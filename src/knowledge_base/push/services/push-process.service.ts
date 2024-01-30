@@ -15,10 +15,12 @@ export class PushProcessService {
    * @param configIns
    */
   private checkConfig(configIns: PushConfigDto) {
+    if (!configIns.apiUrl || !configIns.apiKey) {
+      throw new Error('apiUrl or apiKey is not allow empty');
+    }
+
     if (configIns.type === PUSH_TYPE_DIFY) {
-      if (!configIns.apiUrl || !configIns.apiKey) {
-        throw new Error('apiUrl or apiKey is not allow empty');
-      }
+      this.pushDifyService.checkConfig(configIns);
     } else {
       throw new Error('type is not allow');
     }
@@ -60,6 +62,7 @@ export class PushProcessService {
         configIns.apiUrl,
         filePath,
         configIns.apiKey,
+        configIns.additional,
       );
       return doc.id;
     }
@@ -83,6 +86,7 @@ export class PushProcessService {
         remoteId,
         filePath,
         configIns.apiKey,
+        configIns.additional,
       );
       return doc.id;
     }

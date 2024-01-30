@@ -16,4 +16,6 @@
   - crawlee
   - https://pwnbqysk33g.feishu.cn/docx/JoV5dnUaMoCmPjx8K9xc76zSnXd
     - 执行滚动
-
+[] 独立 larkService
+  - 解决图片 和 地域访问的问题
+  - 批量删除，校验 配置名称

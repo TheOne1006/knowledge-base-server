@@ -1,3 +1,4 @@
+// istanbul ignore file
 /**
  * 文档块类型
  * https://open.feishu.cn/document/ukTMukTMukTM/uUDN04SN0QjL1QDN/document-docx/docx-v1/data-structure/block#4a6e200e

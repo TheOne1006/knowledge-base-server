@@ -446,6 +446,11 @@ export class PushController extends BaseController {
     const pushConfig = await this.service.findByPk(configId);
     this.check_owner(pushConfig, owner.id);
 
+    // pushOption.pushVersion 必须包含 pushConfig.title 中的文字
+    if (!pushOption.pushVersion.includes(pushConfig.title)) {
+      throw new Error(`pushVersion: must include ${pushConfig.title}`);
+    }
+
     // 清理 maps
     const allMaps = await this.pushMapService.findAll({
       configId,
