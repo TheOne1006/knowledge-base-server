@@ -10,14 +10,14 @@ COPY --chown=myuser package*.json ./
 # Install all dependencies. 跳过 安全审计 速度更快
 RUN npm install --include=dev --audit=false
 # 重新下载 Chromium 版本
-RUN npx playwright install
+RUN npx playwright install chromium
 # Next, copy the source files using the user set
 # in the base image.
 COPY --chown=myuser . ./
 
 RUN npm run migrate:up -- --env test
 # Run the test. Check crawler server is work
-RUN npm run test:f knowledge_base/process/__tests__/crawler.service.spec.ts
+RUN npm run test:f knowledge_base/process/playwright/__tests__/playwright.service.spec.ts
 
 # Install all dependencies and build the project.
 # Don't audit to speed up the installation.
@@ -38,8 +38,7 @@ COPY --chown=myuser package*.json ./
 # Install NPM packages, skip optional and development dependencies to
 # keep the image small. Avoid logging too much and print the dependency
 # tree for debugging
-RUN npm --quiet set progress=true \
-  && npm install --omit=dev --omit=optional \
+RUN npm install --omit=dev --omit=optional \
   && echo "Installed NPM packages:" \
   && (npm list --omit=dev --all || true) \
   && echo "Node.js version:" \

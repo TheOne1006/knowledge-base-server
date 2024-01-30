@@ -127,7 +127,6 @@ export class KbResourceController extends BaseController {
     await this.kbResService.checkDir(kbUploadResRoot);
 
     const targetFiles: KbFileDto[] = [];
-    await this.kbResService.checkDir(kbUploadResRoot);
     // save to disk
     for (const file of files) {
       const targetPath = this.kbFileService.getFilePath(
