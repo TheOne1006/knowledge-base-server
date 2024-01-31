@@ -129,7 +129,7 @@ describe('KbResourceController', () => {
         .fn()
         .mockImplementation((_res, originalname) => `/tmp/${originalname}`);
 
-      KbFileServiceMock.findOrCreate = jest
+      KbFileServiceMock.findOrUpdate = jest
         .fn()
         .mockImplementation((_, filePath) => ({
           filePath,

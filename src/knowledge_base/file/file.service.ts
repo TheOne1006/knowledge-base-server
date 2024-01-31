@@ -221,7 +221,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
   }
 
   /**
-   * 查找或者创建
+   * 查找或者更新
    * @param {Partial<KbFileDto>} pyload
    * @param {string} queryFilePath
    * @param {number} kbId
@@ -229,7 +229,7 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
    * @param {number} siteId
    * @returns {Promise<KbFileDto>}
    */
-  async findOrCreate(
+  async findOrUpdate(
     pyload: Partial<KbFileDto>,
     queryFilePath: string,
     kbId: number,
@@ -248,12 +248,12 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
       where.siteId = siteId;
     }
 
-    let instance = await this.mainModel.findOne({
+    const instance = await this.mainModel.findOne({
       where,
     });
 
     if (!instance) {
-      instance = (await this.create(
+      return this.create(
         {
           ...pyload,
           ...where,
@@ -261,10 +261,10 @@ class KbFileDBService extends BaseService<typeof KnowledgeBaseFile, KbFileDto> {
         },
         kbId,
         ownerId,
-      )) as KnowledgeBaseFile;
+      );
     }
 
-    return instance;
+    return this.updateByPk(instance.id, {});
   }
 }
 

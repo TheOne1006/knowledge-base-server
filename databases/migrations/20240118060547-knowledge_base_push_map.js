@@ -35,7 +35,7 @@ module.exports = {
           comment: '文件id',
         },
         push_checksum: {
-          type: STRING(50),
+          type: STRING(100),
           allowNull: false,
           comment: '推送文件的唯一性',
         },

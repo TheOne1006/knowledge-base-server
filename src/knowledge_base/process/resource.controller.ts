@@ -112,7 +112,7 @@ export class KbResourceController extends BaseController {
           // pdf html 图片 word JSON jsonl text md 等格式
           // md mimetype: 'application/octet-stream',
           new FileTypeValidator({
-            fileType: /(octet-stream|pdf|html|doc|docx|json|jsonl|txt)$/,
+            fileType: /(octet-stream|pdf|html|doc|docx|json|jsonl|txt|md)$/,
           }),
         ],
       }),
@@ -142,7 +142,7 @@ export class KbResourceController extends BaseController {
       };
 
       // 如果存在则跳过
-      const uploadItem = await this.kbFileService.findOrCreate(
+      const uploadItem = await this.kbFileService.findOrUpdate(
         kbFileIns,
         kbFileIns.filePath,
         kbIns.id,

@@ -190,6 +190,11 @@ export class PushMapController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'pushChecksum',
+    description: 'pushChecksum',
+    required: false,
+  })
+  @ApiQuery({
     name: 'id',
     description: 'id',
     required: false,
@@ -243,6 +248,7 @@ export class PushMapController extends BaseController {
     @Query('remoteId') remoteId?: string,
     @Query('type') type?: string,
     @Query('pushVersion') pushVersion?: string,
+    @Query('pushChecksum') pushChecksum?: string,
     @Query('id', new ParseIntPipe({ optional: true }))
     id?: number,
     @Query('ids', new ParseArrayPipe({ optional: true }))
@@ -264,7 +270,7 @@ export class PushMapController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId, configId, fileId, type, id };
+    const exactSearch = { kbId, configId, fileId, type, id, pushChecksum };
     const fuzzyMatch = {
       remoteId,
       pushVersion,

@@ -44,7 +44,7 @@ describe('CrawlerController', () => {
     KbFileServiceMock = {
       safeJoinPath: jest.fn().mockImplementation(() => '/path'),
       generateFileHash: jest.fn().mockImplementation(() => 'hash'),
-      findOrCreate: jest.fn().mockImplementation(() => ({
+      findOrUpdate: jest.fn().mockImplementation(() => ({
         id: 1,
         title: 'title',
         ownerId: 1,
@@ -192,7 +192,7 @@ describe('CrawlerController', () => {
           retry: 0,
           finish: false,
           total: 2,
-          index: 0,
+          index: 1,
         },
         {
           url: 'http://example.com/path2',
@@ -200,7 +200,7 @@ describe('CrawlerController', () => {
           retry: 0,
           finish: false,
           total: 4,
-          index: 1,
+          index: 2,
         },
         {
           url: 'http://example.com/link1',
@@ -208,7 +208,7 @@ describe('CrawlerController', () => {
           retry: 0,
           finish: false,
           total: 4,
-          index: 2,
+          index: 3,
         },
         {
           url: 'http://example.com/link2',
@@ -216,7 +216,7 @@ describe('CrawlerController', () => {
           retry: 0,
           finish: false,
           total: 4,
-          index: 3,
+          index: 4,
         },
         {
           url: 'http://example.com/path1',
@@ -224,7 +224,7 @@ describe('CrawlerController', () => {
           retry: 0,
           finish: false,
           total: 4,
-          index: 0,
+          index: 1,
         },
         {
           url: '',

@@ -193,7 +193,7 @@ export class CrawlerController extends BaseController {
             );
 
             // 入库
-            await this.kbFileService.findOrCreate(
+            await this.kbFileService.findOrUpdate(
               {
                 fileExt: kbSiteIns.fileSuffix,
                 sourceType: FILE_SOURCE_TYPE_CRAWLER,
@@ -207,6 +207,7 @@ export class CrawlerController extends BaseController {
             // save html to page
             urlManager.clearRetryUrl(url);
           } catch (error) {
+            logger.error(error);
             logger.warn(`error at ${url}, errMsg: ${error.message}`);
             completed = false;
             retry = urlManager.getUrlRetryUrlTimes(url);
@@ -216,7 +217,9 @@ export class CrawlerController extends BaseController {
           const total = urlManager.getTotal();
 
           logger.info(
-            `crawler finish at ${url}, completed: ${completed}, ${curIndex} / ${total}`,
+            `crawler finish at ${url}, completed: ${completed}, ${
+              curIndex + 1
+            } / ${total}`,
           );
 
           subscriber.next({
@@ -226,7 +229,7 @@ export class CrawlerController extends BaseController {
               retry, // 重试次数
               finish: false, // 是否结束
               total: total,
-              index: curIndex,
+              index: curIndex + 1,
             },
           });
         });
