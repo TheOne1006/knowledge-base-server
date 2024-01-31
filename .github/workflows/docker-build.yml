@@ -27,4 +27,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: thone1006/knowledge-base-server:${{ steps.get_version.outputs.VERSION }}
+        tags:
+          - thone1006/knowledge-base-server:latest
+          - thone1006/knowledge-base-server:${{ steps.extract_tag.outputs.VERSION }}
+
