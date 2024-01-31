@@ -25,7 +25,7 @@ module.exports = {
           comment: '文件扩展名',
         },
         checksum: {
-          type: STRING(50),
+          type: STRING(100),
           allowNull: false,
           comment: '推送文件的唯一性',
         },
