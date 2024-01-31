@@ -20,11 +20,11 @@ jobs:
 
     - name: Extract tag name
       id: extract_tag
-      run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
+      run: echo ::set-output name=VERSION::$(git describe --tags --abbrev=0)
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       with:
         context: .
         push: true
-        tags: thone1006/knowledge-base-manager:${{ steps.extract_tag.outputs.tag }}
+        tags: thone1006/knowledge-base-server:${{ steps.get_version.outputs.VERSION }}
