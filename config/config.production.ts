@@ -8,13 +8,14 @@ export const config = {
   sequelize: {
     username: process.env.PG_USERNAME,
     password: process.env.PG_PASSWORD,
+    database: process.env.PG_DATABASE,
     host: process.env.PG_HOST,
     port: process.env.PG_PORT,
     dialect: 'postgres' as Dialect,
     logging: false,
   },
   logger: {
-    appName: 'example',
+    appName: 'kb-server',
     level: 'info',
     timestamp: true,
     // filename: 'log/all.log',
