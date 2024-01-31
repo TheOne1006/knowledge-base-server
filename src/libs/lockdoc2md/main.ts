@@ -94,7 +94,12 @@ export class LarkDocs2Md {
 
   async wiki2md(wikiToken: string): Promise<string> {
     const blocks = await this.wikiInfoDocxBlocks(wikiToken);
-    return await this.generateMarkdown.buildFromDocs(blocks);
+    try {
+      return await this.generateMarkdown.buildFromDocs(blocks);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 
   async link2md(link: string): Promise<string> {

@@ -169,6 +169,11 @@ export class KbFileController extends BaseController {
     required: false,
   })
   @ApiQuery({
+    name: 'checksum',
+    description: 'checksum',
+    required: false,
+  })
+  @ApiQuery({
     name: 'id',
     description: 'id',
     required: false,
@@ -218,6 +223,7 @@ export class KbFileController extends BaseController {
     @Query('sourceType') sourceType?: string,
     @Query('sourceUrl') sourceUrl?: string,
     @Query('fileExt') fileExt?: string,
+    @Query('checksum') checksum?: string,
     @Query('id', new ParseIntPipe({ optional: true }))
     id?: number,
     @Query('ids', new ParseArrayPipe({ optional: true }))
@@ -239,7 +245,7 @@ export class KbFileController extends BaseController {
       ownerId: owner.id,
     };
 
-    const exactSearch = { kbId, siteId, sourceType, id, fileExt };
+    const exactSearch = { kbId, siteId, sourceType, id, fileExt, checksum };
     const fuzzyMatch = {
       filePath,
       sourceUrl,

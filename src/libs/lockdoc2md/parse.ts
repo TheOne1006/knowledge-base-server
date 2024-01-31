@@ -57,13 +57,13 @@ export const transformText = (block: DocBlock) => {
     } else if (isLinkElement(item)) {
       // 结束原有标记
       prefix = computeMarkdownTagText(tagState);
-      const link = item.text_run.text_element_style.link.url;
+      const link = item.text_run?.text_element_style.link.url;
       const targets = findSequenceElements(i, isLinkElement, elements);
       targets.forEach((element) => {
         // 链接文本内出现的新标记
         currentText += computeMarkdownTagText(
           tagState,
-          element.text_run.text_element_style,
+          element.text_run?.text_element_style,
         );
         currentText += element.text_run.content;
       });
@@ -81,9 +81,9 @@ export const transformText = (block: DocBlock) => {
     } else {
       prefix = computeMarkdownTagText(
         tagState,
-        item.text_run.text_element_style,
+        item.text_run?.text_element_style,
       );
-      currentText = item.text_run.content;
+      currentText = item.text_run?.content;
     }
 
     content += prefix + currentText + postfix;
@@ -205,7 +205,7 @@ export const transformCode = (block: DocBlock) => {
   let content = '';
   const blockData = getBlockData(block);
   const elements = blockData.elements;
-  const language = CodeLanguage[blockData.style.language].toLocaleLowerCase();
+  const language = CodeLanguage[blockData.style.language]?.toLocaleLowerCase();
   elements.forEach((item: TextElement) => (content += item.text_run.content));
 
   return `\`\`\`${language}\n${content}\n\`\`\`\``;

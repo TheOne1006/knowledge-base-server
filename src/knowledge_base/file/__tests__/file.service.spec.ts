@@ -237,7 +237,7 @@ describe('KbFileService', () => {
       });
     });
 
-    describe('findOrCreate', () => {
+    describe('findOrUpdate', () => {
       it('should return an existing instance if it exists', async () => {
         const payload = {
           filePath: '/xxx/path/to/file.html',
@@ -246,7 +246,7 @@ describe('KbFileService', () => {
         const kbId = 1;
         const ownerId = 1;
 
-        const result = await service.findOrCreate(
+        const result = await service.findOrUpdate(
           payload,
           payload.filePath,
           kbId,
@@ -258,14 +258,14 @@ describe('KbFileService', () => {
 
       it('should create a new instance if it does not exist', async () => {
         const payload = {
-          filePath: '/xxx/path/to/newfile-findOrCreate.html',
+          filePath: '/xxx/path/to/newfile-findOrUpdate.html',
           fileExt: 'html',
         };
         const kbId = 1;
         const siteId = 1;
         const ownerId = 1;
 
-        const result = await service.findOrCreate(
+        const result = await service.findOrUpdate(
           payload,
           payload.filePath,
           kbId,
