@@ -15,7 +15,7 @@ RUN npx playwright install chromium
 # in the base image.
 COPY --chown=myuser . ./
 
-RUN npm run migrate:up -- --env test
+# RUN npm run migrate:up -- --env test
 # Run the test. Check crawler server is work
 RUN npm run test:f knowledge_base/process/playwright/__tests__/playwright.service.spec.ts
 
