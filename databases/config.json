@@ -1,10 +1,10 @@
 {
   "development": {
     "username": "root",
-    "password": "root",
+    "password": "",
     "database": "knowledge-base-server",
     "host": "localhost",
-    "dialect": "postgres"
+    "dialect": "mysql"
   },
   "test": {
     "username": "root",
@@ -16,10 +16,10 @@
   },
   "production": {
     "username": "root",
-    "password": "root",
+    "password": "",
     "database": "knowledge-base-server-prod",
     "host": "localhost",
-    "dialect": "postgres"
+    "dialect": "mysql"
   },
   "mysql_demo": {
     "username": "root",
